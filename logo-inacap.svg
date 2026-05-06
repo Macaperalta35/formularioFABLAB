@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 60">
+  <rect x="0" y="0" width="40" height="60" fill="#ED1C24"/>
+  <rect x="35" y="0" width="8" height="60" fill="#ED1C24"/>
+  <text x="52" y="42" font-family="Arial, sans-serif" font-size="38" font-weight="bold" fill="#2d2d2d">inacap</text>
+</svg>
