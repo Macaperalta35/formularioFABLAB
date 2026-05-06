@@ -92,6 +92,7 @@
                     case 'nombre':
                         if (!value.trim()) error = 'Nombre requerido';
                         else if (value.trim().length < 2) error = 'Mínimo 2 caracteres';
+                        else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value.trim())) error = 'Solo letras, espacios y caracteres especiales';
                         break;
                     case 'rut':
                         if (!value.trim()) error = 'RUT requerido';
