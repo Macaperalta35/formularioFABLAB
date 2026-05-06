@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAB LAB INACAP - Registro de Visitas</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.263.1/umd/lucide-react.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Open Sans', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Mock storage API for demo
+        window.storage = {
+            get: async (key) => {
+                const value = localStorage.getItem(key);
+                return value ? { value } : null;
+            },
+            set: async (key, value) => {
+                localStorage.setItem(key, value);
+            }
+        };
+
+        // Import Lucide icons
+        const { Users, Calendar, Clock, CheckCircle, AlertCircle } = lucideReact;
+
+        // Copy the component code here
+        const FabLabRegistro = () => {
+            const [formData, React.useState]({
+                nombre: '',
+                rut: '',
+                correo: '',
+                tipoVisita: '',
+                proposito: '',
+                telefono: ''
+            });
+
+            const [fieldErrors, React.useState]({
+                nombre: '',
+                rut: '',
+                correo: '',
+                tipoVisita: '',
+                telefono: ''
+            });
+
+            const [submitted, React.useState](false);
+            const [error, React.useState]('');
+            const [visitCount, React.useState](0);
+            const [loading, React.useState](false);
+
+            React.useEffect(() => {
+                loadVisitCount();
+            }, []);
+
+            const loadVisitCount = async () => {
+                try {
+                    const result = await window.storage.get('fablab_visit_count');
+                    if (result) {
+                        React.useState(visitCount)[1](parseInt(result.value) || 0);
+                    }
+                } catch (err) {
+                    React.useState(visitCount)[1](0);
+                }
+            };
+
+            const formatRut = (value) => {
+                const cleaned = value.replace(/[^\dkK]/g, '');
+                if (cleaned.length <= 1) return cleaned;
+
+                const body = cleaned.slice(0, -1);
+                const dv = cleaned.slice(-1);
+                const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+                return `${formatted}-${dv}`;
+            };
+
+            const validateRut = (rut) => {
+                const cleaned = rut.replace(/[^\dkK]/g, '');
+                if (cleaned.length < 2) return false;
+
+                const body = cleaned.slice(0, -1);
+                const dv = cleaned.slice(-1).toLowerCase();
+
+                let sum = 0;
+                let multiplier = 2;
+
+                for (let i = body.length - 1; i >= 0; i--) {
+                    sum += parseInt(body[i]) * multiplier;
+                    multiplier = multiplier === 7 ? 2 : multiplier + 1;
+                }
+
+                const expectedDv = 11 - (sum % 11);
+                const calculatedDv = expectedDv === 11 ? '0' : expectedDv === 10 ? 'k' : expectedDv.toString();
+
+                return dv === calculatedDv;
+            };
+
+            const validateEmail = (email) => {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            };
+
+            const validatePhone = (phone) => {
+                if (!phone.trim()) return true;
+                const cleaned = phone.replace(/[^\d]/g, '');
+                return cleaned.length >= 8 && cleaned.length <= 11;
+            };
+
+            const validateField = (name, value) => {
+                let error = '';
+
+                switch (name) {
+                    case 'nombre':
+                        if (!value.trim()) {
+                            error = 'El nombre es requerido';
+                        } else if (value.trim().length < 2) {
+                            error = 'El nombre debe tener al menos 2 caracteres';
+                        }
+                        break;
+
+                    case 'rut':
+                        if (!value.trim()) {
+                            error = 'El RUT es requerido';
+                        } else if (!validateRut(value)) {
+                            error = 'RUT inválido';
+                        }
+                        break;
+
+                    case 'correo':
+                        if (!value.trim()) {
+                            error = 'El correo electrónico es requerido';
+                        } else if (!validateEmail(value)) {
+                            error = 'Correo electrónico inválido';
+                        }
+                        break;
+
+                    case 'tipoVisita':
+                        if (!value) {
+                            error = 'Seleccione el tipo de visita';
+                        }
+                        break;
+
+                    case 'telefono':
+                        if (!validatePhone(value)) {
+                            error = 'Número de teléfono inválido';
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+
+                return error;
+            };
+
+            const isFormValid = () => {
+                return !fieldErrors.nombre &&
+                       !fieldErrors.rut &&
+                       !fieldErrors.correo &&
+                       !fieldErrors.tipoVisita &&
+                       !fieldErrors.telefono &&
+                       formData.nombre.trim() &&
+                       formData.rut.trim() &&
+                       formData.correo.trim() &&
+                       formData.tipoVisita;
+            };
+
+            const handleRutChange = (e) => {
+                const formatted = formatRut(e.target.value);
+                React.useState(formData)[1](prev => ({ ...prev, rut: formatted }));
+
+                const error = validateField('rut', formatted);
+                React.useState(fieldErrors)[1](prev => ({ ...prev, rut: error }));
+            };
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                React.useState(formData)[1](prev => ({
+                    ...prev,
+                    [name]: value
+                }));
+
+                const error = validateField(name, value);
+                React.useState(fieldErrors)[1](prev => ({ ...prev, [name]: error }));
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                React.useState(error)[1]('');
+                React.useState(loading)[1](true);
+
+                if (!isFormValid()) {
+                    React.useState(error)[1]('Por favor complete todos los campos requeridos correctamente');
+                    React.useState(loading)[1](false);
+                    return;
+                }
+
+                try {
+                    const timestamp = new Date().toISOString();
+                    const visitId = `visit_${Date.now()}`;
+
+                    const visitData = {
+                        ...formData,
+                        timestamp,
+                        fecha: new Date().toLocaleDateString('es-CL'),
+                        hora: new Date().toLocaleTimeString('es-CL')
+                    };
+
+                    await window.storage.set(visitId, JSON.stringify(visitData));
+
+                    const newCount = visitCount + 1;
+                    await window.storage.set('fablab_visit_count', newCount.toString());
+                    React.useState(visitCount)[1](newCount);
+
+                    React.useState(submitted)[1](true);
+                    React.useState(loading)[1](false);
+
+                    setTimeout(() => {
+                        React.useState(submitted)[1](false);
+                        React.useState(formData)[1]({
+                            nombre: '',
+                            rut: '',
+                            correo: '',
+                            tipoVisita: '',
+                            proposito: '',
+                            telefono: ''
+                        });
+                        React.useState(fieldErrors)[1]({
+                            nombre: '',
+                            rut: '',
+                            correo: '',
+                            tipoVisita: '',
+                            telefono: ''
+                        });
+                    }, 5000);
+
+                } catch (err) {
+                    React.useState(error)[1]('Error al guardar el registro. Intente nuevamente.');
+                    React.useState(loading)[1](false);
+                }
+            };
+
+            if (submitted) {
+                return (
+                    <div style={{
+                        minHeight: '100vh',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '20px',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%)'
+                    }}>
+                        <div style={{
+                            background: 'white',
+                            borderRadius: '20px',
+                            padding: '48px 32px',
+                            maxWidth: '450px',
+                            width: '100%',
+                            textAlign: 'center',
+                            boxShadow: '0 10px 40px rgba(237, 28, 36, 0.15), 0 0 0 1px rgba(237, 28, 36, 0.1)',
+                            animation: 'slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                        }}>
+                            <div style={{
+                                color: '#ED1C24',
+                                margin: '0 auto 24px',
+                                animation: 'scaleIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s backwards'
+                            }}>
+                                <CheckCircle size={64} strokeWidth={2} />
+                            </div>
+                            <h2 style={{
+                                fontFamily: "'Montserrat', 'Helvetica Neue', sans-serif",
+                                fontSize: '32px',
+                                fontWeight: '700',
+                                color: '#2d2d2d',
+                                marginBottom: '12px',
+                                animation: 'slideUp 0.6s ease-out 0.3s backwards'
+                            }}>¡Registro Exitoso!</h2>
+                            <p style={{
+                                fontFamily: "'Open Sans', 'Helvetica Neue', sans-serif",
+                                fontSize: '16px',
+                                color: '#666666',
+                                marginBottom: '32px',
+                                animation: 'slideUp 0.6s ease-out 0.4s backwards'
+                            }}>
+                                Bienvenido al FAB LAB INACAP
+                            </p>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                gap: '32px',
+                                padding: '24px',
+                                background: '#fff5f5',
+                                borderRadius: '12px',
+                                marginBottom: '24px',
+                                border: '1px solid #ffe5e5',
+                                animation: 'slideUp 0.6s ease-out 0.5s backwards'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    color: '#ED1C24',
+                                    fontFamily: "'Montserrat', sans-serif",
+                                    fontSize: '14px',
+                                    fontWeight: '600'
+                                }}>
+                                    <Users size={18} />
+                                    <span>Visita #{visitCount}</span>
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    color: '#ED1C24',
+                                    fontFamily: "'Montserrat', sans-serif",
+                                    fontSize: '14px',
+                                    fontWeight: '600'
+                                }}>
+                                    <Clock size={18} />
+                                    <span>{new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                            </div>
+                            <div style={{
+                                fontFamily: "'Open Sans', sans-serif",
+                                fontSize: '13px',
+                                color: '#999999',
+                                animation: 'fadeIn 0.6s ease-out 0.6s backwards'
+                            }}>
+                                Redirigiendo al formulario...
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div style={{
+                    minHeight: '100vh',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%)',
+                    padding: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative'
+                }}>
+                    <div style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        right: '0',
+                        height: '8px',
+                        background: 'linear-gradient(90deg, #ED1C24 0%, #c41820 100%)'
+                    }} />
+                    <div style={{
+                        background: 'white',
+                        borderRadius: '16px',
+                        padding: '40px',
+                        maxWidth: '700px',
+                        width: '100%',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                        position: 'relative',
+                        animation: 'slideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                    }}>
+                        {/* Header con Logo */}
+                        <div style={{
+                            textAlign: 'center',
+                            marginBottom: '36px',
+                            paddingBottom: '32px',
+                            borderBottom: '2px solid #f0f0f0'
+                        }}>
+                            <div style={{ marginBottom: '24px', animation: 'fadeIn 0.8s ease-out' }}>
+                                <svg viewBox="0 0 220 60" style={{ height: '50px', width: 'auto' }}>
+                                    <rect x="0" y="0" width="40" height="60" fill="#ED1C24"/>
+                                    <rect x="35" y="0" width="8" height="60" fill="#ED1C24"/>
+                                    <text x="52" y="42" style={{
+                                        fontFamily: 'Arial, sans-serif',
+                                        fontSize: '38',
+                                        fontWeight: 'bold',
+                                        fill: '#2d2d2d'
+                                    }}>inacap</text>
+                                </svg>
+                            </div>
+
+                            <div style={{
+                                width: '60px',
+                                height: '3px',
+                                background: '#ED1C24',
+                                margin: '24px auto',
+                                borderRadius: '2px'
+                            }} />
+
+                            <h1 style={{
+                                fontFamily: "'Montserrat', 'Helvetica Neue', sans-serif",
+                                fontSize: '36px',
+                                fontWeight: '800',
+                                color: '#2d2d2d',
+                                letterSpacing: '1px',
+                                marginBottom: '8px',
+                                animation: 'slideUp 0.8s ease-out 0.2s backwards'
+                            }}>FAB LAB</h1>
+                            <p style={{
+                                fontFamily: "'Open Sans', 'Helvetica Neue', sans-serif",
+                                fontSize: '16px',
+                                color: '#666666',
+                                fontWeight: '600',
+                                marginBottom: '4px',
+                                animation: 'slideUp 0.8s ease-out 0.3s backwards'
+                            }}>Laboratorio de Fabricación Digital</p>
+                            <p style={{
+                                fontFamily: "'Open Sans', 'Helvetica Neue', sans-serif",
+                                fontSize: '13px',
+                                color: '#999999',
+                                marginBottom: '24px',
+                                animation: 'slideUp 0.8s ease-out 0.4s backwards'
+                            }}>Sistema de Registro de Visitas</p>
+
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '12px',
+                                animation: 'slideUp 0.8s ease-out 0.5s backwards'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    color: '#666666',
+                                    fontFamily: "'Open Sans', sans-serif",
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    padding: '8px 16px',
+                                    background: '#fff5f5',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ffe5e5'
+                                }}>
+                                    <Users size={16} />
+                                    <span>{visitCount} visitas registradas</span>
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    color: '#666666',
+                                    fontFamily: "'Open Sans', sans-serif",
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    padding: '8px 16px',
+                                    background: '#fff5f5',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ffe5e5'
+                                }}>
+                                    <Calendar size={16} />
+                                    <span>{new Date().toLocaleDateString('es-CL', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    })}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Form */}
+                        <form onSubmit={handleSubmit} style={{ animation: 'fadeIn 0.8s ease-out 0.6s backwards' }}>
+                            {error && (
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    background: '#fff5f5',
+                                    border: '2px solid #ED1C24',
+                                    color: '#ED1C24',
+                                    padding: '14px 18px',
+                                    borderRadius: '10px',
+                                    marginBottom: '24px',
+                                    fontFamily: "'Open Sans', sans-serif",
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    animation: 'shake 0.5s ease-in-out'
+                                }}>
+                                    <AlertCircle size={18} />
+                                    <span>{error}</span>
+                                </div>
+                            )}
+
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: '20px',
+                                marginBottom: '32px'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px',
+                                    gridColumn: '1 / -1'
+                                }}>
+                                    <label style={{
+                                        fontFamily: "'Montserrat', 'Helvetica Neue', sans-serif",
+                                        fontSize: '14px',
+                                        fontWeight: '700',
+                                        color: '#2d2d2d',
+                                        letterSpacing: '-0.01em'
+                                    }}>Nombre Completo *</label>
+                                    <input
+                                        type="text"
+                                        name="nombre"
+                                        value={formData.nombre}
+                                        onChange={handleChange}
+                                        style={{
+                                            fontFamily: "'Open Sans', 'Helvetica Neue', sans-serif",
+                                            fontSize: '15px',
+                                            padding: '14px 16px',
+                                            border: fieldErrors.nombre ? '2px solid #ED1C24' : '2px solid #e5e5e5',
+                                            borderRadius: '8px',
+                                            background: fieldErrors.nombre ? '#fff5f5' : '#fafafa',
+                                            color: '#2d2d2d',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        placeholder="Ej: Juan Pérez González"
+                                        required
+                                    />
+                                    {fieldErrors.nombre && (
+                                        <span style={{
+                                            fontFamily: "'Open Sans', sans-serif",
+                                            fontSize: '12px',
+                                            color: '#ED1C24',
+                                            marginTop: '4px',
+                                            fontWeight: '600',
+                                            animation: 'fadeInError 0.3s ease-out'
+                                        }}>{fieldErrors.nombre}</span>
+                                    )}
+                                </div>
+
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px'
+                                }}>
+                                    <label style={{
+                                        fontFamily: "'Montserrat', 'Helvetica Neue', sans-serif",
+                                        fontSize: '14px',
+                                        fontWeight: '700',
+                                        color: '#2d2d2d',
+                                        letterSpacing: '-0.01em'
+                                    }}>RUT *</label>
+                                    <input
+                                        type="text"
+                                        name="rut"
+                                        value={formData.rut}
+                                        onChange={handleRutChange}
+                                        style={{
+                                            fontFamily: "'Open Sans', 'Helvetica Neue', sans-serif",
+                                            fontSize: '15px',
+                                            padding: '14px 16px',
+                                            border: fieldErrors.rut ? '2px solid #ED1C24' : '2px solid #e5e5e5',
+                                            borderRadius: '8px',
+                                            background: fieldErrors.rut ? '#fff5f5' : '#fafafa',
+                                            color: '#2d2d2d',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        placeholder="12.345.678-9"
+                                        maxLength={12}
+                                        required
+                                    />
+                                    {fieldErrors.rut && (
+                                        <span style={{
+                                            fontFamily: "'Open Sans', sans-serif",
+                                            fontSize: '12px',
+                                            color: '#ED1C24',
+                                            marginTop: '4px',
+                                            fontWeight: '600',
+                                            animation: 'fadeInError 0.3s ease-out'
+                                        }}>{fieldErrors.rut}</span>
+                                    )}
+                                </div>
+
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px'
+                                }}>
+                                    <label style={{
+                                        fontFamily: "'Montserrat', 'Helvetica Neue', sans-serif",
+                                        fontSize: '14px',
+                                        fontWeight: '700',
+                                        color: '#2d2d2d',
+                                        letterSpacing: '-0.01em'
+                                    }}>Teléfono</label>
+                                    <input
+                                        type="tel"
+                                        name="telefono"
+                                        value={formData.telefono}
+                                        onChange={handleChange}
+                                        style={{
+                                            fontFamily: "'Open Sans', 'Helvetica Neue', sans-serif",
+                                            fontSize: '15px',
+                                            padding: '14px 16px',
+                                            border: fieldErrors.telefono ? '2px solid #ED1C24' : '2px solid #e5e5e5',
+                                            borderRadius: '8px',
+                                            background: fieldErrors.telefono ? '#fff5f5' : '#fafafa',
+                                            color: '#2d2d2d',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        placeholder="+56 9 1234 5678"
+                                    />
+                                    {fieldErrors.telefono && (
+                                        <span style={{
+                                            fontFamily: "'Open Sans', sans-serif",
+                                            fontSize: '12px',
+                                            color: '#ED1C24',
+                                            marginTop: '4px',
+                                            fontWeight: '600',
+                                            animation: 'fadeInError 0.3s ease-out'
+                                        }}>{fieldErrors.telefono}</span>
+                                    )}
+                                </div>
+
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px',
+                                    gridColumn: '1 / -1'
+                                }}>
+                                    <label style={{
+                                        fontFamily: "'Montserrat', 'Helvetica Neue', sans-serif",
+                                        fontSize: '14px',
+                                        fontWeight: '700',
+                                        color: '#2d2d2d',
+                                        letterSpacing: '-0.01em'
+                                    }}>Correo Electrónico *</label>
+                                    <input
+                                        type="email"
+                                        name="correo"
+                                        value={formData.correo}
+                                        onChange={handleChange}
+                                        style={{
+                                            fontFamily: "'Open Sans', 'Helvetica Neue', sans-serif",
+                                            fontSize: '15px',
+                                            padding: '14px 16px',
+                                            border: fieldErrors.correo ? '2px solid #ED1C24' : '2px solid #e5e5e5',
+                                            borderRadius: '8px',
+                                            background: fieldErrors.correo ? '#fff5f5' : '#fafafa',
+                                            color: '#2d2d2d',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        placeholder="correo@ejemplo.com"
+                                        required
+                                    />
+                                    {fieldErrors.correo && (
+                                        <span style={{
+                                            fontFamily: "'Open Sans', sans-serif",
+                                            fontSize: '12px',
+                                            color: '#ED1C24',
+                                            marginTop: '4px',
+                                            fontWeight: '600',
+                                            animation: 'fadeInError 0.3s ease-out'
+                                        }}>{fieldErrors.correo}</span>
+                                    )}
+                                </div>
+
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px',
+                                    gridColumn: '1 / -1'
+                                }}>
+                                    <label style={{
+                                        fontFamily: "'Montserrat', 'Helvetica Neue', sans-serif",
+                                        fontSize: '14px',
+                                        fontWeight: '700',
+                                        color: '#2d2d2d',
+                                        letterSpacing: '-0.01em'
+                                    }}>Tipo de Visita *</label>
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(2, 1fr)',
+                                        gap: '12px'
+                                    }}>
+                                        {[
+                                            { value: 'estudiante', label: 'Estudiante INACAP' },
+                                            { value: 'docente', label: 'Docente' },
+                                            { value: 'externo', label: 'Visitante Externo' },
+                                            { value: 'empresa', label: 'Empresa/Institución' }
+                                        ].map(option => (
+                                            <label key={option.value} style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                padding: '14px',
+                                                border: '2px solid #e5e5e5',
+                                                borderRadius: '8px',
+                                                background: '#fafafa',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                                position: 'relative'
+                                            }}>
+                                                <input
+                                                    type="radio"
+                                                    name="tipoVisita"
+                                                    value={option.value}
+                                                    checked={formData.tipoVisita === option.value}
+                                                    onChange={handleChange}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        opacity: '0',
+                                                        pointerEvents: 'none'
+                                                    }}
+                                                />
+                                                <span style={{
+                                                    width: '20px',
+                                                    height: '20px',
+                                                    border: '2px solid #cccccc',
+                                                    borderRadius: '50%',
+                                                    background: 'white',
+                                                    flexShrink: '0',
+                                                    position: 'relative',
+                                                    transition: 'all 0.2s ease'
+                                                }} />
+                                                <span style={{
+                                                    fontFamily: "'Open Sans', sans-serif",
+                                                    fontSize: '14px',
+                                                    color: '#666666',
+                                                    fontWeight: '600',
+                                                    transition: 'all 0.2s ease'
+                                                }}>{option.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {fieldErrors.tipoVisita && (
+                                        <span style={{
+                                            fontFamily: "'Open Sans', sans-serif",
+                                            fontSize: '12px',
+                                            color: '#ED1C24',
+                                            marginTop: '4px',
+                                            fontWeight: '600',
+                                            animation: 'fadeInError 0.3s ease-out'
+                                        }}>{fieldErrors.tipoVisita}</span>
+                                    )}
+                                </div>
+
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px',
+                                    gridColumn: '1 / -1'
+                                }}>
+                                    <label style={{
+                                        fontFamily: "'Montserrat', 'Helvetica Neue', sans-serif",
+                                        fontSize: '14px',
+                                        fontWeight: '700',
+                                        color: '#2d2d2d',
+                                        letterSpacing: '-0.01em'
+                                    }}>Propósito de la Visita</label>
+                                    <textarea
+                                        name="proposito"
+                                        value={formData.proposito}
+                                        onChange={handleChange}
+                                        style={{
+                                            fontFamily: "'Open Sans', 'Helvetica Neue', sans-serif",
+                                            fontSize: '15px',
+                                            padding: '14px 16px',
+                                            border: '2px solid #e5e5e5',
+                                            borderRadius: '8px',
+                                            background: '#fafafa',
+                                            color: '#2d2d2d',
+                                            transition: 'all 0.2s ease',
+                                            resize: 'vertical',
+                                            minHeight: '90px'
+                                        }}
+                                        placeholder="Ej: Impresión 3D, corte láser, prototipado, capacitación..."
+                                        rows={3}
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '10px',
+                                    padding: '18px 32px',
+                                    background: isFormValid() ? 'linear-gradient(135deg, #ED1C24 0%, #c41820 100%)' : '#cccccc',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '10px',
+                                    fontFamily: "'Montserrat', 'Helvetica Neue', sans-serif",
+                                    fontSize: '16px',
+                                    fontWeight: '700',
+                                    letterSpacing: '0.5px',
+                                    cursor: isFormValid() ? 'pointer' : 'not-allowed',
+                                    transition: 'all 0.3s ease',
+                                    boxShadow: isFormValid() ? '0 4px 12px rgba(237, 28, 36, 0.3)' : 'none',
+                                    textTransform: 'uppercase',
+                                    opacity: loading || !isFormValid() ? '0.6' : '1'
+                                }}
+                                disabled={loading || !isFormValid()}
+                            >
+                                {loading ? (
+                                    <>
+                                        <div style={{
+                                            width: '18px',
+                                            height: '18px',
+                                            border: '2px solid rgba(255, 255, 255, 0.3)',
+                                            borderTopColor: 'white',
+                                            borderRadius: '50%',
+                                            animation: 'spin 0.8s linear infinite'
+                                        }} />
+                                        <span>Registrando...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle size={20} />
+                                        <span>Registrar Visita</span>
+                                    </>
+                                )}
+                            </button>
+                        </form>
+
+                        {/* Footer */}
+                        <div style={{
+                            marginTop: '32px',
+                            paddingTop: '24px'
+                        }}>
+                            <div style={{
+                                height: '1px',
+                                background: 'linear-gradient(90deg, transparent 0%, #e5e5e5 50%, transparent 100%)',
+                                marginBottom: '16px'
+                            }} />
+                            <p style={{
+                                fontFamily: "'Open Sans', sans-serif",
+                                fontSize: '12px',
+                                color: '#999999',
+                                textAlign: 'center',
+                                lineHeight: '1.6'
+                            }}>
+                                Al registrarte aceptas el uso de tus datos para estadísticas del laboratorio
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the component
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<FabLabRegistro />);
+    </script>
+
+    <style>
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        @keyframes fadeInError {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</body>
+</html>

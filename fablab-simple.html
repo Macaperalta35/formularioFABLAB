@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAB LAB INACAP - Registro</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Montserrat', sans-serif; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; }
+        .form-card { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .logo { text-align: center; margin-bottom: 20px; }
+        .logo-text { font-size: 24px; font-weight: 800; color: #ED1C24; }
+        .title { text-align: center; font-size: 28px; font-weight: 700; color: #333; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        .input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; }
+        .input:focus { border-color: #ED1C24; outline: none; }
+        .input.error { border-color: #ED1C24; background: #fff5f5; }
+        .error-text { color: #ED1C24; font-size: 12px; margin-top: 5px; }
+        .radio-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .radio-label { display: flex; align-items: center; gap: 8px; padding: 12px; border: 2px solid #ddd; border-radius: 5px; cursor: pointer; }
+        .radio-label:hover { border-color: #ED1C24; }
+        .radio-input { display: none; }
+        .radio-custom { width: 16px; height: 16px; border: 2px solid #ccc; border-radius: 50%; background: white; }
+        .radio-input:checked + .radio-custom { background: #ED1C24; border-color: #ED1C24; }
+        .submit-btn { width: 100%; padding: 15px; background: #ED1C24; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .success { text-align: center; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .success-icon { font-size: 48px; color: #ED1C24; margin-bottom: 20px; }
+        .success-title { font-size: 24px; color: #333; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const [useState, useEffect] = React;
+
+        function FabLabRegistro() {
+            const [formData, setFormData] = useState({
+                nombre: '',
+                rut: '',
+                correo: '',
+                tipoVisita: '',
+                telefono: '',
+                proposito: ''
+            });
+
+            const [errors, setErrors] = useState({});
+            const [submitted, setSubmitted] = useState(false);
+            const [loading, setLoading] = useState(false);
+            const [submissionError, setSubmissionError] = useState('');
+
+            const BASE_URL = 'http://127.0.0.1:5001/api';
+
+            const validateField = (name, value) => {
+                let error = '';
+                switch(name) {
+                    case 'nombre':
+                        if (!value.trim()) error = 'Nombre requerido';
+                        else if (value.trim().length < 2) error = 'Mínimo 2 caracteres';
+                        break;
+                    case 'rut':
+                        if (!value.trim()) error = 'RUT requerido';
+                        else if (!/^\d{1,3}(\.\d{3})*-\d{1}$/.test(value)) error = 'Formato RUT inválido';
+                        break;
+                    case 'correo':
+                        if (!value.trim()) error = 'Correo requerido';
+                        else if (!/\S+@\S+\.\S+/.test(value)) error = 'Correo inválido';
+                        break;
+                    case 'tipoVisita':
+                        if (!value) error = 'Seleccione tipo de visita';
+                        break;
+                    case 'telefono':
+                        if (value && !/^\+?[\d\s-()]+$/.test(value)) error = 'Teléfono inválido';
+                        break;
+                }
+                return error;
+            };
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+
+                const error = validateField(name, value);
+                setErrors(prev => ({ ...prev, [name]: error }));
+            };
+
+            const isFormValid = () => {
+                return !errors.nombre && !errors.rut && !errors.correo && !errors.tipoVisita && !errors.telefono &&
+                       formData.nombre && formData.rut && formData.correo && formData.tipoVisita;
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+
+                const validationErrors = {
+                    nombre: validateField('nombre', formData.nombre),
+                    rut: validateField('rut', formData.rut),
+                    correo: validateField('correo', formData.correo),
+                    tipoVisita: validateField('tipoVisita', formData.tipoVisita),
+                    telefono: validateField('telefono', formData.telefono),
+                };
+
+                setErrors(validationErrors);
+                if (Object.values(validationErrors).some(Boolean)) return;
+
+                setLoading(true);
+                setSubmissionError('');
+
+                try {
+                    const response = await fetch(`${BASE_URL}/visitas`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ message: 'Error al enviar datos' }));
+                        throw new Error(errorData.message || 'Error de servidor');
+                    }
+
+                    setSubmitted(true);
+                } catch (error) {
+                    setSubmissionError(error.message || 'Error al conectar con el servidor');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            if (submitted) {
+                return (
+                    <div className="container">
+                        <div className="success">
+                            <div className="success-icon">✓</div>
+                            <h2 className="success-title">¡Registro Exitoso!</h2>
+                            <p>Bienvenido al FAB LAB INACAP</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="container">
+                    <div className="form-card">
+                        <div className="logo">
+                            <div className="logo-text">INACAP</div>
+                            <h1 style={{color: '#ED1C24', fontSize: '18px', marginTop: '5px'}}>FAB LAB</h1>
+                        </div>
+
+                        <h2 className="title">Registro de Visitas</h2>
+
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label className="label">Nombre Completo *</label>
+                                <input
+                                    type="text"
+                                    name="nombre"
+                                    value={formData.nombre}
+                                    onChange={handleChange}
+                                    className={`input ${errors.nombre ? 'error' : ''}`}
+                                    placeholder="Juan Pérez"
+                                />
+                                {errors.nombre && <div className="error-text">{errors.nombre}</div>}
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label">RUT *</label>
+                                <input
+                                    type="text"
+                                    name="rut"
+                                    value={formData.rut}
+                                    onChange={handleChange}
+                                    className={`input ${errors.rut ? 'error' : ''}`}
+                                    placeholder="12.345.678-9"
+                                />
+                                {errors.rut && <div className="error-text">{errors.rut}</div>}
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label">Correo Electrónico *</label>
+                                <input
+                                    type="email"
+                                    name="correo"
+                                    value={formData.correo}
+                                    onChange={handleChange}
+                                    className={`input ${errors.correo ? 'error' : ''}`}
+                                    placeholder="correo@ejemplo.com"
+                                />
+                                {errors.correo && <div className="error-text">{errors.correo}</div>}
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label">Tipo de Visita *</label>
+                                <div className="radio-group">
+                                    {[
+                                        {value: 'estudiante', label: 'Estudiante'},
+                                        {value: 'docente', label: 'Docente'},
+                                        {value: 'externo', label: 'Externo'},
+                                        {value: 'empresa', label: 'Empresa'}
+                                    ].map(option => (
+                                        <label key={option.value} className="radio-label">
+                                            <input
+                                                type="radio"
+                                                name="tipoVisita"
+                                                value={option.value}
+                                                checked={formData.tipoVisita === option.value}
+                                                onChange={handleChange}
+                                                className="radio-input"
+                                            />
+                                            <span className="radio-custom"></span>
+                                            {option.label}
+                                        </label>
+                                    ))}
+                                </div>
+                                {errors.tipoVisita && <div className="error-text">{errors.tipoVisita}</div>}
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label">Teléfono</label>
+                                <input
+                                    type="tel"
+                                    name="telefono"
+                                    value={formData.telefono}
+                                    onChange={handleChange}
+                                    className={`input ${errors.telefono ? 'error' : ''}`}
+                                    placeholder="+56 9 1234 5678"
+                                />
+                                {errors.telefono && <div className="error-text">{errors.telefono}</div>}
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label">Propósito</label>
+                                <textarea
+                                    name="proposito"
+                                    value={formData.proposito}
+                                    onChange={handleChange}
+                                    className="input"
+                                    rows="3"
+                                    placeholder="¿Qué deseas hacer en el FAB LAB?"
+                                />
+                            </div>
+
+                            {submissionError && <div className="error-text">{submissionError}</div>}
+
+                            <button
+                                type="submit"
+                                className="submit-btn"
+                                disabled={!isFormValid() || loading}
+                            >
+                                {loading ? 'Registrando...' : 'Registrar Visita'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<FabLabRegistro />);
+    </script>
+</body>
+</html>
