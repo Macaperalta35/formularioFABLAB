@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAB LAB INACAP - Registro</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Formulario -->
+        <div id="form-container" class="form-card">
+            <div class="logo">
+                <svg viewBox="0 0 220 60" class="logo-svg">
+                    <rect x="0" y="0" width="40" height="60" fill="#ED1C24"/>
+                    <rect x="35" y="0" width="8" height="60" fill="#ED1C24"/>
+                    <text x="52" y="42" font-family="Arial, sans-serif" font-size="38" font-weight="bold" fill="#2d2d2d">inacap</text>
+                </svg>
+                <h1 class="title">FAB LAB</h1>
+                <p class="subtitle">Laboratorio de Fabricación Digital</p>
+                <p style="font-size: 13px; color: #999; margin-top: 4px;">Sistema de Registro de Visitas</p>
+            </div>
+
+            <form id="registro-form">
+                <div class="form-group">
+                    <label class="label">Nombre Completo *</label>
+                    <input type="text" id="nombre" name="nombre" class="input" placeholder="Ej: Juan Pérez González" required>
+                    <div id="nombre-error" class="error-text hidden"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">RUT *</label>
+                    <input type="text" id="rut" name="rut" class="input" placeholder="12.345.678-9" maxlength="12" required>
+                    <div id="rut-error" class="error-text hidden"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Correo Electrónico *</label>
+                    <input type="email" id="correo" name="correo" class="input" placeholder="correo@ejemplo.com" required>
+                    <div id="correo-error" class="error-text hidden"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Tipo de Visita *</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="tipoVisita" value="estudiante" class="radio-input" required>
+                            <span class="radio-custom"></span>
+                            Estudiante INACAP
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="tipoVisita" value="docente" class="radio-input" required>
+                            <span class="radio-custom"></span>
+                            Docente
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="tipoVisita" value="externo" class="radio-input" required>
+                            <span class="radio-custom"></span>
+                            Visitante Externo
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="tipoVisita" value="empresa" class="radio-input" required>
+                            <span class="radio-custom"></span>
+                            Empresa/Institución
+                        </label>
+                    </div>
+                    <div id="tipoVisita-error" class="error-text hidden"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Teléfono</label>
+                    <input type="tel" id="telefono" name="telefono" class="input" placeholder="+56 9 1234 5678">
+                    <div id="telefono-error" class="error-text hidden"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Propósito de la Visita</label>
+                    <textarea id="proposito" name="proposito" class="input textarea" placeholder="Ej: Impresión 3D, corte láser, prototipado..." rows="3"></textarea>
+                </div>
+
+                <button type="submit" id="submit-btn" class="submit-btn" disabled>
+                    Registrar Visita
+                </button>
+            </form>
+
+            <div class="footer">
+                <p class="footer-text">
+                    Al registrarte aceptas el uso de tus datos para estadísticas del laboratorio
+                </p>
+            </div>
+        </div>
+
+        <!-- Pantalla de éxito -->
+        <div id="success-container" class="success hidden">
+            <div class="success-icon">✓</div>
+            <h2 class="success-title">¡Registro Exitoso!</h2>
+            <p class="success-text">Bienvenido al FAB LAB INACAP</p>
+            <div class="stats">
+                <div class="stat">
+                    👥 Visita #<span id="visit-count">1</span>
+                </div>
+                <div class="stat">
+                    🕐 <span id="current-time"></span>
+                </div>
+            </div>
+            <p style="color: #999; font-size: 13px;">Redirigiendo al formulario...</p>
+        </div>
+    </div>
+
+    <script>
+        // Elementos del DOM
+        const form = document.getElementById('registro-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const formContainer = document.getElementById('form-container');
+        const successContainer = document.getElementById('success-container');
+        const visitCountSpan = document.getElementById('visit-count');
+        const currentTimeSpan = document.getElementById('current-time');
+
+        // Estado del formulario
+        let visitCount = parseInt(localStorage.getItem('fablab_visit_count') || '0');
+
+        // Funciones de validación
+        function formatRUT(value) {
+            const cleaned = value.replace(/[^\dkK]/g, '');
+            if (cleaned.length <= 1) return cleaned;
+
+            const body = cleaned.slice(0, -1);
+            const dv = cleaned.slice(-1);
+            const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+            return `${formatted}-${dv}`;
+        }
+
+        function validateRUT(rut) {
+            const cleaned = rut.replace(/[^\dkK]/g, '');
+            if (cleaned.length < 2) return false;
+
+            const body = cleaned.slice(0, -1);
+            const dv = cleaned.slice(-1).toLowerCase();
+
+            let sum = 0;
+            let multiplier = 2;
+
+            for (let i = body.length - 1; i >= 0; i--) {
+                sum += parseInt(body[i]) * multiplier;
+                multiplier = multiplier === 7 ? 2 : multiplier + 1;
+            }
+
+            const expectedDv = 11 - (sum % 11);
+            const calculatedDv = expectedDv === 11 ? '0' : expectedDv === 10 ? 'k' : expectedDv.toString();
+
+            return dv === calculatedDv;
+        }
+
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function validatePhone(phone) {
+            if (!phone.trim()) return true; // Opcional
+            const cleaned = phone.replace(/[^\d]/g, '');
+            return cleaned.length >= 8 && cleaned.length <= 11;
+        }
+
+        function validateField(fieldName, value) {
+            let error = '';
+
+            switch (fieldName) {
+                case 'nombre':
+                    if (!value.trim()) {
+                        error = 'El nombre es requerido';
+                    } else if (value.trim().length < 2) {
+                        error = 'El nombre debe tener al menos 2 caracteres';
+                    }
+                    break;
+
+                case 'rut':
+                    if (!value.trim()) {
+                        error = 'El RUT es requerido';
+                    } else if (!validateRUT(value)) {
+                        error = 'RUT inválido';
+                    }
+                    break;
+
+                case 'correo':
+                    if (!value.trim()) {
+                        error = 'El correo electrónico es requerido';
+                    } else if (!validateEmail(value)) {
+                        error = 'Correo electrónico inválido';
+                    }
+                    break;
+
+                case 'tipoVisita':
+                    if (!value) {
+                        error = 'Seleccione el tipo de visita';
+                    }
+                    break;
+
+                case 'telefono':
+                    if (!validatePhone(value)) {
+                        error = 'Número de teléfono inválido';
+                    }
+                    break;
+            }
+
+            return error;
+        }
+
+        function updateFieldValidation(field) {
+            const value = field.value;
+            const fieldName = field.name;
+            const errorDiv = document.getElementById(`${fieldName}-error`);
+            const error = validateField(fieldName, value);
+
+            if (error) {
+                field.classList.add('error');
+                errorDiv.textContent = error;
+                errorDiv.classList.remove('hidden');
+            } else {
+                field.classList.remove('error');
+                errorDiv.classList.add('hidden');
+            }
+
+            updateSubmitButton();
+        }
+
+        function updateSubmitButton() {
+            const nombre = document.getElementById('nombre').value;
+            const rut = document.getElementById('rut').value;
+            const correo = document.getElementById('correo').value;
+            const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
+            const telefono = document.getElementById('telefono').value;
+
+            const isValid = nombre.trim() &&
+                           rut.trim() &&
+                           correo.trim() &&
+                           tipoVisita &&
+                           !document.getElementById('nombre-error').textContent &&
+                           !document.getElementById('rut-error').textContent &&
+                           !document.getElementById('correo-error').textContent &&
+                           !document.getElementById('telefono-error').textContent;
+
+            submitBtn.disabled = !isValid;
+        }
+
+        // Event listeners
+        document.getElementById('rut').addEventListener('input', function(e) {
+            e.target.value = formatRUT(e.target.value);
+            updateFieldValidation(e.target);
+        });
+
+        document.querySelectorAll('input, textarea').forEach(field => {
+            field.addEventListener('input', function() {
+                updateFieldValidation(this);
+            });
+        });
+
+        document.querySelectorAll('input[name="tipoVisita"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                updateFieldValidation(this);
+            });
+        });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Simular envío
+            submitBtn.textContent = 'Registrando...';
+            submitBtn.disabled = true;
+
+            setTimeout(() => {
+                // Actualizar contador
+                visitCount++;
+                localStorage.setItem('fablab_visit_count', visitCount.toString());
+
+                // Mostrar éxito
+                visitCountSpan.textContent = visitCount;
+                currentTimeSpan.textContent = new Date().toLocaleTimeString('es-CL', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                formContainer.classList.add('hidden');
+                successContainer.classList.remove('hidden');
+
+                // Reset después de 5 segundos
+                setTimeout(() => {
+                    successContainer.classList.add('hidden');
+                    formContainer.classList.remove('hidden');
+                    form.reset();
+                    submitBtn.textContent = 'Registrar Visita';
+                    submitBtn.disabled = true;
+
+                    // Limpiar errores
+                    document.querySelectorAll('.error-text').forEach(el => {
+                        el.classList.add('hidden');
+                    });
+                    document.querySelectorAll('.input').forEach(el => {
+                        el.classList.remove('error');
+                    });
+                }, 5000);
+            }, 1000);
+        });
+
+        // Inicializar
+        updateSubmitButton();
+    </script>
+</body>
+</html>
