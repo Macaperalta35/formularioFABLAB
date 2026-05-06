@@ -9,30 +9,40 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #ED1C24;
+            --surface: #ffffff;
+            --background: #f8f1ef;
+            --text: #2b2b2b;
+            --muted: #555;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Montserrat', sans-serif; background: #f5f5f5; }
-        .container { max-width: 600px; margin: 20px auto; padding: 20px; }
-        .form-card { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .logo { text-align: center; margin-bottom: 20px; }
-        .logo-text { font-size: 24px; font-weight: 800; color: #ED1C24; }
-        .title { text-align: center; font-size: 28px; font-weight: 700; color: #333; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; }
-        .label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
-        .input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; }
-        .input:focus { border-color: #ED1C24; outline: none; }
-        .input.error { border-color: #ED1C24; background: #fff5f5; }
-        .error-text { color: #ED1C24; font-size: 12px; margin-top: 5px; }
+        body { font-family: 'Montserrat', sans-serif; background: radial-gradient(circle at top, rgba(237,28,36,0.18), transparent 35%), var(--background); color: var(--text); }
+        .container { max-width: 620px; margin: 30px auto; padding: 0 20px; }
+        .form-card { background: var(--surface); border-radius: 24px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,0.08); border: 1px solid rgba(237,28,36,0.12); }
+        .logo { text-align: center; margin-bottom: 18px; }
+        .logo-text { font-size: 32px; font-weight: 900; color: var(--primary); letter-spacing: 0.12em; }
+        .logo-subtitle { font-size: 14px; text-transform: uppercase; color: var(--primary); margin-top: 6px; letter-spacing: 0.2em; }
+        .title { text-align: center; font-size: 30px; font-weight: 700; color: var(--text); margin-bottom: 28px; }
+        .form-group { margin-bottom: 18px; }
+        .label { display: block; margin-bottom: 8px; font-weight: 700; color: var(--text); }
+        .input { width: 100%; padding: 14px 16px; border: 2px solid rgba(0,0,0,0.1); border-radius: 12px; font-size: 16px; background: #fff; color: var(--text); }
+        .input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(237,28,36,0.08); }
+        .input.error { border-color: var(--primary); background: #fff5f5; }
+        .error-text { color: var(--primary); font-size: 12px; margin-top: 6px; }
         .radio-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .radio-label { display: flex; align-items: center; gap: 8px; padding: 12px; border: 2px solid #ddd; border-radius: 5px; cursor: pointer; }
-        .radio-label:hover { border-color: #ED1C24; }
+        .radio-label { display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid rgba(0,0,0,0.08); border-radius: 12px; cursor: pointer; background: #fff; transition: all 0.2s ease; }
+        .radio-label:hover { border-color: var(--primary); }
         .radio-input { display: none; }
-        .radio-custom { width: 16px; height: 16px; border: 2px solid #ccc; border-radius: 50%; background: white; }
-        .radio-input:checked + .radio-custom { background: #ED1C24; border-color: #ED1C24; }
-        .submit-btn { width: 100%; padding: 15px; background: #ED1C24; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: 600; cursor: pointer; }
-        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
-        .success { text-align: center; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .success-icon { font-size: 48px; color: #ED1C24; margin-bottom: 20px; }
-        .success-title { font-size: 24px; color: #333; margin-bottom: 10px; }
+        .radio-custom { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 50%; background: white; transition: all 0.2s ease; }
+        .radio-input:checked + .radio-custom { background: var(--primary); border-color: var(--primary); }
+        .submit-btn { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 14px; font-size: 17px; font-weight: 700; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(237,28,36,0.22); }
+        .submit-btn:disabled { background: rgba(237,28,36,0.45); cursor: not-allowed; }
+        .success { text-align: center; padding: 40px; background: var(--surface); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
+        .success-icon { font-size: 52px; color: var(--primary); margin-bottom: 20px; }
+        .success-title { font-size: 26px; color: var(--text); margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -150,7 +160,7 @@
                     <div className="form-card">
                         <div className="logo">
                             <div className="logo-text">INACAP</div>
-                            <h1 style={{color: '#ED1C24', fontSize: '18px', marginTop: '5px'}}>FAB LAB</h1>
+                            <div className="logo-subtitle">Fab Lab</div>
                         </div>
 
                         <h2 className="title">Registro de Visitas</h2>

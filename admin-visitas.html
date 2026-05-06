@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Registro de Visitas FAB LAB INACAP</title>
     <style>
+        :root {
+            --primary: #ED1C24;
+            --surface: #ffffff;
+            --background: #f8f1ef;
+            --text: #222222;
+            --muted: #5a5a5a;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,9 +21,10 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: radial-gradient(circle at top, rgba(237,28,36,0.18), transparent 35%), var(--background);
             min-height: 100vh;
             padding: 20px;
+            color: var(--text);
         }
 
         .container {
@@ -24,73 +33,105 @@
         }
 
         .header {
-            background: white;
+            background: var(--surface);
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
             margin-bottom: 30px;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
+            text-align: center;
+            gap: 15px;
         }
 
         .header h1 {
-            color: #333;
-            font-size: 24px;
+            color: var(--text);
+            font-size: 30px;
+            letter-spacing: 0.02em;
         }
 
         .header .logo {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
         }
 
         .logo-text {
-            font-weight: bold;
-            font-size: 18px;
-            color: #ED1C24;
+            font-weight: 900;
+            font-size: 32px;
+            color: var(--primary);
+            letter-spacing: 0.18em;
+        }
+
+        .logo-subtitle {
+            color: var(--primary);
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-size: 14px;
         }
 
         .actions {
             display: flex;
-            gap: 10px;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 5px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-weight: 700;
+            transition: all 0.25s ease;
         }
 
         .btn-primary {
-            background: #ED1C24;
+            background: var(--primary);
             color: white;
         }
 
         .btn-primary:hover {
             background: #c61a1e;
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(237, 28, 36, 0.3);
+            box-shadow: 0 10px 20px rgba(237, 28, 36, 0.2);
         }
 
         .btn-secondary {
-            background: #667eea;
-            color: white;
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
         }
 
         .btn-secondary:hover {
-            background: #5568d3;
+            background: rgba(237, 28, 36, 0.08);
         }
 
         .table-container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
             overflow: hidden;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        td {
+            color: var(--text);
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid rgba(237, 28, 36, 0.15);
         }
 
         table {
@@ -192,12 +233,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <div>
-                <h1>📊 Panel de Administración</h1>
-                <p style="color: #999; margin-top: 5px;">Gestión de Visitas FAB LAB INACAP</p>
-            </div>
             <div class="logo">
                 <span class="logo-text">INACAP</span>
+                <span class="logo-subtitle">Fab Lab</span>
+            </div>
+            <div>
+                <h1>📊 Panel de Administración</h1>
+                <p style="color: var(--muted); margin-top: 5px;">Gestión de Visitas FAB LAB INACAP</p>
             </div>
         </div>
 
