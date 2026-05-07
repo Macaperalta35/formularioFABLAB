@@ -257,7 +257,6 @@
         <div style="margin-bottom: 20px;">
             <div class="actions">
                 <button class="btn btn-primary" onclick="exportarExcel()">📥 Descargar Excel</button>
-                <button class="btn btn-secondary" onclick="exportarCSV()">📥 Descargar CSV</button>
                 <button class="btn btn-secondary" onclick="recargar()">🔄 Recargar</button>
             </div>
         </div>
@@ -362,10 +361,6 @@
 
         function exportarExcel() {
             window.location.href = `${BASE_URL}/visitas/export?format=excel`;
-        }
-
-        function exportarCSV() {
-            window.location.href = `${BASE_URL}/visitas/export?format=csv`;
         }
 
         function recargar() {

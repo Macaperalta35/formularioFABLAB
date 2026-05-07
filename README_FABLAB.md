@@ -15,7 +15,7 @@ Sistema completo de registro de visitas para FAB LAB INACAP con formulario web i
   
 - **Base de datos SQLite** para almacenar registros
 - **Panel administrativo** para visualizar y descargar datos
-- **Exportación a Excel y CSV** con formato profesional
+- **Exportación a Excel** con formato profesional
 - **Diseño corporativo** con colores y logo de INACAP
 - **Backend Flask** con API REST
 
@@ -47,6 +47,8 @@ python serve.py
 
 El formulario estará disponible en: `http://localhost:8000/fablab-simple.html`
 
+> Para accesos desde celular en la misma red local, ejecuta `configurar_celulares.bat` como administrador y luego usa `fablab-mobile-fix.html`.
+
 ## 📱 Uso del Formulario
 
 1. Abre [http://localhost:8000/fablab-simple.html](http://localhost:8000/fablab-simple.html)
@@ -62,8 +64,7 @@ Para visualizar y exportar todos los registros:
 1. Abre [http://localhost:8000/admin-visitas.html](http://localhost:8000/admin-visitas.html)
 2. Verás un resumen de estadísticas (total de visitas, visitas por tipo)
 3. **Descargar Excel**: Descarga un archivo .xlsx con formato profesional
-4. **Descargar CSV**: Descarga un archivo .csv compatible con Excel
-5. **Recargar**: Actualiza la tabla con nuevos registros
+4. **Recargar**: Actualiza la tabla con nuevos registros
 
 ## 🔌 Endpoints de API
 
@@ -90,11 +91,6 @@ GET /api/visitas
 ### Descargar Excel
 ```
 GET /api/visitas/export?format=excel
-```
-
-### Descargar CSV
-```
-GET /api/visitas/export?format=csv
 ```
 
 ## 📁 Estructura de archivos

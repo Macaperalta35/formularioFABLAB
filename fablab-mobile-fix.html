@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FAB LAB Móvil - Registro</title>
+    <style>
+        :root {
+            --primary: #ED1C24;
+            --surface: #ffffff;
+            --background: #f8f8f8;
+            --text: #2d2d2d;
+            --muted: #666666;
+            --danger: #c41820;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100%; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding: 16px;
+        }
+        .page {
+            width: 100%;
+            max-width: 580px;
+        }
+        .card {
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            border: 1px solid rgba(237,28,36,0.12);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        .header h1 {
+            font-size: 26px;
+            margin-bottom: 6px;
+        }
+        .header p {
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .status {
+            background: #fff5f5;
+            border: 1px solid rgba(237,28,36,0.18);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .status strong { display: block; margin-bottom: 8px; color: var(--text); }
+        .status p { word-break: break-word; line-height: 1.5; color: var(--text); font-size: 14px; }
+        .status small { color: var(--muted); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: var(--text);
+            font-size: 14px;
+        }
+        .form-control,
+        .form-control textarea {
+            width: 100%;
+            border-radius: 14px;
+            border: 1px solid rgba(0,0,0,0.12);
+            padding: 14px 16px;
+            font-size: 16px;
+            color: var(--text);
+            background: #fff;
+        }
+        .form-control:focus,
+        .form-control textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 6px rgba(237,28,36,0.08);
+        }
+        .radio-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 14px;
+            cursor: pointer;
+            background: #fff;
+            transition: border-color 0.2s ease, background 0.2s ease;
+            user-select: none;
+        }
+        .radio-label:hover {
+            border-color: var(--primary);
+        }
+        .radio-input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+        .footer-text {
+            margin-top: 22px;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .button {
+            width: 100%;
+            background: var(--primary);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .button:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(237,28,36,0.22);
+        }
+        .message {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(237,28,36,0.08);
+            color: var(--danger);
+            font-weight: 600;
+            display: none;
+        }
+        .message.success {
+            background: rgba(34,139,34,0.12);
+            color: #166500;
+        }
+        @media (max-width: 520px) {
+            .card { padding: 20px; }
+            .header h1 { font-size: 22px; }
+            .button { padding: 14px; font-size: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="card">
+            <div class="header">
+                <h1>FAB LAB Móvil</h1>
+                <p>Formulario optimizado para celulares y red local.</p>
+            </div>
+
+            <div class="status">
+                <strong>Conexión actual</strong>
+                <p>Frontend: <span id="frontend-url">Cargando...</span></p>
+                <p>API: <span id="api-url">Cargando...</span></p>
+                <p><small>Si usas otro equipo, reemplaza localhost por la IP de tu PC.</small></p>
+            </div>
+
+            <div class="form-group">
+                <label for="nombre">Nombre completo *</label>
+                <input id="nombre" name="nombre" class="form-control" type="text" placeholder="Ej: Juan Pérez" autocomplete="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="rut">RUT *</label>
+                <input id="rut" name="rut" class="form-control" type="text" placeholder="12.345.678-9" maxlength="12" inputmode="text" required>
+            </div>
+
+            <div class="form-group">
+                <label for="correo">Correo electrónico *</label>
+                <input id="correo" name="correo" class="form-control" type="email" placeholder="correo@ejemplo.com" autocomplete="email" required>
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de visita *</label>
+                <div class="radio-grid">
+                    <label class="radio-label"><input class="radio-input" type="radio" name="tipoVisita" value="estudiante"> Estudiante INACAP</label>
+                    <label class="radio-label"><input class="radio-input" type="radio" name="tipoVisita" value="docente"> Docente</label>
+                    <label class="radio-label"><input class="radio-input" type="radio" name="tipoVisita" value="externo"> Visitante Externo</label>
+                    <label class="radio-label"><input class="radio-input" type="radio" name="tipoVisita" value="empresa"> Empresa/Institución</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input id="telefono" name="telefono" class="form-control" type="tel" placeholder="+56 9 1234 5678" autocomplete="tel">
+            </div>
+
+            <div class="form-group">
+                <label for="proposito">Propósito</label>
+                <textarea id="proposito" name="proposito" class="form-control" rows="4" placeholder="Ej: Corte láser, impresión 3D..."></textarea>
+            </div>
+
+            <button id="submit-btn" class="button" type="button" disabled>Enviar registro</button>
+
+            <div id="message" class="message"></div>
+
+            <div class="footer-text">
+                Si la conexión falla, asegúrate de ejecutar el servidor en tu PC y de usar la IP local que detecta el script de configuración.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const frontendUrlEl = document.getElementById('frontend-url');
+        const apiUrlEl = document.getElementById('api-url');
+        const messageEl = document.getElementById('message');
+        const submitBtn = document.getElementById('submit-btn');
+        const inputs = Array.from(document.querySelectorAll('.form-control'));
+        const radioInputs = Array.from(document.querySelectorAll('input[name="tipoVisita"]'));
+
+        const apiBase = `${window.location.protocol}//${window.location.hostname}:5001/api`;
+        const frontendUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port}${window.location.pathname}`;
+
+        frontendUrlEl.textContent = frontendUrl;
+        apiUrlEl.textContent = `${apiBase}/visitas`;
+
+        function formatRUT(value) {
+            const cleaned = value.replace(/[^\dkK]/gi, '').replace(/\s/g, '');
+            if (cleaned.length <= 1) return cleaned;
+            const body = cleaned.slice(0, -1);
+            const dv = cleaned.slice(-1);
+            const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return `${formatted}-${dv}`;
+        }
+
+        function validateRUT(rut) {
+            const cleaned = rut.replace(/[^\dkK]/gi, '').replace(/\s/g, '');
+            if (cleaned.length < 2) return false;
+            const body = cleaned.slice(0, -1);
+            const dv = cleaned.slice(-1).toLowerCase();
+            let sum = 0;
+            let multiplier = 2;
+            for (let i = body.length - 1; i >= 0; i--) {
+                sum += parseInt(body[i], 10) * multiplier;
+                multiplier = multiplier === 7 ? 2 : multiplier + 1;
+            }
+            const expected = 11 - (sum % 11);
+            const calc = expected === 11 ? '0' : expected === 10 ? 'k' : expected.toString();
+            return dv === calc;
+        }
+
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function validatePhone(phone) {
+            if (!phone.trim()) return true;
+            const cleaned = phone.replace(/[^\d]/g, '');
+            return cleaned.length >= 8 && cleaned.length <= 11;
+        }
+
+        function validateForm() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const rut = document.getElementById('rut').value.trim();
+            const correo = document.getElementById('correo').value.trim();
+            const tipoVisita = radioInputs.some(r => r.checked);
+            const telefono = document.getElementById('telefono').value.trim();
+
+            const valid = nombre.length >= 2 && validateRUT(rut) && validateEmail(correo) && tipoVisita && validatePhone(telefono);
+            submitBtn.disabled = !valid;
+            return valid;
+        }
+
+        function showMessage(text, type = 'error') {
+            messageEl.textContent = text;
+            messageEl.className = `message ${type === 'success' ? 'success' : ''}`;
+            messageEl.style.display = 'block';
+        }
+
+        function hideMessage() {
+            messageEl.style.display = 'none';
+        }
+
+        document.getElementById('rut').addEventListener('input', function () {
+            this.value = formatRUT(this.value);
+            validateForm();
+        });
+
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                hideMessage();
+                validateForm();
+            });
+        });
+
+        radioInputs.forEach(radio => {
+            radio.addEventListener('change', () => {
+                hideMessage();
+                validateForm();
+            });
+        });
+
+        submitBtn.addEventListener('click', async () => {
+            if (!validateForm()) {
+                showMessage('Completa correctamente todos los campos requeridos.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando…';
+            hideMessage();
+
+            const payload = {
+                nombre: document.getElementById('nombre').value.trim(),
+                rut: document.getElementById('rut').value.trim(),
+                correo: document.getElementById('correo').value.trim(),
+                tipoVisita: radioInputs.find(r => r.checked)?.value || '',
+                telefono: document.getElementById('telefono').value.trim(),
+                proposito: document.getElementById('proposito').value.trim(),
+            };
+
+            try {
+                const response = await fetch(`${apiBase}/visitas`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.error || 'Error al enviar el formulario');
+                }
+
+                showMessage('¡Registro enviado correctamente! Escanea de nuevo para otro registro.', 'success');
+                inputs.forEach(i => i.value = '');
+                radioInputs.forEach(r => r.checked = false);
+            } catch (error) {
+                showMessage(`Error de conexión: ${error.message}`);
+            } finally {
+                submitBtn.textContent = 'Enviar registro';
+                validateForm();
+            }
+        });
+
+        // Probar API al cargar la página para detectar problemas de conexión.
+        async function checkApi() {
+            try {
+                const response = await fetch(`${apiBase}/`);
+                if (!response.ok) throw new Error('Servidor API no disponible');
+                const data = await response.json();
+                if (!data || !data.api) throw new Error('Respuesta inválida del servidor');
+            } catch (err) {
+                showMessage('No se puede conectar al servidor API. Verifica que Flask esté activo y que los puertos 8000/5001 estén permitidos.');
+            }
+        }
+
+        checkApi();
+    </script>
+</body>
+</html>
