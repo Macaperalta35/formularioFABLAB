@@ -20,12 +20,12 @@ echo [OK] Python instalado
 echo.
 
 REM Terminal 1: Backend FAB LAB
-echo [1/2] Iniciando servidor FAB LAB en http://127.0.0.1:5001
-cd /d "c:\Users\macas\Downloads"
+echo [1/2] Iniciando servidor FAB LAB en http://127.0.0.1:5000
+cd /d "%~dp0"
 start "FAB LAB Backend" cmd /k "python fablab_app.py"
 
 REM Esperar a que inicie
-timeout /t 3 /nobreak
+timeout /t 5 /nobreak
 
 REM Terminal 2: Servidor HTTP
 echo [2/2] Iniciando servidor HTTP en http://localhost:8000
@@ -39,7 +39,7 @@ echo.
 echo URLs disponibles:
 echo   - Formulario:  http://localhost:8000/fablab-simple.html
 echo   - Admin:       http://localhost:8000/admin-visitas.html
-echo   - API:         http://127.0.0.1:5001/api/visitas
+echo   - API:         http://127.0.0.1:5000/api/visitas
 echo.
 echo Presiona CTRL+C para detener los servidores
 echo.

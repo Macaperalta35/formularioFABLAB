@@ -435,13 +435,16 @@
             const errorDiv = document.getElementById(`${fieldName}-error`);
             const error = validateField(fieldName, value);
 
-            if (error) {
-                field.classList.add('error');
-                errorDiv.textContent = error;
-                errorDiv.classList.remove('hidden');
-            } else {
-                field.classList.remove('error');
-                errorDiv.classList.add('hidden');
+            if (errorDiv) {
+                if (error) {
+                    field.classList.add('error');
+                    errorDiv.textContent = error;
+                    errorDiv.classList.remove('hidden');
+                } else {
+                    field.classList.remove('error');
+                    errorDiv.classList.add('hidden');
+                    errorDiv.textContent = '';
+                }
             }
 
             updateSubmitButton();
@@ -454,14 +457,14 @@
             const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
             const telefono = document.getElementById('telefono').value;
 
-            const isValid = nombre.trim() &&
-                           rut.trim() &&
-                           correo.trim() &&
-                           tipoVisita &&
-                           !document.getElementById('nombre-error').textContent &&
-                           !document.getElementById('rut-error').textContent &&
-                           !document.getElementById('correo-error').textContent &&
-                           !document.getElementById('telefono-error').textContent;
+            // Validamos los campos requeridos directamente
+            const fieldsValid = nombre.trim().length >= 2 &&
+                               validateRUT(rut) &&
+                               validateEmail(correo) &&
+                               tipoVisita !== null;
+            
+            // El botón se habilita si los campos obligatorios son válidos y el teléfono (si existe) también
+            const isValid = fieldsValid && validatePhone(telefono);
 
             submitBtn.disabled = !isValid;
         }
@@ -484,15 +487,52 @@
             });
         });
 
-        form.addEventListener('submit', function(e) {
+        // IMPORTANTE: el formulario se abre via QR (GitHub Pages), por lo que no debe usarse 127.0.0.1.
+        // Usa el mismo host donde está corriendo el backend (si el backend también está publicado en red).
+        // Si tu backend está en otra máquina/puerto, reemplaza esta constante por esa URL.
+        // BACKEND: usa la URL donde Flask está accesible desde el navegador (no 127.0.0.1).
+        // Por ejemplo: http://TU_IP:5001/api o una URL con dominio.
+        // Se utiliza el puerto 5000 para coincidir con la configuración del backend
+        const BASE_URL = 'http://127.0.0.1:5000/api';
+        // Si estás viendo el formulario por QR/GitHub Pages, debes cambiarlo por tu IP real del PC.
+        // Ejemplo: const BASE_URL = 'http://192.168.1.10:5001/api';
+        // Alternativa: const BASE_URL = 'http://TU_IP_O_DOMINIO:5001/api';
+
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Simular envío
+            // Bloquear mientras envía
             submitBtn.textContent = 'Registrando...';
             submitBtn.disabled = true;
 
-            setTimeout(() => {
-                // Actualizar contador
+            const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
+
+            const payload = {
+                nombre: document.getElementById('nombre').value.trim(),
+                rut: document.getElementById('rut').value.trim(),
+                correo: document.getElementById('correo').value.trim(),
+                tipoVisita: tipoVisita ? tipoVisita.value : '',
+                telefono: document.getElementById('telefono').value.trim(),
+                proposito: document.getElementById('proposito').value.trim()
+            };
+
+            try {
+                const response = await fetch(`${BASE_URL}/visitas`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    let errMsg = 'Error al guardar el registro.';
+                    try {
+                        const data = await response.json();
+                        errMsg = data?.error || data?.message || errMsg;
+                    } catch (_) {}
+                    throw new Error(errMsg);
+                }
+
+                // Actualizar contador (solo UI local)
                 visitCount++;
                 localStorage.setItem('fablab_visit_count', visitCount.toString());
 
@@ -521,8 +561,30 @@
                     document.querySelectorAll('.input').forEach(el => {
                         el.classList.remove('error');
                     });
+
+                    updateSubmitButton();
                 }, 5000);
-            }, 1000);
+            } catch (err) {
+                // Mostrar error mínimo usando el mismo contenedor de nombre-error (evitar HTML extra)
+                const msg = (err && err.message) ? err.message : 'No se pudo conectar con el servidor';
+                let banner = document.getElementById('submit-error-banner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'submit-error-banner';
+                    banner.className = 'error-text';
+                    banner.style.marginTop = '10px';
+                    banner.style.display = 'block';
+                    banner.style.color = '#ED1C24';
+                    banner.textContent = msg;
+                    form.prepend(banner);
+                } else {
+                    banner.textContent = msg;
+                }
+
+                // Volver a habilitar si el formulario está válido
+                updateSubmitButton();
+                submitBtn.textContent = 'Registrar Visita';
+            }
         });
 
         // Inicializar
