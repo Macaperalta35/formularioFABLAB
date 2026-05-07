@@ -28,8 +28,7 @@
         addResult('✅ Página de prueba cargada correctamente');
 
         // Test 2: Verificar conectividad con la API
-        fetch('http://127.0.0.1:5001/api/visitas', {
-            method: 'GET',
+        fetch('http://127.0.0.1:500
             headers: { 'Accept': 'application/json' }
         })
         .then(response => {
@@ -57,7 +56,7 @@
             proposito: 'Prueba desde móvil'
         };
 
-        fetch('http://127.0.0.1:5001/api/visitas', {
+        fetch('http://127.0.0.1:5000/api/visitas', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

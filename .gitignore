@@ -1,10 +1,20 @@
+# Python
 __pycache__/
-*.py[cod]
-*$py.class
-.venv
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
 venv/
-ENV/
-.env
-instance/
+env/
+
+# Database
 *.db
+*.sqlite3
+*.sqlite
+instance/
+
+# Logs
 *.log
+pip-debug.log

@@ -41,7 +41,7 @@ echo  Servidores iniciados correctamente!
 echo ========================================
 echo.
 echo URLs disponibles:
-echo   - Formulario: http://localhost:8000/fablab-simple.html
+echo   - Formulario: http://localhost:8000/index.html
 echo   - Admin:      http://localhost:8000/admin-visitas.html
 echo   - API:        http://127.0.0.1:5000/api/visitas
 echo.

@@ -294,7 +294,10 @@
 
     <script>
         // Usar window.location.hostname para compatibilidad en red local, y puerto 5000
-        const BASE_URL = `${window.location.protocol}//${window.location.hostname}:5000/api`;
+        let hostname = window.location.hostname;
+        if (hostname === 'localhost') hostname = '127.0.0.1';
+        
+        const BASE_URL = `${window.location.protocol}//${hostname}:5000/api`;
 
         async function cargarDatos() {
             const loadingContainer = document.getElementById('loading-container');
@@ -308,7 +311,12 @@
             messageContainer.innerHTML = '';
 
             try {
-                const response = await fetch(`${BASE_URL}/visitas`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                const response = await fetch(`${BASE_URL}/visitas`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
                 if (!response.ok) throw new Error('Error al obtener datos');
 
                 const visitas = await response.json();
