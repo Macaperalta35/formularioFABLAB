@@ -350,7 +350,8 @@
             const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
             
             if (window.location.hostname.includes('github.io')) {
-                return 'https://TU-BACKEND.onrender.com/api/visitas';
+                // URL del backend desplegado en Render (actualizar después del despliegue)
+                return 'https://fablab-backend.onrender.com/api/visitas';
             }
 
             // Detectar automáticamente el puerto disponible
@@ -374,6 +375,12 @@
 
         // Inicializar URL base
         (async () => {
+            // Verificar si se está abriendo desde file://
+            if (window.location.protocol === 'file:') {
+                alert('⚠️ Para que funcione correctamente, abre este formulario desde el servidor web:\n\nhttp://127.0.0.1:8000/index.html\n\nNo lo abras directamente desde el archivo.');
+                return;
+            }
+
             BASE_URL = await getBaseUrl();
         })();
 
