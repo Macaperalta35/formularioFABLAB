@@ -4,10 +4,10 @@ Sistema completo de registro de visitas para FAB LAB INACAP con formulario web i
 
 ## ✨ Características
 
-- **Formulario web responsivo** con validación en tiempo real
+- **Formulario web 100% compatible** con móviles, tablets y PCs
 - **Validación de campos**:
   - Nombre requerido (mínimo 2 caracteres)
-  - RUT con formato validado (XX.XXX.XXX-X)
+  - RUT con formato validado (XX.XXX.XXX-X o XX.XXX.XXX-K)
   - Correo electrónico válido
   - Teléfono opcional con formato flexible
   - Tipo de visita obligatorio (Estudiante, Docente, Externo, Empresa)
@@ -18,6 +18,7 @@ Sistema completo de registro de visitas para FAB LAB INACAP con formulario web i
 - **Exportación a Excel** con formato profesional
 - **Diseño corporativo** con colores y logo de INACAP
 - **Backend Flask** con API REST
+- **Compatibilidad total** con navegadores móviles modernos
 
 ## 🚀 Instalación y Configuración
 
@@ -45,9 +46,20 @@ cd "c:\Users\macas\OneDrive\Desktop\fablab formulario"
 python serve.py
 ```
 
-El formulario estará disponible en: `http://localhost:8000/fablab-simple.html`
+### 4. Acceder al formulario
 
-> Para accesos desde celular en la misma red local, ejecuta `configurar_celulares.bat` como administrador y luego usa `fablab-mobile-fix.html`.
+**Para máxima compatibilidad (recomendado):**
+- **PC/Tablet:** `http://localhost:8000/fablab-mobile.html`
+- **Móvil:** `http://192.168.100.7:8000/fablab-mobile.html` (desde la misma red)
+
+**Versión alternativa:**
+- **PC/Tablet:** `http://localhost:8000/fablab-simple.html`
+
+### 5. Panel administrativo
+
+Accede al panel de administración en: `http://localhost:8000/admin-visitas.html`
+
+> **Nota:** La versión `fablab-mobile.html` está optimizada para funcionar en todos los dispositivos móviles, tablets y PCs con máxima compatibilidad.
 
 ## 📱 Uso del Formulario
 
