@@ -75,7 +75,7 @@
             const [loading, setLoading] = useState(false);
             const [submissionError, setSubmissionError] = useState('');
 
-            const BASE_URL = 'http://127.0.0.1:5001/api';
+            const BASE_URL = `${window.location.protocol}//${window.location.hostname}:5001/api`;
 
             const formatRut = (rut) => {
                 const digits = rut.replace(/\D/g, '');

@@ -219,8 +219,8 @@ if __name__ == '__main__':
         print("✓ Base de datos FAB LAB creada")
     
     print("🚀 Servidor FAB LAB iniciando...")
-    print("📍 Escuchando en: http://127.0.0.1:5001")
+    print("📍 Escuchando en: http://0.0.0.0:5001 (accesible en la red local)")
     print("📍 CORS habilitado para todos los orígenes")
-    print("📊 Documentación: GET http://127.0.0.1:5001/")
+    print("📊 Documentación: GET http://<IP_DEL_SERVIDOR>:5001/")
     
-    app.run(host='127.0.0.1', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)
