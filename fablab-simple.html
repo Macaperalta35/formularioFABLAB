@@ -82,7 +82,7 @@
                 let hostname = window.location.hostname;
                 if (hostname === 'localhost') hostname = '127.0.0.1';
 
-                const protocol = window.location.protocol;
+                const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
                 const ports = [5000, 5001];
 
                 for (const port of ports) {
