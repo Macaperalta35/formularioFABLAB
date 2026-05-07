@@ -310,7 +310,8 @@
                 }
             }
 
-            return `${protocol}//${host}:5000/api`;
+            // Fallback conservador si no responde ningún puerto
+            return `${protocol}//${host}:5001/api`;
         }
 
         let BASE_URL = null;

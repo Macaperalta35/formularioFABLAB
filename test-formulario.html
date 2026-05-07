@@ -47,8 +47,8 @@
                 }
             }
             
-            console.log('Usando puerto por defecto: 5000');
-            return `http://${hostname}:5000/api/visitas`;
+            console.log('Usando puerto por defecto: 5001');
+            return `http://${hostname}:5001/api/visitas`;
         }
 
         // Test 2: Verificar conectividad con la API
@@ -93,30 +93,30 @@
                 if (response.ok) {
                     addResult('✅ POST a API funciona correctamente');
                     return response.json();
-            } else {
+                }
                 return response.json().then(err => {
                     throw new Error(err.message || 'Error en POST');
                 });
-            }
-        })
-        .then(data => {
-            addResult(`✅ Registro creado con ID: ${data.visita?.id || 'desconocido'}`);
-        })
-        .catch(error => {
-            addResult(`❌ Error en POST: ${error.message}`, false);
-        });
+            })
+            .then(data => {
+                addResult(`✅ Registro creado con ID: ${data.visita?.id || 'desconocido'}`);
+            })
+            .catch(error => {
+                addResult(`❌ Error en POST: ${error.message}`, false);
+            });
 
-        // Test 4: Verificar que el formulario móvil existe
-        fetch('http://localhost:8000/fablab-mobile.html')
-        .then(response => {
-            if (response.ok) {
-                addResult('✅ Formulario móvil está accesible');
-            } else {
-                addResult('❌ Formulario móvil no accesible', false);
-            }
-        })
-        .catch(error => {
-            addResult(`❌ Error accediendo al formulario: ${error.message}`, false);
+            // Test 4: Verificar que el formulario móvil existe
+            fetch('http://localhost:8000/fablab-mobile.html')
+            .then(response => {
+                if (response.ok) {
+                    addResult('✅ Formulario móvil está accesible');
+                } else {
+                    addResult('❌ Formulario móvil no accesible', false);
+                }
+            })
+            .catch(error => {
+                addResult(`❌ Error accediendo al formulario: ${error.message}`, false);
+            });
         });
 
         addResult('🔄 Pruebas completadas. Si todas son verdes, el sistema funciona correctamente.');
