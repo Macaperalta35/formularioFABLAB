@@ -257,7 +257,6 @@
         <div style="margin-bottom: 20px;">
             <div class="actions">
                 <button class="btn btn-primary" onclick="exportarExcel()">📥 Descargar Excel</button>
-                <button class="btn btn-secondary" onclick="exportarCSV()">📥 Descargar CSV</button>
                 <button class="btn btn-secondary" onclick="recargar()">🔄 Recargar</button>
             </div>
         </div>
@@ -294,7 +293,8 @@
     </div>
 
     <script>
-        const BASE_URL = 'http://127.0.0.1:5000/api';
+        // Usar window.location.hostname para compatibilidad en red local, y puerto 5000
+        const BASE_URL = `${window.location.protocol}//${window.location.hostname}:5000/api`;
 
         async function cargarDatos() {
             const loadingContainer = document.getElementById('loading-container');
@@ -362,10 +362,6 @@
 
         function exportarExcel() {
             window.location.href = `${BASE_URL}/visitas/export?format=excel`;
-        }
-
-        function exportarCSV() {
-            window.location.href = `${BASE_URL}/visitas/export?format=csv`;
         }
 
         function recargar() {

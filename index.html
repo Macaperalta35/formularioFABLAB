@@ -490,10 +490,8 @@
         // IMPORTANTE: el formulario se abre via QR (GitHub Pages), por lo que no debe usarse 127.0.0.1.
         // Usa el mismo host donde está corriendo el backend (si el backend también está publicado en red).
         // Si tu backend está en otra máquina/puerto, reemplaza esta constante por esa URL.
-        // BACKEND: usa la URL donde Flask está accesible desde el navegador (no 127.0.0.1).
-        // Por ejemplo: http://TU_IP:5001/api o una URL con dominio.
-        // Se utiliza el puerto 5000 para coincidir con la configuración del backend
-        const BASE_URL = 'http://127.0.0.1:5000/api';
+        // Se utiliza window.location.hostname para compatibilidad en red local, y puerto 5000
+        const BASE_URL = `${window.location.protocol}//${window.location.hostname}:5000/api`;
         // Si estás viendo el formulario por QR/GitHub Pages, debes cambiarlo por tu IP real del PC.
         // Ejemplo: const BASE_URL = 'http://192.168.1.10:5001/api';
         // Alternativa: const BASE_URL = 'http://TU_IP_O_DOMINIO:5001/api';

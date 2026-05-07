@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAB LAB INACAP - QR de acceso</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ED1C24;
+            --surface: #ffffff;
+            --background: #f8f1ef;
+            --text: #2b2b2b;
+            --muted: #555;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Montserrat', sans-serif; background: radial-gradient(circle at top, rgba(237,28,36,0.18), transparent 35%), var(--background); color: var(--text); }
+        .container { max-width: 580px; margin: 30px auto; padding: 20px; }
+        .card { background: var(--surface); border-radius: 24px; padding: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.08); border: 1px solid rgba(237,28,36,0.12); }
+        .logo { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; margin-bottom: 22px; }
+        .logo img { max-width: 120px; width: auto; height: auto; }
+        .logo-name { font-size: 24px; font-weight: 900; letter-spacing: 0.14em; }
+        .logo-subtitle { font-size: 14px; text-transform: uppercase; color: var(--primary); letter-spacing: 0.24em; font-weight: 900; }
+        .title { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 14px; }
+        .text { font-size: 15px; line-height: 1.7; color: var(--text); margin-bottom: 18px; }
+        .text strong { color: var(--primary); }
+        .qr-box { display: grid; place-items: center; padding: 20px; background: #fdf0f0; border-radius: 20px; margin-bottom: 18px; }
+        .qr-box canvas { width: 240px; height: 240px; }
+        .info { display: grid; gap: 10px; margin-top: 10px; }
+        .info-code { padding: 14px 16px; background: #fff; border-radius: 14px; border: 1px solid rgba(0,0,0,0.08); font-family: 'Courier New', monospace; word-break: break-all; }
+        .warning { color: #b22020; font-size: 14px; font-weight: 700; }
+        .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; text-decoration: none; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+                <img src="logo-inacap.svg" alt="INACAP logo">
+                <div class="logo-name">INACAP</div>
+                <div class="logo-subtitle">Fab Lab</div>
+            </div>
+            <h1 class="title">Acceso con QR desde el celular</h1>
+            <p class="text">Escanea el código con tu celular para abrir directamente el formulario de registro. Si el QR no carga, copia la dirección manualmente.</p>
+
+            <div class="qr-box">
+                <canvas id="qrCanvas"></canvas>
+            </div>
+
+            <div class="info">
+                <div class="text"><strong>URL de acceso:</strong></div>
+                <div id="accessUrl" class="info-code"></div>
+                <div id="feedback" class="warning"></div>
+            </div>
+
+            <a id="openLink" class="button" target="_blank" rel="noopener noreferrer">Abrir formulario</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" integrity="sha512-W7k9beZNbE/s4ix0uwLbduYtTSx9uhrLsY4Z1yNLhCt12BNxPl1pR8zfX+X6vu2pKqz0HpMQxMGZD0Xg2p3Nkg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        const hostname = window.location.hostname;
+        const port = window.location.port || 80;
+        const protocol = window.location.protocol;
+        const targetUrl = `${protocol}//${hostname}:${port}/fablab-simple.html`;
+        const accessUrlEl = document.getElementById('accessUrl');
+        const feedbackEl = document.getElementById('feedback');
+        const openLink = document.getElementById('openLink');
+
+        accessUrlEl.textContent = targetUrl;
+        openLink.href = targetUrl;
+
+        const qr = new QRious({
+            element: document.getElementById('qrCanvas'),
+            value: targetUrl,
+            size: 260,
+            level: 'H'
+        });
+
+        if (hostname === '127.0.0.1' || hostname === 'localhost') {
+            feedbackEl.textContent = 'Atención: si el QR no funciona, reemplaza localhost/127.0.0.1 por la IP de tu PC en la URL.';
+        }
+    </script>
+</body>
+</html>

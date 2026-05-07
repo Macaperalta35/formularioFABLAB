@@ -3,7 +3,6 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
-import csv
 import io
 
 # Crear aplicación Flask independiente para FAB LAB
@@ -114,92 +113,69 @@ def listar_visitas():
 
 @app.route('/api/visitas/export', methods=['GET'])
 def exportar_visitas():
-    """Exportar visitas en Excel o CSV"""
-    formato = request.args.get('format', 'csv').lower()
-    
+    """Exportar visitas en Excel"""
+    formato = request.args.get('format', 'excel').lower()
+
+    if formato != 'excel':
+        return jsonify({'error': 'Solo se admite exportación en formato Excel'}), 400
+
     try:
         visitas = Visita.query.order_by(Visita.created_at.desc()).all()
-        
-        if formato == 'excel':
-            try:
-                from openpyxl import Workbook
-                from openpyxl.styles import Font, PatternFill, Alignment
-                
-                wb = Workbook()
-                ws = wb.active
-                ws.title = "Visitas"
-                
-                # Encabezados
-                headers = ['ID', 'Nombre', 'RUT', 'Correo', 'Teléfono', 'Tipo de Visita', 'Propósito', 'Fecha de Registro']
-                ws.append(headers)
-                
-                # Formato encabezado
-                header_fill = PatternFill(start_color="ED1C24", end_color="ED1C24", fill_type="solid")
-                header_font = Font(bold=True, color="FFFFFF")
-                
-                for cell in ws[1]:
-                    cell.fill = header_fill
-                    cell.font = header_font
-                    cell.alignment = Alignment(horizontal="center", vertical="center")
-                
-                # Datos
-                for visita in visitas:
-                    ws.append([
-                        visita.id,
-                        visita.nombre,
-                        visita.rut,
-                        visita.correo,
-                        visita.telefono or '',
-                        visita.tipo_visita,
-                        visita.proposito or '',
-                        visita.created_at.strftime('%d/%m/%Y %H:%M')
-                    ])
-                
-                # Ajustar columnas
-                ws.column_dimensions['A'].width = 5
-                ws.column_dimensions['B'].width = 20
-                ws.column_dimensions['C'].width = 15
-                ws.column_dimensions['D'].width = 25
-                ws.column_dimensions['E'].width = 15
-                ws.column_dimensions['F'].width = 15
-                ws.column_dimensions['G'].width = 30
-                ws.column_dimensions['H'].width = 18
-                
-                output = io.BytesIO()
-                wb.save(output)
-                output.seek(0)
-                
-                response = make_response(output.getvalue())
-                response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                response.headers['Content-Disposition'] = 'attachment; filename=visitas_fablab.xlsx'
-                
-                return response
-            except ImportError:
-                formato = 'csv'  # Fallback a CSV
-        
-        if formato == 'csv':
-            output = io.StringIO()
-            writer = csv.writer(output)
-            writer.writerow(['ID', 'Nombre', 'RUT', 'Correo', 'Teléfono', 'Tipo de Visita', 'Propósito', 'Fecha de Registro'])
-            
-            for visita in visitas:
-                writer.writerow([
-                    visita.id,
-                    visita.nombre,
-                    visita.rut,
-                    visita.correo,
-                    visita.telefono or '',
-                    visita.tipo_visita,
-                    visita.proposito or '',
-                    visita.created_at.strftime('%d/%m/%Y %H:%M')
-                ])
-            
-            response = make_response(output.getvalue())
-            response.headers['Content-Type'] = 'text/csv; charset=utf-8'
-            response.headers['Content-Disposition'] = 'attachment; filename=visitas_fablab.csv'
-            
-            return response
-    
+
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Visitas"
+
+        # Encabezados
+        headers = ['ID', 'Nombre', 'RUT', 'Correo', 'Teléfono', 'Tipo de Visita', 'Propósito', 'Fecha de Registro']
+        ws.append(headers)
+
+        # Formato encabezado
+        header_fill = PatternFill(start_color="ED1C24", end_color="ED1C24", fill_type="solid")
+        header_font = Font(bold=True, color="FFFFFF")
+
+        for cell in ws[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        # Datos
+        for visita in visitas:
+            ws.append([
+                visita.id,
+                visita.nombre,
+                visita.rut,
+                visita.correo,
+                visita.telefono or '',
+                visita.tipo_visita,
+                visita.proposito or '',
+                visita.created_at.strftime('%d/%m/%Y %H:%M')
+            ])
+
+        # Ajustar columnas
+        ws.column_dimensions['A'].width = 5
+        ws.column_dimensions['B'].width = 20
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 25
+        ws.column_dimensions['E'].width = 15
+        ws.column_dimensions['F'].width = 15
+        ws.column_dimensions['G'].width = 30
+        ws.column_dimensions['H'].width = 18
+
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = 'attachment; filename=visitas_fablab.xlsx'
+
+        return response
+    except ImportError:
+        return jsonify({'error': 'openpyxl no está instalado. Instala dependencias con pip.'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -219,8 +195,8 @@ if __name__ == '__main__':
         print("✓ Base de datos FAB LAB creada")
     
     print("🚀 Servidor FAB LAB iniciando...")
-    print("📍 Escuchando en: http://127.0.0.1:5000")
+    print("📍 Escuchando en: http://0.0.0.0:5000 (accesible en la red local)")
     print("📍 CORS habilitado para todos los orígenes")
-    print("📊 Documentación: GET http://127.0.0.1:5000/")
+    print("📊 Documentación: GET http://<IP_DEL_SERVIDOR>:5000/")
     
     app.run(host='0.0.0.0', port=5000, debug=True)

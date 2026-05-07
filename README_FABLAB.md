@@ -4,10 +4,10 @@ Sistema completo de registro de visitas para FAB LAB INACAP con formulario web i
 
 ## ✨ Características
 
-- **Formulario web responsivo** con validación en tiempo real
+- **Formulario web 100% compatible** con móviles, tablets y PCs
 - **Validación de campos**:
   - Nombre requerido (mínimo 2 caracteres)
-  - RUT con formato validado (XX.XXX.XXX-X)
+  - RUT con formato validado (XX.XXX.XXX-X o XX.XXX.XXX-K)
   - Correo electrónico válido
   - Teléfono opcional con formato flexible
   - Tipo de visita obligatorio (Estudiante, Docente, Externo, Empresa)
@@ -15,16 +15,17 @@ Sistema completo de registro de visitas para FAB LAB INACAP con formulario web i
   
 - **Base de datos SQLite** para almacenar registros
 - **Panel administrativo** para visualizar y descargar datos
-- **Exportación a Excel y CSV** con formato profesional
+- **Exportación a Excel** con formato profesional
 - **Diseño corporativo** con colores y logo de INACAP
 - **Backend Flask** con API REST
+- **Compatibilidad total** con navegadores móviles modernos
 
 ## 🚀 Instalación y Configuración
 
 ### 1. Instalar dependencias
 
 ```bash
-cd "c:\Users\macas\OneDrive\Desktop\fablab formulario"
+cd "c:\Users\SSP_LAB\Desktop\formularioFABLAB"
 pip install -r requirements.txt
 ```
 
@@ -41,11 +42,34 @@ El servidor estará disponible en: `http://127.0.0.1:5000`
 En otra terminal, ejecuta:
 
 ```bash
-cd "c:\Users\macas\OneDrive\Desktop\fablab formulario"
+cd "c:\Users\SSP_LAB\Desktop\formularioFABLAB"
 python serve.py
 ```
 
-El formulario estará disponible en: `http://localhost:8000/fablab-simple.html`
+### 4. Acceder al formulario
+
+**Para máxima compatibilidad (recomendado):**
+- **PC/Tablet:** `http://localhost:8000/index.html`
+- **Móvil:** `http://<TU_IP_LOCAL>:8000/index.html` (desde la misma red)
+
+**Versión alternativa:**
+- **PC/Tablet:** `http://localhost:8000/fablab-simple.html`
+
+### 5. Solución de problemas comunes
+
+**Problema: "No puedo apretar el botón Registrar Visita en móviles"**
+- ✅ **Solucionado**: El formulario `index.html` ahora usa validación directa de datos.
+- ✅ **Campo teléfono ahora opcional** (antes se validaba como requerido)
+- ✅ **Botón se habilita automáticamente** cuando todos los campos requeridos están completos
+- ✅ **Validación de RUT más flexible** para ingreso desde móviles
+- ✅ **Feedback visual claro** sobre el estado del formulario
+
+**Problema: "El formulario no funciona en celulares"**
+- ✅ **Solucionado**: Eliminada dependencia de React/Babel
+- ✅ **JavaScript vanilla puro (index.html)** compatible con todos los navegadores móviles
+- ✅ **Detección automática de red** (localhost vs IP de red local)
+
+> **Nota:** La versión `index.html` está optimizada para funcionar en todos los dispositivos móviles, tablets y PCs con máxima compatibilidad.
 
 ## 📱 Uso del Formulario
 
@@ -62,8 +86,7 @@ Para visualizar y exportar todos los registros:
 1. Abre [http://localhost:8000/admin-visitas.html](http://localhost:8000/admin-visitas.html)
 2. Verás un resumen de estadísticas (total de visitas, visitas por tipo)
 3. **Descargar Excel**: Descarga un archivo .xlsx con formato profesional
-4. **Descargar CSV**: Descarga un archivo .csv compatible con Excel
-5. **Recargar**: Actualiza la tabla con nuevos registros
+4. **Recargar**: Actualiza la tabla con nuevos registros
 
 ## 🔌 Endpoints de API
 
@@ -90,11 +113,6 @@ GET /api/visitas
 ### Descargar Excel
 ```
 GET /api/visitas/export?format=excel
-```
-
-### Descargar CSV
-```
-GET /api/visitas/export?format=csv
 ```
 
 ## 📁 Estructura de archivos

@@ -4,7 +4,7 @@
 
 ### Terminal 1 - Servidor Backend
 ```bash
-cd c:\Users\macas\OneDrive\Desktop\carbon_y_cheddar_api\backend
+cd c:\Users\SSP_LAB\Desktop\formularioFABLAB
 pip install -r requirements.txt
 pip install openpyxl
 python app.py
@@ -13,7 +13,7 @@ python app.py
 
 ### Terminal 2 - Servidor de Formulario
 ```bash
-cd c:\Users\macas\Downloads
+cd c:\Users\SSP_LAB\Desktop\formularioFABLAB
 python serve.py
 ```
 ✅ Deberías ver: `Sirviendo en http://localhost:8000`
