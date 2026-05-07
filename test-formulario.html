@@ -106,10 +106,14 @@
             });
 
             // Test 4: Verificar que el formulario móvil existe
-            fetch('http://localhost:8000/fablab-mobile.html')
+            const frontendHost = window.location.hostname || 'localhost';
+            const frontendPort = window.location.port || '8000';
+            const frontendUrl = `http://${frontendHost}:${frontendPort}/fablab-mobile.html`;
+
+            fetch(frontendUrl)
             .then(response => {
                 if (response.ok) {
-                    addResult('✅ Formulario móvil está accesible');
+                    addResult(`✅ Formulario móvil está accesible en ${frontendUrl}`);
                 } else {
                     addResult('❌ Formulario móvil no accesible', false);
                 }
@@ -120,7 +124,6 @@
         });
 
         addResult('🔄 Pruebas completadas. Si todas son verdes, el sistema funciona correctamente.');
-        addResult('📱 Ahora prueba el formulario desde tu celular usando: http://192.168.100.7:8000/fablab-mobile.html');
     </script>
 </body>
 </html>
