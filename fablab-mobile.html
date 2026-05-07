@@ -489,35 +489,45 @@
                 errorMessage.style.display = 'none';
 
                 try {
-                    // Detectar si estamos en localhost o IP
+                    // Detectar automáticamente el puerto del backend
                     let hostname = window.location.hostname;
                     if (hostname === 'localhost') hostname = '127.0.0.1';
-                    let apiUrl = `${window.location.protocol}//${hostname}:5000/api/visitas`;
+                    const protocol = window.location.protocol;
+                    const ports = [5000, 5001];
+                    let apiUrl = null;
+
+                    // Probar puertos disponibles
+                    for (const port of ports) {
+                        const candidate = `${protocol}//${hostname}:${port}/api/visitas`;
+                        try {
+                            console.log('Probando puerto:', port);
+                            const testResponse = await fetch(candidate.replace('/api/visitas', '/api/visitas'), { method: 'GET' });
+                            if (testResponse.ok) {
+                                apiUrl = candidate;
+                                console.log('API encontrado en puerto:', port);
+                                break;
+                            }
+                        } catch (err) {
+                            console.log('Puerto', port, 'no disponible');
+                        }
+                    }
+
+                    if (!apiUrl) {
+                        apiUrl = `${protocol}//${hostname}:5000/api/visitas`;
+                        console.log('Usando puerto por defecto:', apiUrl);
+                    }
 
                     console.log('Enviando a:', apiUrl);
                     console.log('Datos:', data);
 
-                    let response;
-                    try {
-                        response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify(data)
-                        });
-                    } catch (error) {
-                        apiUrl = apiUrl.replace(':5000', ':5001');
-                        console.log('Reintentando en:', apiUrl);
-                        response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify(data)
-                        });
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
                     }
 
                     const result = await response.json();

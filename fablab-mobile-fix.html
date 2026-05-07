@@ -226,7 +226,7 @@
 
         let host = window.location.hostname;
         if (host === 'localhost') host = '127.0.0.1';
-        let apiBase = `${window.location.protocol}//${host}:5000/api`;
+        let apiBase = null; // Se inicializará automáticamente
         const frontendUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port}${window.location.pathname}`;
         const form = document.getElementById('registroForm');
 
@@ -235,13 +235,18 @@
             for (const port of ports) {
                 const candidate = `${window.location.protocol}//${host}:${port}/api`;
                 try {
+                    console.log('Probando puerto:', port);
                     const response = await fetch(`${candidate}/visitas`, { method: 'GET' });
-                    if (response.ok) return candidate;
+                    if (response.ok) {
+                        console.log('API encontrado en puerto:', port);
+                        return candidate;
+                    }
                 } catch (err) {
-                    // Intentar siguiente puerto
+                    console.log('Puerto', port, 'no disponible');
                 }
             }
-            return apiBase;
+            console.log('Usando puerto por defecto: 5000');
+            return `${window.location.protocol}//${host}:5000/api`;
         }
 
         async function ensureApiBase() {

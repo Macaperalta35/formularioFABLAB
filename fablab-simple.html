@@ -75,6 +75,7 @@
             const [loading, setLoading] = useState(false);
             const [submissionError, setSubmissionError] = useState('');
             const [apiBase, setApiBase] = useState('');
+            const [apiLoading, setApiLoading] = useState(true);
 
             // Función para detectar automáticamente el puerto del backend
             const detectApiBase = async () => {
@@ -87,21 +88,42 @@
                 for (const port of ports) {
                     const candidate = `${protocol}//${hostname}:${port}/api`;
                     try {
-                        const response = await fetch(`${candidate}/visitas`, { method: 'GET' });
+                        console.log('Probando puerto:', port, candidate);
+                        const response = await fetch(`${candidate}/visitas`, { 
+                            method: 'GET',
+                            mode: 'cors',
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
                         if (response.ok) {
+                            console.log('API encontrado en puerto:', port);
                             return candidate;
                         }
                     } catch (err) {
+                        console.log('Puerto', port, 'no disponible:', err.message);
                         // Intentar siguiente puerto
                     }
                 }
 
+                console.log('Usando puerto por defecto: 5000');
                 return `${protocol}//${hostname}:5000/api`;
             };
 
             // Inicializar API base al montar el componente
             useEffect(() => {
-                detectApiBase().then(setApiBase);
+                const initApi = async () => {
+                    try {
+                        const base = await detectApiBase();
+                        setApiBase(base);
+                    } catch (error) {
+                        console.error('Error detectando API:', error);
+                        setSubmissionError('No se pudo conectar al servidor. Verifica que esté ejecutándose.');
+                    } finally {
+                        setApiLoading(false);
+                    }
+                };
+                initApi();
             }, []);
 
             const formatRut = (rut) => {
@@ -169,7 +191,7 @@
                 if (Object.values(validationErrors).some(Boolean)) return;
 
                 if (!apiBase) {
-                    setSubmissionError('Conectando con el servidor...');
+                    setSubmissionError('Esperando conexión con el servidor...');
                     return;
                 }
 
@@ -177,20 +199,25 @@
                 setSubmissionError('');
 
                 try {
+                    console.log('Enviando datos a:', `${apiBase}/visitas`);
                     const response = await fetch(`${apiBase}/visitas`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
                         body: JSON.stringify(formData)
                     });
 
                     if (!response.ok) {
                         const errorData = await response.json().catch(() => ({ message: 'Error al enviar datos' }));
-                        throw new Error(errorData.message || 'Error de servidor');
+                        throw new Error(errorData.message || `Error del servidor (${response.status})`);
                     }
 
                     setSubmitted(true);
                 } catch (error) {
-                    setSubmissionError(error.message || 'Error al conectar con el servidor');
+                    console.error('Error al enviar formulario:', error);
+                    setSubmissionError(error.message || 'Error al conectar con el servidor. Verifica que el backend esté ejecutándose.');
                 } finally {
                     setLoading(false);
                 }
@@ -322,9 +349,9 @@
                             <button
                                 type="submit"
                                 className="submit-btn"
-                                disabled={!isFormValid() || loading || !apiBase}
+                                disabled={!isFormValid() || loading || apiLoading || !apiBase}
                             >
-                                {loading ? 'Registrando...' : !apiBase ? 'Conectando...' : 'Registrar Visita'}
+                                {loading ? 'Registrando...' : apiLoading ? 'Conectando...' : !apiBase ? 'Esperando servidor...' : 'Registrar Visita'}
                             </button>
                         </form>
                     </div>

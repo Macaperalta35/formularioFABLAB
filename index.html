@@ -342,20 +342,46 @@
         let visitCount = parseInt(localStorage.getItem('fablab_visit_count') || '0');
 
         // --- LÓGICA DE CONEXIÓN UNIFICADA ---
-        function getBaseUrl() {
+        async function getBaseUrl() {
             let host = window.location.hostname;
             // En Windows, 'localhost' es más lento que '127.0.0.1'
             if (host === 'localhost' || !host) host = '127.0.0.1';
             
             const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
-            return window.location.hostname.includes('github.io')
-                ? 'https://TU-BACKEND.onrender.com/api/visitas'
-                : `${protocol}//${host}:5000/api/visitas`;
+            
+            if (window.location.hostname.includes('github.io')) {
+                return 'https://TU-BACKEND.onrender.com/api/visitas';
+            }
+
+            // Detectar automáticamente el puerto disponible
+            const ports = [5000, 5001];
+            for (const port of ports) {
+                const candidate = `${protocol}//${host}:${port}/api/visitas`;
+                try {
+                    const response = await fetch(candidate.replace('/api/visitas', '/api/visitas'), { method: 'GET' });
+                    if (response.ok) {
+                        return candidate;
+                    }
+                } catch (err) {
+                    // Intentar siguiente puerto
+                }
+            }
+
+            return `${protocol}//${host}:5000/api/visitas`;
         }
         
-        let BASE_URL = getBaseUrl();
+        let BASE_URL = null;
+
+        // Inicializar URL base
+        (async () => {
+            BASE_URL = await getBaseUrl();
+        })();
 
         async function postRegistro(payload, signal) {
+            if (!BASE_URL) {
+                BASE_URL = await getBaseUrl();
+            }
+            
             try {
                 return await fetch(BASE_URL, {
                     method: 'POST',
@@ -364,9 +390,18 @@
                     signal
                 });
             } catch (error) {
+                // Si falla, intentar con el otro puerto
                 if (BASE_URL.includes(':5000')) {
-                    BASE_URL = BASE_URL.replace(':5000', ':5001');
-                    return await fetch(BASE_URL, {
+                    const altUrl = BASE_URL.replace(':5000', ':5001');
+                    return await fetch(altUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                        signal
+                    });
+                } else if (BASE_URL.includes(':5001')) {
+                    const altUrl = BASE_URL.replace(':5001', ':5000');
+                    return await fetch(altUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload),

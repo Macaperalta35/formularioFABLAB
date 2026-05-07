@@ -27,47 +27,72 @@
         // Test 1: Verificar que la página carga
         addResult('✅ Página de prueba cargada correctamente');
 
-        // Test 2: Verificar conectividad con la API
-        fetch('http://127.0.0.1:5000/api/visitas', {
-            headers: { 'Accept': 'application/json' }
-        })
-        .then(response => {
-            if (response.ok) {
-                addResult('✅ API backend responde correctamente');
-                return response.json();
-            } else {
-                throw new Error('API no responde');
+        // Función para detectar automáticamente el puerto del backend
+        async function detectApiUrl() {
+            const hostname = '127.0.0.1';
+            const ports = [5000, 5001];
+            
+            for (const port of ports) {
+                const candidate = `http://${hostname}:${port}/api/visitas`;
+                try {
+                    const response = await fetch(candidate, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (response.ok) {
+                        console.log('API encontrado en puerto:', port);
+                        return candidate;
+                    }
+                } catch (err) {
+                    console.log('Puerto', port, 'no disponible');
+                }
             }
-        })
-        .then(data => {
-            addResult(`✅ API retorna ${Array.isArray(data) ? data.length : 'datos'} registros`);
-        })
-        .catch(error => {
-            addResult(`❌ Error conectando con API: ${error.message}`, false);
-        });
+            
+            console.log('Usando puerto por defecto: 5000');
+            return `http://${hostname}:5000/api/visitas`;
+        }
 
-        // Test 3: Verificar que podemos hacer POST a la API
-        const testData = {
-            nombre: 'Test Móvil',
-            rut: '11.111.111-1',
-            correo: 'test@movil.com',
-            tipoVisita: 'estudiante',
-            telefono: '+56987654321',
-            proposito: 'Prueba desde móvil'
-        };
+        // Test 2: Verificar conectividad con la API
+        detectApiUrl().then(apiUrl => {
+            fetch(apiUrl, {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(response => {
+                if (response.ok) {
+                    addResult('✅ API backend responde correctamente');
+                    return response.json();
+                } else {
+                    throw new Error('API no responde');
+                }
+            })
+            .then(data => {
+                addResult(`✅ API retorna ${Array.isArray(data) ? data.length : 'datos'} registros`);
+            })
+            .catch(error => {
+                addResult(`❌ Error conectando con API: ${error.message}`, false);
+            });
 
-        fetch('http://127.0.0.1:5000/api/visitas', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(testData)
-        })
-        .then(response => {
-            if (response.ok) {
-                addResult('✅ POST a API funciona correctamente');
-                return response.json();
+            // Test 3: Verificar que podemos hacer POST a la API
+            const testData = {
+                nombre: 'Test Móvil',
+                rut: '11.111.111-1',
+                correo: 'test@movil.com',
+                tipoVisita: 'estudiante',
+                telefono: '+56987654321',
+                proposito: 'Prueba desde móvil'
+            };
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(testData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    addResult('✅ POST a API funciona correctamente');
+                    return response.json();
             } else {
                 return response.json().then(err => {
                     throw new Error(err.message || 'Error en POST');
