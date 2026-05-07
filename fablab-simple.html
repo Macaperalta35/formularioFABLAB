@@ -74,12 +74,35 @@
             const [submitted, setSubmitted] = useState(false);
             const [loading, setLoading] = useState(false);
             const [submissionError, setSubmissionError] = useState('');
+            const [apiBase, setApiBase] = useState('');
 
-            // Usar window.location.hostname para compatibilidad en red local, y puerto 5000
-            let hostname = window.location.hostname;
-            if (hostname === 'localhost') hostname = '127.0.0.1';
+            // Función para detectar automáticamente el puerto del backend
+            const detectApiBase = async () => {
+                let hostname = window.location.hostname;
+                if (hostname === 'localhost') hostname = '127.0.0.1';
 
-            const BASE_URL = `${window.location.protocol}//${hostname}:5000/api`;
+                const protocol = window.location.protocol;
+                const ports = [5000, 5001];
+
+                for (const port of ports) {
+                    const candidate = `${protocol}//${hostname}:${port}/api`;
+                    try {
+                        const response = await fetch(`${candidate}/visitas`, { method: 'GET' });
+                        if (response.ok) {
+                            return candidate;
+                        }
+                    } catch (err) {
+                        // Intentar siguiente puerto
+                    }
+                }
+
+                return `${protocol}//${hostname}:5000/api`;
+            };
+
+            // Inicializar API base al montar el componente
+            useEffect(() => {
+                detectApiBase().then(setApiBase);
+            }, []);
 
             const formatRut = (rut) => {
                 const cleaned = rut.replace(/[^\dkK]/gi, '').replace(/\s/g, '');
@@ -89,6 +112,7 @@
                 const body = cleaned.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
                 return `${body}-${dv}`;
             };
+
 
             const validateField = (name, value) => {
                 let error = '';
@@ -144,11 +168,16 @@
                 setErrors(validationErrors);
                 if (Object.values(validationErrors).some(Boolean)) return;
 
+                if (!apiBase) {
+                    setSubmissionError('Conectando con el servidor...');
+                    return;
+                }
+
                 setLoading(true);
                 setSubmissionError('');
 
                 try {
-                    const response = await fetch(`${BASE_URL}/visitas`, {
+                    const response = await fetch(`${apiBase}/visitas`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(formData)
@@ -293,9 +322,9 @@
                             <button
                                 type="submit"
                                 className="submit-btn"
-                                disabled={!isFormValid() || loading}
+                                disabled={!isFormValid() || loading || !apiBase}
                             >
-                                {loading ? 'Registrando...' : 'Registrar Visita'}
+                                {loading ? 'Registrando...' : !apiBase ? 'Conectando...' : 'Registrar Visita'}
                             </button>
                         </form>
                     </div>
