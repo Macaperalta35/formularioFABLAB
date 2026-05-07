@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FAB LAB Móvil - Registro</title>
     <style>
         :root {
@@ -246,8 +246,8 @@
                     console.log('Puerto', port, 'no disponible');
                 }
             }
-            console.log('Usando puerto por defecto: 5000');
-            return `${protocol}//${host}:5000/api`;
+            console.log('Usando puerto por defecto: 5001');
+            return `${protocol}//${host}:5001/api`;
         }
 
         async function ensureApiBase() {

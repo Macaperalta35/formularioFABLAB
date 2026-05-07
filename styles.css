@@ -265,3 +265,19 @@ body {
         font-size: 28px;
     }
 }
+
+@media (max-width: 420px) {
+    .form-card {
+        padding: 22px 16px;
+    }
+    .title {
+        font-size: 24px;
+    }
+    .submit-btn {
+        padding: 16px 20px;
+        font-size: 15px;
+    }
+    .radio-group {
+        gap: 10px;
+    }
+}
