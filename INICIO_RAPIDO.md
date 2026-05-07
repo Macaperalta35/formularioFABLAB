@@ -7,7 +7,7 @@
 cd c:\Users\SSP_LAB\Desktop\formularioFABLAB
 pip install -r requirements.txt
 pip install openpyxl
-python app.py
+python fablab_app.py
 ```
 ✅ Deberías ver: `Running on http://127.0.0.1:5000`
 

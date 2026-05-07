@@ -124,12 +124,11 @@ fablab-formulario/
 ├── serve.py                 # Servidor HTTP local
 └── README.md               # Este archivo
 
-backend/
-├── app.py                  # Aplicación Flask principal
+├── fablab_app.py           # Aplicación Flask principal
 ├── models.py               # Modelos de base de datos
 ├── requirements.txt        # Dependencias Python
-└── routes/
-    └── visitas.py         # API de visitas
+├── routes/
+│   └── visitas.py          # API de visitas
 ```
 
 ## 🗄️ Base de Datos

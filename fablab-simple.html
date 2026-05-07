@@ -76,7 +76,10 @@
             const [submissionError, setSubmissionError] = useState('');
 
             // Usar window.location.hostname para compatibilidad en red local, y puerto 5000
-            const BASE_URL = `${window.location.protocol}//${window.location.hostname}:5000/api`;
+            let hostname = window.location.hostname;
+            if (hostname === 'localhost') hostname = '127.0.0.1';
+
+            const BASE_URL = `${window.location.protocol}//${hostname}:5000/api`;
 
             const formatRut = (rut) => {
                 const cleaned = rut.replace(/[^\dkK]/gi, '').replace(/\s/g, '');

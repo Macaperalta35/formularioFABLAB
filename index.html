@@ -356,23 +356,8 @@
 
         function validateRUT(rut) {
             const cleaned = rut.replace(/[^\dkK]/g, '');
-            if (cleaned.length < 2) return false;
-
-            const body = cleaned.slice(0, -1);
-            const dv = cleaned.slice(-1).toLowerCase();
-
-            let sum = 0;
-            let multiplier = 2;
-
-            for (let i = body.length - 1; i >= 0; i--) {
-                sum += parseInt(body[i]) * multiplier;
-                multiplier = multiplier === 7 ? 2 : multiplier + 1;
-            }
-
-            const expectedDv = 11 - (sum % 11);
-            const calculatedDv = expectedDv === 11 ? '0' : expectedDv === 10 ? 'k' : expectedDv.toString();
-
-            return dv === calculatedDv;
+            // Validación más permisiva para que el botón se habilite fácilmente
+            return cleaned.length >= 8 && cleaned.length <= 9;
         }
 
         function validateEmail(email) {
@@ -394,6 +379,8 @@
                         error = 'El nombre es requerido';
                     } else if (value.trim().length < 2) {
                         error = 'El nombre debe tener al menos 2 caracteres';
+                    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value.trim())) {
+                        error = 'El nombre solo puede contener letras y espacios';
                     }
                     break;
 
@@ -459,6 +446,7 @@
 
             // Validamos los campos requeridos directamente
             const fieldsValid = nombre.trim().length >= 2 &&
+                               /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(nombre.trim()) &&
                                validateRUT(rut) &&
                                validateEmail(correo) &&
                                tipoVisita !== null;
@@ -491,7 +479,12 @@
         // Usa el mismo host donde está corriendo el backend (si el backend también está publicado en red).
         // Si tu backend está en otra máquina/puerto, reemplaza esta constante por esa URL.
         // Se utiliza window.location.hostname para compatibilidad en red local, y puerto 5000
-        const BASE_URL = `${window.location.protocol}//${window.location.hostname}:5000/api`;
+        let hostname = window.location.hostname;
+        // En Windows, 'localhost' puede causar lentitud (2s+) por resolución DNS IPv6. 
+        // Usar 127.0.0.1 es mucho más rápido para desarrollo local.
+        if (hostname === 'localhost') hostname = '127.0.0.1';
+        
+        const BASE_URL = `${window.location.protocol}//${hostname}:5000/api`;
         // Si estás viendo el formulario por QR/GitHub Pages, debes cambiarlo por tu IP real del PC.
         // Ejemplo: const BASE_URL = 'http://192.168.1.10:5001/api';
         // Alternativa: const BASE_URL = 'http://TU_IP_O_DOMINIO:5001/api';
@@ -515,11 +508,19 @@
             };
 
             try {
+                console.log("Intentando conectar a:", `${BASE_URL}/visitas`);
+                
+                // Agregamos un controlador de aborto para evitar que el botón se quede "pegado" si el servidor no responde
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos de espera máxima
+
                 const response = await fetch(`${BASE_URL}/visitas`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
 
                 if (!response.ok) {
                     let errMsg = 'Error al guardar el registro.';

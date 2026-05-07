@@ -25,17 +25,16 @@ echo.
 
 REM Terminal 1: Flask Backend
 echo [1/2] Iniciando Flask Backend en http://127.0.0.1:5000
-cd /d "c:\Users\macas\OneDrive\Desktop\carbon_y_cheddar_api\backend"
-start "FAB LAB Backend - Flask" cmd /k "python app.py"
+cd /d "%~dp0"
+start "FAB LAB Backend - Flask" cmd /k "python fablab_app.py"
 
 REM Esperar un momento para que Flask se inicie
 timeout /t 3 /nobreak
 
 REM Terminal 2: Servidor HTTP
 echo [2/2] Iniciando Servidor HTTP en http://localhost:8000
-cd /d "c:\Users\macas\Downloads"
+cd /d "%~dp0"
 start "FAB LAB Frontend - HTTP Server" cmd /k "python serve.py"
-
 echo.
 echo ========================================
 echo  Servidores iniciados correctamente!

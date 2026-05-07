@@ -490,7 +490,8 @@
 
                 try {
                     // Detectar si estamos en localhost o IP
-                    const hostname = window.location.hostname;
+                    let hostname = window.location.hostname;
+                    if (hostname === 'localhost') hostname = '127.0.0.1';
                     const apiUrl = `${window.location.protocol}//${hostname}:5000/api/visitas`;
 
                     console.log('Enviando a:', apiUrl);
