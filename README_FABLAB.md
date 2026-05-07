@@ -55,9 +55,19 @@ python serve.py
 **Versión alternativa:**
 - **PC/Tablet:** `http://localhost:8000/fablab-simple.html`
 
-### 5. Panel administrativo
+### 5. Solución de problemas comunes
 
-Accede al panel de administración en: `http://localhost:8000/admin-visitas.html`
+**Problema: "No puedo apretar el botón Registrar Visita en móviles"**
+- ✅ **Solucionado**: El formulario `fablab-mobile.html` ahora tiene validación mejorada
+- ✅ **Campo teléfono ahora opcional** (antes se validaba como requerido)
+- ✅ **Botón se habilita automáticamente** cuando todos los campos requeridos están completos
+- ✅ **Validación de RUT más flexible** para ingreso desde móviles
+- ✅ **Feedback visual claro** sobre el estado del formulario
+
+**Problema: "El formulario no funciona en celulares"**
+- ✅ **Solucionado**: Eliminada dependencia de React/Babel
+- ✅ **JavaScript vanilla puro** compatible con todos los navegadores móviles
+- ✅ **Detección automática de red** (localhost vs IP de red local)
 
 > **Nota:** La versión `fablab-mobile.html` está optimizada para funcionar en todos los dispositivos móviles, tablets y PCs con máxima compatibilidad.
 

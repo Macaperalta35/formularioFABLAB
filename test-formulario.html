@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Formulario Móvil</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>Prueba del Formulario Móvil FAB LAB</h1>
+
+    <div id="results"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+
+        // Test 1: Verificar que la página carga
+        addResult('✅ Página de prueba cargada correctamente');
+
+        // Test 2: Verificar conectividad con la API
+        fetch('http://127.0.0.1:5001/api/visitas', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(response => {
+            if (response.ok) {
+                addResult('✅ API backend responde correctamente');
+                return response.json();
+            } else {
+                throw new Error('API no responde');
+            }
+        })
+        .then(data => {
+            addResult(`✅ API retorna ${Array.isArray(data) ? data.length : 'datos'} registros`);
+        })
+        .catch(error => {
+            addResult(`❌ Error conectando con API: ${error.message}`, false);
+        });
+
+        // Test 3: Verificar que podemos hacer POST a la API
+        const testData = {
+            nombre: 'Test Móvil',
+            rut: '11.111.111-1',
+            correo: 'test@movil.com',
+            tipoVisita: 'estudiante',
+            telefono: '+56987654321',
+            proposito: 'Prueba desde móvil'
+        };
+
+        fetch('http://127.0.0.1:5001/api/visitas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(testData)
+        })
+        .then(response => {
+            if (response.ok) {
+                addResult('✅ POST a API funciona correctamente');
+                return response.json();
+            } else {
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Error en POST');
+                });
+            }
+        })
+        .then(data => {
+            addResult(`✅ Registro creado con ID: ${data.visita?.id || 'desconocido'}`);
+        })
+        .catch(error => {
+            addResult(`❌ Error en POST: ${error.message}`, false);
+        });
+
+        // Test 4: Verificar que el formulario móvil existe
+        fetch('http://localhost:8000/fablab-mobile.html')
+        .then(response => {
+            if (response.ok) {
+                addResult('✅ Formulario móvil está accesible');
+            } else {
+                addResult('❌ Formulario móvil no accesible', false);
+            }
+        })
+        .catch(error => {
+            addResult(`❌ Error accediendo al formulario: ${error.message}`, false);
+        });
+
+        addResult('🔄 Pruebas completadas. Si todas son verdes, el sistema funciona correctamente.');
+        addResult('📱 Ahora prueba el formulario desde tu celular usando: http://192.168.100.7:8000/fablab-mobile.html');
+    </script>
+</body>
+</html>
