@@ -131,6 +131,9 @@
             transform: translateY(-1px);
             box-shadow: 0 14px 28px rgba(237,28,36,0.22);
         }
+        .button.disabled {
+            opacity: 0.6;
+        }
         .message {
             margin-top: 16px;
             padding: 14px 16px;
@@ -201,7 +204,7 @@
                 <textarea id="proposito" name="proposito" class="form-control" rows="4" placeholder="Ej: Corte láser, impresión 3D..."></textarea>
             </div>
 
-            <button id="submit-btn" class="button" type="button" disabled>Enviar registro</button>
+            <button id="submit-btn" class="button" type="button">Enviar registro</button>
 
             <div id="message" class="message"></div>
 
@@ -235,19 +238,8 @@
         }
 
         function validateRUT(rut) {
-            const cleaned = rut.replace(/[^\dkK]/gi, '').replace(/\s/g, '');
-            if (cleaned.length < 2) return false;
-            const body = cleaned.slice(0, -1);
-            const dv = cleaned.slice(-1).toLowerCase();
-            let sum = 0;
-            let multiplier = 2;
-            for (let i = body.length - 1; i >= 0; i--) {
-                sum += parseInt(body[i], 10) * multiplier;
-                multiplier = multiplier === 7 ? 2 : multiplier + 1;
-            }
-            const expected = 11 - (sum % 11);
-            const calc = expected === 11 ? '0' : expected === 10 ? 'k' : expected.toString();
-            return dv === calc;
+            const cleaned = rut.replace(/[^0-9kK]/gi, '').trim();
+            return /^[0-9]{7,8}[0-9kK]$/.test(cleaned);
         }
 
         function validateEmail(email) {
@@ -268,7 +260,7 @@
             const telefono = document.getElementById('telefono').value.trim();
 
             const valid = nombre.length >= 2 && validateRUT(rut) && validateEmail(correo) && tipoVisita && validatePhone(telefono);
-            submitBtn.disabled = !valid;
+            submitBtn.classList.toggle('disabled', !valid);
             return valid;
         }
 
@@ -347,11 +339,9 @@
         async function checkApi() {
             try {
                 const response = await fetch(`${apiBase}/`);
-                if (!response.ok) throw new Error('Servidor API no disponible');
-                const data = await response.json();
-                if (!data || !data.api) throw new Error('Respuesta inválida del servidor');
+                if (!response.ok) throw new Error("Servidor API no disponible");
             } catch (err) {
-                showMessage('No se puede conectar al servidor API. Verifica que Flask esté activo y que los puertos 8000/5001 estén permitidos.');
+                showMessage("No se puede conectar al servidor API. Verifica que Flask esté activo y que los puertos 8000/5001 estén permitidos.");
             }
         }
 
@@ -359,3 +349,4 @@
     </script>
 </body>
 </html>
+
