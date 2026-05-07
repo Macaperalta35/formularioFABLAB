@@ -339,10 +339,24 @@
         const visitCountSpan = document.getElementById('visit-count');
         const currentTimeSpan = document.getElementById('current-time');
 
-        // Estado del formulario
         let visitCount = parseInt(localStorage.getItem('fablab_visit_count') || '0');
 
-        // Funciones de validación
+        // --- LÓGICA DE CONEXIÓN UNIFICADA ---
+        function getBaseUrl() {
+            let host = window.location.hostname;
+            // En Windows, 'localhost' es más lento que '127.0.0.1'
+            if (host === 'localhost' || !host) host = '127.0.0.1';
+            
+            const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
+            const localUrl = `${protocol}//${host}:5000/api/visitas`;
+            
+            // Si estás en GitHub Pages y tienes un backend real, cámbialo aquí. 
+            // De lo contrario, intentará conectar a tu IP local.
+            return window.location.hostname.includes('github.io') ? 'https://TU-BACKEND.onrender.com/api/visitas' : localUrl;
+        }
+        
+        const BASE_URL = getBaseUrl();
+
         function formatRUT(value) {
             const cleaned = value.replace(/[^\dkK]/g, '');
             if (cleaned.length <= 1) return cleaned;
@@ -482,31 +496,15 @@
             });
         });
 
-        // IMPORTANTE: el formulario se abre via QR (GitHub Pages), por lo que no debe usarse 127.0.0.1.
-        // Usa el mismo host donde está corriendo el backend (si el backend también está publicado en red).
-        // Si tu backend está en otra máquina/puerto, reemplaza esta constante por esa URL.
-        // Se utiliza window.location.hostname para compatibilidad en red local, y puerto 5000
-        let hostname = window.location.hostname || '127.0.0.1';
-        // En Windows, 'localhost' puede causar lentitud (2s+) por resolución DNS IPv6. 
-        // Usar 127.0.0.1 es mucho más rápido para desarrollo local.
-        if (hostname === 'localhost') hostname = '127.0.0.1';
-        
-        const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
-        const BASE_URL = `${protocol}//${hostname}:5000/api/visitas`;
-        // Si estás viendo el formulario por QR/GitHub Pages, debes cambiarlo por tu IP real del PC.
-        // Ejemplo: const BASE_URL = 'http://192.168.1.10:5001/api';
-        // Alternativa: const BASE_URL = 'http://TU_IP_O_DOMINIO:5001/api';
-
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Bloquear mientras envía
             submitBtn.textContent = 'Registrando...';
             submitBtn.disabled = true;
 
-            const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
-
-            const payload = {
+            try {
+                const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
+                const payload = {
                 nombre: document.getElementById('nombre').value.trim(),
                 rut: document.getElementById('rut').value.trim(),
                 correo: document.getElementById('correo').value.trim(),
@@ -515,10 +513,8 @@
                 proposito: document.getElementById('proposito').value.trim()
             };
 
-            try {
                 console.log("Intentando conectar a:", BASE_URL);
                 
-                // Agregamos un controlador de aborto para evitar que el botón se quede "pegado" si el servidor no responde
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000); 
 
@@ -531,7 +527,7 @@
                 clearTimeout(timeoutId);
 
                 if (!response.ok) {
-                    let errMsg = 'Error al guardar el registro.';
+                    let errMsg = `Error del servidor (${response.status})`;
                     try {
                         const data = await response.json();
                         errMsg = data?.error || data?.message || errMsg;

@@ -28,7 +28,7 @@
         addResult('✅ Página de prueba cargada correctamente');
 
         // Test 2: Verificar conectividad con la API
-        fetch('http://127.0.0.1:500
+        fetch('http://127.0.0.1:5000/api/visitas', {
             headers: { 'Accept': 'application/json' }
         })
         .then(response => {

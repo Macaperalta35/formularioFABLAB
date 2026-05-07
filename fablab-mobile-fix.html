@@ -224,7 +224,9 @@
         const inputs = Array.from(document.querySelectorAll('.form-control'));
         const radioInputs = Array.from(document.querySelectorAll('input[name="tipoVisita"]'));
 
-        const apiBase = `${window.location.protocol}//${window.location.hostname}:5000/api`;
+        let host = window.location.hostname;
+        if (host === 'localhost') host = '127.0.0.1';
+        const apiBase = `${window.location.protocol}//${host}:5000/api`;
         const frontendUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port}${window.location.pathname}`;
         const form = document.getElementById('registroForm');
 

@@ -293,11 +293,17 @@
     </div>
 
     <script>
-        // Usar window.location.hostname para compatibilidad en red local, y puerto 5000
-        let hostname = window.location.hostname;
-        if (hostname === 'localhost') hostname = '127.0.0.1';
-        
-        const BASE_URL = `${window.location.protocol}//${hostname}:5000/api`;
+        function getBaseUrl() {
+            let host = window.location.hostname;
+            if (host === 'localhost' || !host) host = '127.0.0.1';
+            
+            const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
+            const localUrl = `${protocol}//${host}:5000/api`;
+            
+            return window.location.hostname.includes('github.io') ? 'https://TU-BACKEND.onrender.com/api' : localUrl;
+        }
+
+        const BASE_URL = getBaseUrl();
 
         async function cargarDatos() {
             const loadingContainer = document.getElementById('loading-container');
@@ -334,7 +340,7 @@
                             <td>${v.rut}</td>
                             <td>${v.correo}</td>
                             <td>${v.telefono || '-'}</td>
-                            <td>${v.tipo_visita}</td>
+                            <td>${v.tipo_visita || 'No especificado'}</td>
                             <td>${v.proposito || '-'}</td>
                             <td>${new Date(v.created_at).toLocaleDateString('es-CL')} ${new Date(v.created_at).toLocaleTimeString('es-CL')}</td>
                         </tr>
@@ -343,7 +349,8 @@
                     // Calcular estadísticas
                     const tipos = {};
                     visitas.forEach(v => {
-                        tipos[v.tipo_visita] = (tipos[v.tipo_visita] || 0) + 1;
+                        const tipo = v.tipo_visita || 'Otros';
+                        tipos[tipo] = (tipos[tipo] || 0) + 1;
                     });
 
                     statsContainer.innerHTML = `

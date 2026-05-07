@@ -107,8 +107,10 @@ def listar_visitas():
     """Obtener todas las visitas"""
     try:
         visitas = Visita.query.order_by(Visita.created_at.desc()).all()
-        return jsonify([visita.to_dict() for visita in visitas]), 200
+        data = [visita.to_dict() for visita in visitas]
+        return make_response(jsonify(data), 200)
     except Exception as e:
+        print(f"❌ Error al listar visitas: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/visitas/export', methods=['GET'])
@@ -199,4 +201,5 @@ if __name__ == '__main__':
     print("📍 CORS habilitado para todos los orígenes")
     print("📊 Documentación: GET http://<IP_DEL_SERVIDOR>:5000/")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
