@@ -157,6 +157,11 @@
         .submit-btn.loading {
             background: rgba(237,28,36,0.7);
         }
+        .submit-btn.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
         .success {
             text-align: center;
             padding: 40px 20px;
@@ -337,7 +342,16 @@
                     break;
                 case 'rut':
                     if (!value.trim()) error = 'RUT requerido';
-                    else if (!/^[0-9]{1,3}(\.[0-9]{3})*-[0-9kK]{1}$/.test(value)) error = 'Formato RUT inválido (ej: 12.345.678-9)';
+                    else {
+                        // Validación más flexible para móviles
+                        const rutClean = value.replace(/[^\dkK]/gi, '');
+                        if (rutClean.length < 8 || rutClean.length > 9) {
+                            error = 'RUT debe tener entre 8 y 9 dígitos';
+                        } else if (!/^[0-9]+[0-9kK]$/.test(rutClean)) {
+                            error = 'Formato RUT inválido';
+                        }
+                        // Nota: No validamos el dígito verificador aquí para ser más permisivos
+                    }
                     break;
                 case 'correo':
                     if (!value.trim()) error = 'Correo requerido';
@@ -375,15 +389,38 @@
 
             let isValid = true;
 
-            // Validar campos
-            const fields = ['nombre', 'rut', 'correo', 'tipoVisita', 'telefono'];
-            fields.forEach(field => {
+            // Validar campos requeridos (excluir telefono que es opcional)
+            const requiredFields = ['nombre', 'rut', 'correo', 'tipoVisita'];
+            requiredFields.forEach(field => {
                 const error = validateField(field, data[field] || '');
                 showError(field, error);
                 if (error) isValid = false;
             });
 
+            // Validar teléfono solo si tiene valor
+            if (data.telefono && data.telefono.trim()) {
+                const error = validateField('telefono', data.telefono);
+                showError('telefono', error);
+                if (error) isValid = false;
+            } else {
+                showError('telefono', ''); // Limpiar error si está vacío
+            }
+
             return isValid;
+        }
+
+        // Función para actualizar estado del botón submit
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const isValid = validateForm();
+
+            if (isValid) {
+                submitBtn.classList.remove('disabled');
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.classList.add('disabled');
+                submitBtn.disabled = true;
+            }
         }
 
         // Event listeners
@@ -393,12 +430,16 @@
             const btnText = document.getElementById('btnText');
             const errorMessage = document.getElementById('errorMessage');
 
+            // Inicializar estado del botón
+            updateSubmitButton();
+
             // Formatear RUT en tiempo real
             document.getElementById('rut').addEventListener('input', function(e) {
                 const formatted = formatRut(e.target.value);
                 e.target.value = formatted;
                 const error = validateField('rut', formatted);
                 showError('rut', error);
+                updateSubmitButton();
             });
 
             // Validación en tiempo real para otros campos
@@ -406,6 +447,7 @@
                 document.getElementById(fieldId).addEventListener('input', function(e) {
                     const error = validateField(fieldId, e.target.value);
                     showError(fieldId, error);
+                    updateSubmitButton();
                 });
             });
 
@@ -414,6 +456,7 @@
                 radio.addEventListener('change', function() {
                     const error = validateField('tipoVisita', this.value);
                     showError('tipoVisita', error);
+                    updateSubmitButton();
                 });
             });
 
@@ -421,7 +464,10 @@
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
+                // Validar formulario antes de enviar
                 if (!validateForm()) {
+                    errorMessage.textContent = 'Por favor, completa todos los campos requeridos correctamente.';
+                    errorMessage.style.display = 'block';
                     return;
                 }
 
@@ -432,8 +478,8 @@
                     rut: formData.get('rut').trim(),
                     correo: formData.get('correo').trim(),
                     tipoVisita: formData.get('tipoVisita'),
-                    telefono: formData.get('telefono').trim(),
-                    proposito: formData.get('proposito').trim()
+                    telefono: formData.get('telefono').trim() || null,
+                    proposito: formData.get('proposito').trim() || null
                 };
 
                 // Mostrar loading
@@ -445,7 +491,7 @@
                 try {
                     // Detectar si estamos en localhost o IP
                     const hostname = window.location.hostname;
-                    const port = hostname === 'localhost' ? '5001' : '5001';
+                    const port = hostname === 'localhost' || hostname === '127.0.0.1' ? '5001' : '5001';
                     const apiUrl = `${window.location.protocol}//${hostname}:${port}/api/visitas`;
 
                     console.log('Enviando a:', apiUrl);
@@ -487,6 +533,7 @@
                     submitBtn.disabled = false;
                     submitBtn.classList.remove('loading');
                     btnText.textContent = 'Registrar Visita';
+                    updateSubmitButton();
                 }
             });
         });
