@@ -169,15 +169,16 @@
                 <p><small>Si usas otro equipo, reemplaza localhost por la IP de tu PC.</small></p>
             </div>
 
-            <div class="form-group">
-                <label for="nombre">Nombre completo *</label>
-                <input id="nombre" name="nombre" class="form-control" type="text" placeholder="Ej: Juan Pérez" autocomplete="name" required>
-            </div>
+            <form id="registroForm">
+                <div class="form-group">
+                    <label for="nombre">Nombre completo *</label>
+                    <input id="nombre" name="nombre" class="form-control" type="text" placeholder="Ej: Juan Pérez" autocomplete="name" required>
+                </div>
 
-            <div class="form-group">
-                <label for="rut">RUT *</label>
-                <input id="rut" name="rut" class="form-control" type="text" placeholder="12.345.678-9" maxlength="12" inputmode="text" required>
-            </div>
+                <div class="form-group">
+                    <label for="rut">RUT *</label>
+                    <input id="rut" name="rut" class="form-control" type="text" placeholder="12.345.678-9" maxlength="12" inputmode="text" required>
+                </div>
 
             <div class="form-group">
                 <label for="correo">Correo electrónico *</label>
@@ -204,7 +205,8 @@
                 <textarea id="proposito" name="proposito" class="form-control" rows="4" placeholder="Ej: Corte láser, impresión 3D..."></textarea>
             </div>
 
-            <button id="submit-btn" class="button" type="button">Enviar registro</button>
+                <button id="submit-btn" class="button disabled" type="submit" disabled>Enviar registro</button>
+            </form>
 
             <div id="message" class="message"></div>
 
@@ -224,22 +226,34 @@
 
         const apiBase = `${window.location.protocol}//${window.location.hostname}:5001/api`;
         const frontendUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port}${window.location.pathname}`;
+        const form = document.getElementById('registroForm');
 
         frontendUrlEl.textContent = frontendUrl;
         apiUrlEl.textContent = `${apiBase}/visitas`;
 
         function formatRUT(value) {
             const cleaned = value.replace(/[^\dkK]/gi, '').replace(/\s/g, '');
-            if (cleaned.length <= 1) return cleaned;
+            if (cleaned.length <= 1) return cleaned.toUpperCase();
             const body = cleaned.slice(0, -1);
-            const dv = cleaned.slice(-1);
+            const dv = cleaned.slice(-1).toUpperCase();
             const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
             return `${formatted}-${dv}`;
         }
 
         function validateRUT(rut) {
-            const cleaned = rut.replace(/[^0-9kK]/gi, '').trim();
-            return /^[0-9]{7,8}[0-9kK]$/.test(cleaned);
+            const cleaned = rut.replace(/[^0-9kK]/gi, '').toUpperCase().trim();
+            if (!/^[0-9]{7,8}[0-9K]$/.test(cleaned)) return false;
+            const body = cleaned.slice(0, -1);
+            const dv = cleaned.slice(-1);
+            let sum = 0;
+            let multiplier = 2;
+            for (let i = body.length - 1; i >= 0; i--) {
+                sum += parseInt(body.charAt(i), 10) * multiplier;
+                multiplier = multiplier === 7 ? 2 : multiplier + 1;
+            }
+            const remainder = 11 - (sum % 11);
+            const expectedDV = remainder === 11 ? '0' : remainder === 10 ? 'K' : remainder.toString();
+            return dv === expectedDV;
         }
 
         function validateEmail(email) {
@@ -261,6 +275,7 @@
 
             const valid = nombre.length >= 2 && validateRUT(rut) && validateEmail(correo) && tipoVisita && validatePhone(telefono);
             submitBtn.classList.toggle('disabled', !valid);
+            submitBtn.disabled = !valid;
             return valid;
         }
 
@@ -293,7 +308,8 @@
             });
         });
 
-        submitBtn.addEventListener('click', async () => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
             if (!validateForm()) {
                 showMessage('Completa correctamente todos los campos requeridos.');
                 return;
@@ -346,6 +362,7 @@
         }
 
         checkApi();
+        validateForm();
     </script>
 </body>
 </html>
