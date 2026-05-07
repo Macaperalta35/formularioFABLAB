@@ -293,17 +293,38 @@
     </div>
 
     <script>
-        function getBaseUrl() {
+        async function getBaseUrl() {
             let host = window.location.hostname;
             if (host === 'localhost' || !host) host = '127.0.0.1';
-            
+
             const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
-            const localUrl = `${protocol}//${host}:5000/api`;
-            
-            return window.location.hostname.includes('github.io') ? 'https://TU-BACKEND.onrender.com/api' : localUrl;
+            const ports = [5000, 5001];
+
+            for (const port of ports) {
+                const apiUrl = `${protocol}//${host}:${port}/api`;
+                try {
+                    const response = await fetch(`${apiUrl}/visitas`, { method: 'GET' });
+                    if (response.ok) return apiUrl;
+                } catch (err) {
+                    // No hay servidor en este puerto, intentar siguiente
+                }
+            }
+
+            return `${protocol}//${host}:5000/api`;
         }
 
-        const BASE_URL = getBaseUrl();
+        let BASE_URL = null;
+
+        // Función para prevenir inyección HTML/JS (XSS)
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
         async function cargarDatos() {
             const loadingContainer = document.getElementById('loading-container');
@@ -336,12 +357,12 @@
                     tbody.innerHTML = visitas.map(v => `
                         <tr>
                             <td>${v.id}</td>
-                            <td>${v.nombre}</td>
-                            <td>${v.rut}</td>
-                            <td>${v.correo}</td>
-                            <td>${v.telefono || '-'}</td>
-                            <td>${v.tipo_visita || 'No especificado'}</td>
-                            <td>${v.proposito || '-'}</td>
+                            <td>${escapeHTML(v.nombre)}</td>
+                            <td>${escapeHTML(v.rut)}</td>
+                            <td>${escapeHTML(v.correo)}</td>
+                            <td>${escapeHTML(v.telefono || '-')}</td>
+                            <td>${escapeHTML(v.tipo_visita || 'No especificado')}</td>
+                            <td>${escapeHTML(v.proposito || '-')}</td>
                             <td>${new Date(v.created_at).toLocaleDateString('es-CL')} ${new Date(v.created_at).toLocaleTimeString('es-CL')}</td>
                         </tr>
                     `).join('');
@@ -383,8 +404,13 @@
             cargarDatos();
         }
 
+        async function initAdmin() {
+            BASE_URL = await getBaseUrl();
+            cargarDatos();
+        }
+
         // Cargar datos al iniciar
-        cargarDatos();
+        initAdmin();
 
         // Recargar cada 30 segundos
         setInterval(cargarDatos, 30000);

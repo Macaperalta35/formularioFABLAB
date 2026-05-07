@@ -193,8 +193,9 @@
 
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
-                                <label className="label">Nombre Completo *</label>
+                                <label className="label" htmlFor="nombre">Nombre Completo *</label>
                                 <input
+                                    id="nombre"
                                     type="text"
                                     name="nombre"
                                     value={formData.nombre}
@@ -206,8 +207,9 @@
                             </div>
 
                             <div className="form-group">
-                                <label className="label">RUT *</label>
+                                <label className="label" htmlFor="rut">RUT *</label>
                                 <input
+                                    id="rut"
                                     type="text"
                                     name="rut"
                                     value={formData.rut}
@@ -219,8 +221,9 @@
                             </div>
 
                             <div className="form-group">
-                                <label className="label">Correo Electrónico *</label>
+                                <label className="label" htmlFor="correo">Correo Electrónico *</label>
                                 <input
+                                    id="correo"
                                     type="email"
                                     name="correo"
                                     value={formData.correo}
@@ -232,7 +235,7 @@
                             </div>
 
                             <div className="form-group">
-                                <label className="label">Tipo de Visita *</label>
+                                <label className="label" htmlFor="tipoVisita">Tipo de Visita *</label>
                                 <div className="radio-group">
                                     {[
                                         {value: 'estudiante', label: 'Estudiante'},
@@ -242,6 +245,7 @@
                                     ].map(option => (
                                         <label key={option.value} className="radio-label">
                                             <input
+                                                id={`tipo_${option.value}`}
                                                 type="radio"
                                                 name="tipoVisita"
                                                 value={option.value}
@@ -258,8 +262,9 @@
                             </div>
 
                             <div className="form-group">
-                                <label className="label">Teléfono</label>
+                                <label className="label" htmlFor="telefono">Teléfono</label>
                                 <input
+                                    id="telefono"
                                     type="tel"
                                     name="telefono"
                                     value={formData.telefono}
@@ -271,8 +276,9 @@
                             </div>
 
                             <div className="form-group">
-                                <label className="label">Propósito</label>
+                                <label className="label" htmlFor="proposito">Propósito</label>
                                 <textarea
+                                    id="proposito"
                                     name="proposito"
                                     value={formData.proposito}
                                     onChange={handleChange}

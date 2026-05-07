@@ -348,14 +348,34 @@
             if (host === 'localhost' || !host) host = '127.0.0.1';
             
             const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
-            const localUrl = `${protocol}//${host}:5000/api/visitas`;
-            
-            // Si estás en GitHub Pages y tienes un backend real, cámbialo aquí. 
-            // De lo contrario, intentará conectar a tu IP local.
-            return window.location.hostname.includes('github.io') ? 'https://TU-BACKEND.onrender.com/api/visitas' : localUrl;
+            return window.location.hostname.includes('github.io')
+                ? 'https://TU-BACKEND.onrender.com/api/visitas'
+                : `${protocol}//${host}:5000/api/visitas`;
         }
         
-        const BASE_URL = getBaseUrl();
+        let BASE_URL = getBaseUrl();
+
+        async function postRegistro(payload, signal) {
+            try {
+                return await fetch(BASE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal
+                });
+            } catch (error) {
+                if (BASE_URL.includes(':5000')) {
+                    BASE_URL = BASE_URL.replace(':5000', ':5001');
+                    return await fetch(BASE_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                        signal
+                    });
+                }
+                throw error;
+            }
+        }
 
         function formatRUT(value) {
             const cleaned = value.replace(/[^\dkK]/g, '');
@@ -518,12 +538,7 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000); 
 
-                const response = await fetch(BASE_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                    signal: controller.signal
-                });
+                const response = await postRegistro(payload, controller.signal);
                 clearTimeout(timeoutId);
 
                 if (!response.ok) {

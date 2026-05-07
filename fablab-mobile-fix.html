@@ -226,9 +226,28 @@
 
         let host = window.location.hostname;
         if (host === 'localhost') host = '127.0.0.1';
-        const apiBase = `${window.location.protocol}//${host}:5000/api`;
+        let apiBase = `${window.location.protocol}//${host}:5000/api`;
         const frontendUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port}${window.location.pathname}`;
         const form = document.getElementById('registroForm');
+
+        async function resolveApiBase() {
+            const ports = [5000, 5001];
+            for (const port of ports) {
+                const candidate = `${window.location.protocol}//${host}:${port}/api`;
+                try {
+                    const response = await fetch(`${candidate}/visitas`, { method: 'GET' });
+                    if (response.ok) return candidate;
+                } catch (err) {
+                    // Intentar siguiente puerto
+                }
+            }
+            return apiBase;
+        }
+
+        async function ensureApiBase() {
+            apiBase = await resolveApiBase();
+            apiUrlEl.textContent = `${apiBase}/visitas`;
+        }
 
         frontendUrlEl.textContent = frontendUrl;
         apiUrlEl.textContent = `${apiBase}/visitas`;
@@ -331,6 +350,7 @@
             };
 
             try {
+                await ensureApiBase();
                 const response = await fetch(`${apiBase}/visitas`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -356,7 +376,8 @@
         // Probar API al cargar la página para detectar problemas de conexión.
         async function checkApi() {
             try {
-                const response = await fetch(`${apiBase}/`);
+                await ensureApiBase();
+                const response = await fetch(`${apiBase}/visitas`);
                 if (!response.ok) throw new Error("Servidor API no disponible");
             } catch (err) {
                 showMessage("No se puede conectar al servidor API. Verifica que Flask esté activo y que los puertos 8000/5001 estén permitidos.");

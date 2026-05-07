@@ -492,19 +492,33 @@
                     // Detectar si estamos en localhost o IP
                     let hostname = window.location.hostname;
                     if (hostname === 'localhost') hostname = '127.0.0.1';
-                    const apiUrl = `${window.location.protocol}//${hostname}:5000/api/visitas`;
+                    let apiUrl = `${window.location.protocol}//${hostname}:5000/api/visitas`;
 
                     console.log('Enviando a:', apiUrl);
                     console.log('Datos:', data);
 
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(data)
-                    });
+                    let response;
+                    try {
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        });
+                    } catch (error) {
+                        apiUrl = apiUrl.replace(':5000', ':5001');
+                        console.log('Reintentando en:', apiUrl);
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        });
+                    }
 
                     const result = await response.json();
 
