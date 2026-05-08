@@ -16,14 +16,27 @@ app.config['SECRET_KEY'] = 'fablab-secret-key-2024'
 # Inicializar BD
 db = SQLAlchemy(app)
 
-# Configurar CORS
+# Configurar CORS con configuración más explícita
 CORS(app, resources={
     r"/api/*": {
-        "origins": "*",
+        "origins": ["https://macaperalta35.github.io", "http://localhost:8000", "http://127.0.0.1:8000", "*"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
+        "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+        "expose_headers": ["Content-Type"],
+        "supports_credentials": False
     }
 })
+
+# Manejar OPTIONS requests globalmente
+@app.before_request
+def handle_options():
+    if request.method == 'OPTIONS':
+        response = make_response('', 200)
+        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With'
+        response.headers['Access-Control-Max-Age'] = '86400'  # 24 horas
+        return response
 
 # ============= MODELO DE DATOS =============
 class Visita(db.Model):
@@ -65,53 +78,38 @@ def home():
         }
     })
 
-@app.route('/api/visitas', methods=['POST'])
-def crear_visita():
-    """Crear nuevo registro de visita"""
-    data = request.get_json() or {}
-    
-    nombre = data.get('nombre', '').strip()
-    rut = data.get('rut', '').strip()
-    correo = data.get('correo', '').strip()
-    tipo_visita = data.get('tipoVisita', '').strip() or data.get('tipo_visita', '').strip()
-    telefono = data.get('telefono', '').strip()
-    proposito = data.get('proposito', '').strip()
-    
-    # Validar campos obligatorios
-    if not nombre or not rut or not correo or not tipo_visita:
-        return jsonify({'error': 'Faltan campos obligatorios'}), 400
-    
-    try:
-        visita = Visita(
-            nombre=nombre,
-            rut=rut,
-            correo=correo,
-            tipo_visita=tipo_visita,
-            telefono=telefono,
-            proposito=proposito
-        )
+@app.route('/api/visitas', methods=['GET', 'POST'])
+def manejar_visitas():
+    """Manejar visitas (Listar y Crear)"""
+    if request.method == 'POST':
+        data = request.get_json() or {}
         
-        db.session.add(visita)
-        db.session.commit()
+        nombre = data.get('nombre', '').strip()
+        rut = data.get('rut', '').strip()
+        correo = data.get('correo', '').strip()
+        tipo_visita = data.get('tipoVisita', '').strip() or data.get('tipo_visita', '').strip()
+        telefono = data.get('telefono', '').strip()
+        proposito = data.get('proposito', '').strip()
         
-        return jsonify({
-            'message': 'Registro guardado exitosamente',
-            'visita': visita.to_dict()
-        }), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        if not nombre or not rut or not correo or not tipo_visita:
+            return jsonify({'error': 'Faltan campos obligatorios'}), 400
+        
+        try:
+            visita = Visita(nombre=nombre, rut=rut, correo=correo, tipo_visita=tipo_visita, telefono=telefono, proposito=proposito)
+            db.session.add(visita)
+            db.session.commit()
+            return jsonify({'message': 'Registro guardado exitosamente', 'visita': visita.to_dict()}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
 
-@app.route('/api/visitas', methods=['GET'])
-def listar_visitas():
-    """Obtener todas las visitas"""
-    try:
-        visitas = Visita.query.order_by(Visita.created_at.desc()).all()
-        data = [visita.to_dict() for visita in visitas]
-        return make_response(jsonify(data), 200)
-    except Exception as e:
-        print(f"❌ Error al listar visitas: {e}")
-        return jsonify({'error': str(e)}), 500
+    elif request.method == 'GET':
+        try:
+            visitas = Visita.query.order_by(Visita.created_at.desc()).all()
+            return make_response(jsonify([v.to_dict() for v in visitas]), 200)
+        except Exception as e:
+            print(f"❌ Error al listar visitas: {e}")
+            return jsonify({'error': str(e)}), 500
 
 @app.route('/api/visitas/export', methods=['GET'])
 def exportar_visitas():
