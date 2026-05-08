@@ -81,8 +81,8 @@
             const detectApiBase = async () => {
                 // Si estamos en producción (GitHub Pages)
                 if (window.location.hostname.includes('github.io')) {
-                    // URL del backend desplegado en Render (actualizar después del despliegue)
-                    return 'https://fablab-backend.onrender.com/api';
+                    // URL de Netlify Functions (actualizar después del despliegue)
+                    return 'https://TU-SITIO.netlify.app/.netlify/functions/api_visitas';
                 }
 
                 // Si estamos en file://, usar localhost
@@ -90,32 +90,8 @@
                 const hostname = isFileProtocol ? '127.0.0.1' : window.location.hostname;
                 const protocol = 'http:'; // Siempre usar http para la API
 
-                const ports = [5001, 5000]; // Probar primero 5001 donde sabemos que está el backend
-
-                for (const port of ports) {
-                    const candidate = `${protocol}//${hostname}:${port}/api`;
-                    try {
-                        console.log('Probando puerto:', port, candidate);
-                        const response = await fetch(`${candidate}/visitas`, {
-                            method: 'GET',
-                            mode: 'cors',
-                            headers: {
-                                'Accept': 'application/json'
-                            }
-                        });
-                        if (response.ok) {
-                            console.log('API encontrado en puerto:', port);
-                            return candidate;
-                        }
-                    } catch (err) {
-                        console.log('Puerto', port, 'no disponible:', err.message);
-                        // Intentar siguiente puerto
-                    }
-                }
-
-                // Fallback: usar el puerto donde sabemos que está funcionando
-                console.log('Usando puerto fallback: 5001');
-                return `${protocol}//${hostname}:5001/api`;
+                // Apuntar directamente al puerto 5000 donde corre fablab_app.py
+                return `${protocol}//${hostname}:5000/api`;
             };
 
             // Inicializar API base al montar el componente

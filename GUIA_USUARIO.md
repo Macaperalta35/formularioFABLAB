@@ -21,7 +21,7 @@ Ejecuta el archivo `iniciar.bat` para iniciar ambos servidores automáticamente.
 
 ### 3. Verificar Conexión
 Si ves "Failed to fetch", verifica:
-1. Que ambos servidores estén ejecutándose (puertos 5001 y 8000)
+1. Que ambos servidores estén ejecutándose (puertos 5000 y 8000)
 2. Que abras los formularios desde http://127.0.0.1:8000/
 3. Que no haya bloqueadores de anuncios o extensiones que bloqueen las peticiones
 
@@ -45,7 +45,7 @@ Si ves "Failed to fetch", verifica:
 - Para probar desde otro dispositivo en la red, reemplaza `127.0.0.1` con la IP de tu computadora
 
 ## 🛠️ Desarrollo
-- Backend Flask: `fablab_app.py` (puerto 5001)
+- Backend Flask: `fablab_app.py` (puerto 5000)
 - Servidor HTTP: `serve.py` (puerto 8000)
 - Base de datos: `instance/fablab_visitas.db`</content>
 <parameter name="filePath">c:\Users\macas\OneDrive\Desktop\fablab formulario\GUIA_USUARIO.md

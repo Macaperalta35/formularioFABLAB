@@ -1,20 +1,13 @@
-# Python
+# Archivos de base de datos
+*.db
+*.sqlite
+*.sqlite3
+
+# Directorio de instancia de Flask
+instance/
+
+# Archivos compilados y caché de Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# Virtual environment
-.venv/
-venv/
-env/
-
-# Database
-*.db
-*.sqlite3
-*.sqlite
-instance/
-
-# Logs
-*.log
-pip-debug.log
