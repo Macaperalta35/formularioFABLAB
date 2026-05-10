@@ -106,7 +106,7 @@
                     </div>
                 </div>
 
-                <button type="submit" id="submit-btn" class="submit-btn" disabled>
+                <button type="submit" id="submit-btn" class="submit-btn">
                     <span class="btn-text">Registrar Visita</span>
                     <span class="btn-loader hidden">
                         <span class="spinner"></span> Registrando...
@@ -238,14 +238,29 @@
         }
 
         function updateSubmitButton() {
-            const n = document.getElementById('nombre').value;
-            const r = document.getElementById('rut').value;
-            const c = document.getElementById('correo').value;
+            // El botón ya no se deshabilita dinámicamente. 
+            // La validación se ejecuta al hacer clic.
+        }
+
+        function validateAll() {
+            let isValid = true;
+            ['nombre', 'rut', 'correo', 'telefono'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    updateFieldUI(el);
+                    if (validateField(el.name, el.value)) isValid = false;
+                }
+            });
+            
             const t = document.querySelector('input[name="tipoVisita"]:checked');
-            const p = document.getElementById('telefono').value;
-            const valid = n.trim().length >= 2 && !/[0-9]/.test(n)
-                && validateRUT(r) && validateEmail(c) && t !== null && validatePhone(p);
-            submitBtn.disabled = !valid;
+            const errDiv = document.getElementById('tipoVisita-error');
+            if (!t) {
+                isValid = false;
+                if (errDiv) { errDiv.textContent = 'Seleccione tipo de visita'; errDiv.classList.remove('hidden'); }
+            } else {
+                if (errDiv) errDiv.classList.add('hidden');
+            }
+            return isValid;
         }
 
         // ========== EVENT LISTENERS ==========
@@ -269,6 +284,12 @@
         // ========== SUBMIT ==========
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            if (!validateAll()) {
+                // Si falta algún dato, se muestran los errores y no se envía.
+                return;
+            }
+
             btnText.classList.add('hidden');
             btnLoader.classList.remove('hidden');
             submitBtn.disabled = true;
@@ -303,7 +324,7 @@
                     form.reset();
                     btnText.classList.remove('hidden');
                     btnLoader.classList.add('hidden');
-                    submitBtn.disabled = true;
+                    submitBtn.disabled = false;
                     document.querySelectorAll('.error-text').forEach(el => el.classList.add('hidden'));
                     document.querySelectorAll('.input').forEach(el => el.classList.remove('error'));
                 }, 5000);
@@ -322,7 +343,7 @@
                 }
                 btnText.classList.remove('hidden');
                 btnLoader.classList.add('hidden');
-                updateSubmitButton();
+                submitBtn.disabled = false;
             }
         });
 
