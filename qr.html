@@ -41,6 +41,39 @@
             margin-bottom: 8px;
         }
         .logo svg { filter: drop-shadow(0 2px 8px rgba(237,28,36,0.3)); }
+        
+        .inacap-logo {
+            display: inline-flex;
+            align-items: flex-end;
+            gap: 6px;
+            margin: 0 auto 12px;
+        }
+        .inacap-mark {
+            display: flex;
+            gap: 2px;
+            align-items: stretch;
+            height: 38px;
+        }
+        .inacap-block {
+            display: block;
+            width: 28px;
+            height: 100%;
+            background: #ED1C24;
+        }
+        .inacap-bar {
+            display: block;
+            width: 6px;
+            height: 100%;
+            background: #ED1C24;
+        }
+        .inacap-text {
+            font-family: 'Arial', sans-serif;
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: #1a1a2e;
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
         h1 { font-size: 1.75rem; font-weight: 800; color: #1a1a2e; }
         .sub { font-size: 0.875rem; color: #6b7280; margin-bottom: 28px; }
         #qr-container {
@@ -108,12 +141,15 @@
 </head>
 <body>
     <div class="card">
-        <div class="logo">
-            <svg viewBox="0 0 48 48" width="40" height="40" fill="none">
-                <rect width="48" height="48" rx="12" fill="#ED1C24"/>
-                <path d="M14 14h6v20h-6zM24 14h4v8h-4zM24 26h4v8h-4zM32 14h4v20h-4z" fill="#fff"/>
-            </svg>
-            <h1>FAB LAB INACAP</h1>
+        <div class="logo" style="flex-direction: column; gap: 4px;">
+            <div class="inacap-logo" aria-label="Logo INACAP">
+                <div class="inacap-mark">
+                    <span class="inacap-block"></span>
+                    <span class="inacap-bar"></span>
+                </div>
+                <span class="inacap-text">inacap</span>
+            </div>
+            <h1>FAB LAB</h1>
         </div>
         <p class="sub">Escanea el código QR para registrar tu visita</p>
 
