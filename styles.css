@@ -657,9 +657,9 @@ body {
     gap: 8px;
 }
 .tag-btn {
-    background: white;
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
+    background: #fff5f5;
+    border: 1px solid var(--red);
+    color: var(--red);
     padding: 6px 12px;
     border-radius: 50px;
     font-size: 0.75rem;
@@ -668,6 +668,6 @@ body {
     transition: var(--transition);
 }
 .tag-btn:hover {
-    border-color: var(--red);
-    color: var(--red);
+    background: var(--red);
+    color: white;
 }
