@@ -113,11 +113,11 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="label" for="descripcion">Propósito de la Visita / Descripción <span class="req">*</span></label>
+                    <label class="label" for="proposito">Propósito de la Visita / Descripción <span class="req">*</span></label>
                     <div class="input-wrapper textarea-wrapper">
-                        <textarea id="descripcion" name="descripcion" class="input textarea" placeholder="Ej: Diseño e impresión de piezas para un sistema de riego..." rows="3" required></textarea>
+                        <textarea id="proposito" name="proposito" class="input textarea" placeholder="Ej: Diseño e impresión de piezas para un sistema de riego..." rows="3" required></textarea>
                     </div>
-                    <div id="descripcion-error" class="error-text hidden"></div>
+                    <div id="proposito-error" class="error-text hidden"></div>
                 </div>
 
 
@@ -207,18 +207,18 @@
                     clickedTags.push(tagValue);
                 }
 
-                const descripcion = document.getElementById('descripcion');
-                const currentVal = descripcion.value.trim();
+                const proposito = document.getElementById('proposito');
+                const currentVal = proposito.value.trim();
                 
                 if (currentVal) {
-                    descripcion.value = currentVal + ", " + textToAdd;
+                    proposito.value = currentVal + ", " + textToAdd;
                 } else {
-                    descripcion.value = textToAdd;
+                    proposito.value = textToAdd;
                 }
                 
                 // Trigger validation UI
-                updateFieldUI(descripcion);
-                descripcion.focus();
+                updateFieldUI(proposito);
+                proposito.focus();
             });
         });
 
@@ -264,7 +264,7 @@
                 case 'telefono':
                     if (!validatePhone(value)) return 'Teléfono inválido';
                     return '';
-                case 'descripcion':
+                case 'proposito':
                     if (value.trim().length < 5) return 'Mínimo 5 caracteres';
                     return '';
                 default: return '';
@@ -296,7 +296,7 @@
             const telefono = document.getElementById('telefono').value;
             const correo = document.getElementById('correo').value;
             const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
-            const descripcion = document.getElementById('descripcion').value;
+            const proposito = document.getElementById('proposito').value;
             
             const isPersonalValid = !validateField('nombre', nombre) && 
                                     !validateField('rut', rut) && 
@@ -304,7 +304,7 @@
                                     !validateField('correo', correo) && 
                                     !!tipoVisita;
 
-            const isProjectValid = !validateField('descripcion', descripcion);
+            const isProjectValid = !validateField('proposito', proposito);
             
             return isPersonalValid && isProjectValid;
         }
@@ -314,7 +314,7 @@
         }
 
         // ========== EVENT LISTENERS ==========
-        ['nombre', 'rut', 'telefono', 'correo', 'descripcion'].forEach(id => {
+        ['nombre', 'rut', 'telefono', 'correo', 'proposito'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', function(e) { 
@@ -365,7 +365,7 @@
                     telefono: document.getElementById('telefono').value.trim(),
                     correo: document.getElementById('correo').value.trim(),
                     tipoVisita: tipoVisita ? tipoVisita.value : '',
-                    proposito: document.getElementById('descripcion').value.trim(),
+                    proposito: document.getElementById('proposito').value.trim(),
                     etiquetas: clickedTags.join(', '),
                     fecha: new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' })
                 };
