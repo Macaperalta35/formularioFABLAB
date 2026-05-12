@@ -35,6 +35,74 @@
             </header>
 
             <form id="registro-form" autocomplete="off" novalidate>
+                <!-- Datos Personales -->
+                <div class="form-group">
+                    <label class="label" for="nombre">Nombre Completo <span class="req">*</span></label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="nombre" name="nombre" class="input" placeholder="Ej: Juan Pérez González" required>
+                    </div>
+                    <div id="nombre-error" class="error-text hidden"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="label" for="rut">RUT <span class="req">*</span></label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🪪</span>
+                            <input type="text" id="rut" name="rut" class="input" placeholder="12.345.678-9" maxlength="12" required>
+                        </div>
+                        <div id="rut-error" class="error-text hidden"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="label" for="telefono">Teléfono <span class="req">*</span></label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">📱</span>
+                            <input type="tel" id="telefono" name="telefono" class="input" placeholder="+56 9 1234 5678" maxlength="15" required>
+                        </div>
+                        <div id="telefono-error" class="error-text hidden"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label" for="correo">Correo Electrónico <span class="req">*</span></label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" id="correo" name="correo" class="input" placeholder="correo@ejemplo.com" required>
+                    </div>
+                    <div id="correo-error" class="error-text hidden"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">Tipo de Visita <span class="req">*</span></label>
+                    <div class="radio-group" id="tipoVisita-group">
+                        <label class="radio-label" for="tipo-estudiante">
+                            <input type="radio" name="tipoVisita" value="estudiante" id="tipo-estudiante" class="radio-input" required>
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">🎓 Estudiante</span>
+                        </label>
+                        <label class="radio-label" for="tipo-docente">
+                            <input type="radio" name="tipoVisita" value="docente" id="tipo-docente" class="radio-input">
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">👨‍🏫 Docente</span>
+                        </label>
+                        <label class="radio-label" for="tipo-externo">
+                            <input type="radio" name="tipoVisita" value="externo" id="tipo-externo" class="radio-input">
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">🏢 Visitante Externo</span>
+                        </label>
+                        <label class="radio-label" for="tipo-empresa">
+                            <input type="radio" name="tipoVisita" value="empresa" id="tipo-empresa" class="radio-input">
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">🏭 Empresa</span>
+                        </label>
+                    </div>
+                    <div id="tipoVisita-error" class="error-text hidden"></div>
+                </div>
+
+                <div class="header-divider" style="margin: 25px auto; opacity: 0.3;"></div>
+
+                <!-- Datos del Proyecto/Visita -->
                 <div class="form-group">
                     <label class="label" for="titulo">Título <span class="req">*</span></label>
                     <div class="input-wrapper">
@@ -102,6 +170,7 @@
                     </span>
                 </button>
             </form>
+
 
             <footer class="footer">
                 <p class="footer-text">Al registrarte aceptas el uso de tus datos para estadísticas del laboratorio</p>
@@ -241,13 +310,55 @@
         });
 
         // ========== VALIDACIONES ==========
+        function formatRUT(value) {
+            let cleaned = value.replace(/[^\dkK]/g, '');
+            if (cleaned.length > 9) cleaned = cleaned.slice(0, 9);
+            if (cleaned.length <= 1) return cleaned;
+            const body = cleaned.slice(0, -1);
+            const dv = cleaned.slice(-1);
+            return body.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
+        }
+
+        function validateRUT(rut) {
+            const cleaned = rut.replace(/[^\dkK]/g, '');
+            return cleaned.length >= 8 && cleaned.length <= 9;
+        }
+
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function validatePhone(phone) {
+            if (!phone.trim()) return false;
+            return phone.replace(/[^\d]/g, '').length >= 8;
+        }
+
         function validateField(name, value) {
-            if (!value || !value.trim()) {
+            if (!value || (typeof value === 'string' && !value.trim())) {
                 return 'Este campo es indispensable para el registro';
             }
-            if (name === 'titulo' && value.trim().length < 3) return 'Mínimo 3 caracteres';
-            if (name === 'descripcion' && value.trim().length < 5) return 'Mínimo 5 caracteres';
-            return '';
+            switch (name) {
+                case 'nombre':
+                    if (value.trim().length < 2) return 'Mínimo 2 caracteres';
+                    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) return 'Solo letras y espacios';
+                    return '';
+                case 'rut':
+                    if (!validateRUT(value)) return 'RUT inválido';
+                    return '';
+                case 'correo':
+                    if (!validateEmail(value)) return 'Correo inválido';
+                    return '';
+                case 'telefono':
+                    if (!validatePhone(value)) return 'Teléfono inválido';
+                    return '';
+                case 'titulo':
+                    if (value.trim().length < 3) return 'Mínimo 3 caracteres';
+                    return '';
+                case 'descripcion':
+                    if (value.trim().length < 5) return 'Mínimo 5 caracteres';
+                    return '';
+                default: return '';
+            }
         }
 
         function validateTags() {
@@ -303,16 +414,28 @@
         }
 
         function isFormValid() {
+            const nombre = document.getElementById('nombre').value;
+            const rut = document.getElementById('rut').value;
+            const telefono = document.getElementById('telefono').value;
+            const correo = document.getElementById('correo').value;
+            const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
             const titulo = document.getElementById('titulo').value;
             const descripcion = document.getElementById('descripcion').value;
             const categoria = document.querySelector('input[name="categoria"]:checked');
             
-            const isTituloValid = !validateField('titulo', titulo);
-            const isDescValid = !validateField('descripcion', descripcion);
-            const isCategoriaValid = !!categoria;
+            const isPersonalValid = !validateField('nombre', nombre) && 
+                                    !validateField('rut', rut) && 
+                                    !validateField('telefono', telefono) && 
+                                    !validateField('correo', correo) && 
+                                    !!tipoVisita;
+
+            const isProjectValid = !validateField('titulo', titulo) && 
+                                   !validateField('descripcion', descripcion) && 
+                                   !!categoria;
+
             const isTagsValid = validateTags();
             
-            return isTituloValid && isDescValid && isCategoriaValid && isTagsValid;
+            return isPersonalValid && isProjectValid && isTagsValid;
         }
 
         function updateSubmitButton() {
@@ -320,25 +443,30 @@
         }
 
         // ========== EVENT LISTENERS ==========
-        ['titulo', 'descripcion'].forEach(id => {
+        ['nombre', 'rut', 'telefono', 'correo', 'titulo', 'descripcion'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
-                el.addEventListener('input', function() { updateFieldUI(this); });
+                el.addEventListener('input', function(e) { 
+                    if (id === 'rut') e.target.value = formatRUT(e.target.value);
+                    if (id === 'nombre') e.target.value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                    updateFieldUI(this); 
+                });
                 el.addEventListener('blur', function() { updateFieldUI(this); });
             }
         });
 
-        document.querySelectorAll('input[name="categoria"]').forEach(r => {
+        document.querySelectorAll('input[name="tipoVisita"], input[name="categoria"]').forEach(r => {
             r.addEventListener('change', function() { 
-                const errDiv = document.getElementById('categoria-error');
+                const groupName = this.name;
+                const errDiv = document.getElementById(groupName + '-error');
                 if (errDiv) errDiv.classList.add('hidden');
                 updateSubmitButton(); 
             });
-            // Focus out validation
             r.addEventListener('blur', function() {
-                const categoria = document.querySelector('input[name="categoria"]:checked');
-                const errDiv = document.getElementById('categoria-error');
-                if (!categoria && errDiv) {
+                const groupName = this.name;
+                const selected = document.querySelector(`input[name="${groupName}"]:checked`);
+                const errDiv = document.getElementById(groupName + '-error');
+                if (!selected && errDiv) {
                     errDiv.textContent = 'Este campo es indispensable para el registro';
                     errDiv.classList.remove('hidden');
                 }
@@ -358,10 +486,16 @@
             submitBtn.disabled = true;
 
             try {
+                const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
                 const categoria = document.querySelector('input[name="categoria"]:checked');
                 const etiquetasStr = tags.map(t => t.template.includes('__') ? t.template.replace('__', t.value) : t.template).join(', ');
 
                 const payload = {
+                    nombre: document.getElementById('nombre').value.trim(),
+                    rut: document.getElementById('rut').value.trim(),
+                    telefono: document.getElementById('telefono').value.trim(),
+                    correo: document.getElementById('correo').value.trim(),
+                    tipoVisita: tipoVisita ? tipoVisita.value : '',
                     titulo: document.getElementById('titulo').value.trim(),
                     categoria: categoria ? categoria.value : '',
                     descripcion: document.getElementById('descripcion').value.trim(),
