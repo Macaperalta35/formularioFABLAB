@@ -100,23 +100,16 @@
                     <div id="tipoVisita-error" class="error-text hidden"></div>
                 </div>
 
-                <div class="header-divider" style="margin: 25px auto; opacity: 0.3;"></div>
-
                 <!-- Datos del Proyecto/Visita -->
                 <div class="form-group">
-                    <label class="label">Etiquetas Rápidas <span class="req">*</span></label>
-                    <div class="tags-container" id="tags-container">
-                        <div id="selected-tags" class="selected-tags"></div>
-                        <div class="tag-suggestions">
-                            <button type="button" class="tag-btn" data-template="Impresión 3D">Impresión 3D</button>
-                            <button type="button" class="tag-btn" data-template="Corte Láser">Corte Láser</button>
-                            <button type="button" class="tag-btn" data-template="Uso Cascos VR">Uso Cascos VR</button>
-                            <button type="button" class="tag-btn" data-template="Actividad Asignatura: __">Actividad Asignatura: __</button>
-                            <button type="button" class="tag-btn" data-template="Taller de: __">Taller de: __</button>
-                        </div>
+                    <label class="label">Etiquetas Rápidas</label>
+                    <div class="tag-suggestions" id="tag-suggestions">
+                        <button type="button" class="tag-btn" data-text="Impresión 3D">Impresión 3D</button>
+                        <button type="button" class="tag-btn" data-text="Corte Láser">Corte Láser</button>
+                        <button type="button" class="tag-btn" data-text="Uso Cascos VR">Uso Cascos VR</button>
+                        <button type="button" class="tag-btn" data-text="Actividad Asignatura: ">Actividad Asignatura</button>
+                        <button type="button" class="tag-btn" data-text="Taller de: ">Taller de</button>
                     </div>
-                    <div id="etiquetas-error" class="error-text hidden"></div>
-                    <input type="hidden" id="etiquetas-data" name="etiquetas" value="">
                 </div>
 
                 <div class="form-group">
@@ -202,76 +195,22 @@
             return { ok: true };
         }
 
-        // ========== TAGS LOGIC ==========
-        let tags = [];
-
-        function renderTags() {
-            selectedTagsDiv.innerHTML = '';
-            tags.forEach((tag, index) => {
-                const tagEl = document.createElement('div');
-                const isVariable = tag.template.includes('__');
-                
-                if (isVariable) {
-                    tagEl.className = 'tag-item incomplete';
-                    const prefix = tag.template.split('__')[0];
-                    const suffix = tag.template.split('__')[1] || '';
-                    
-                    tagEl.innerHTML = `
-                        <span>${prefix}</span>
-                        <input type="text" class="tag-input" data-index="${index}" value="${tag.value || ''}" placeholder="Completar..." required>
-                        <span>${suffix}</span>
-                        <button type="button" class="remove-tag" data-index="${index}">×</button>
-                    `;
-                } else {
-                    tagEl.className = 'tag-item';
-                    tagEl.innerHTML = `
-                        <span>${tag.template}</span>
-                        <button type="button" class="remove-tag" data-index="${index}">×</button>
-                    `;
-                }
-                selectedTagsDiv.appendChild(tagEl);
-            });
-
-            etiquetasData.value = JSON.stringify(tags);
-            validateTags();
-            updateSubmitButton();
-
-            document.querySelectorAll('.remove-tag').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const idx = parseInt(e.target.dataset.index);
-                    tags.splice(idx, 1);
-                    renderTags();
-                });
-            });
-
-            document.querySelectorAll('.tag-input').forEach(input => {
-                input.addEventListener('input', (e) => {
-                    const idx = parseInt(e.target.dataset.index);
-                    tags[idx].value = e.target.value;
-                    etiquetasData.value = JSON.stringify(tags);
-                    
-                    if(e.target.value.trim()) {
-                        e.target.parentElement.classList.remove('incomplete');
-                        e.target.classList.remove('error');
-                    } else {
-                        e.target.parentElement.classList.add('incomplete');
-                    }
-                    validateTags();
-                    updateSubmitButton();
-                });
-                
-                input.addEventListener('blur', (e) => {
-                    validateTags();
-                    updateSubmitButton();
-                });
-            });
-        }
-
+        // ========== TAGS LOGIC (Append to Textarea) ==========
         tagButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                const template = btn.dataset.template;
-                tags.push({ template, value: '' });
-                renderTags();
+                const textToAdd = btn.dataset.text;
+                const descripcion = document.getElementById('descripcion');
+                const currentVal = descripcion.value.trim();
+                
+                if (currentVal) {
+                    descripcion.value = currentVal + ", " + textToAdd;
+                } else {
+                    descripcion.value = textToAdd;
+                }
+                
+                // Trigger validation UI
+                updateFieldUI(descripcion);
+                descripcion.focus();
             });
         });
 
@@ -324,40 +263,7 @@
             }
         }
 
-        function validateTags() {
-            let isValid = true;
-            let errorMsg = '';
-            
-            if (tags.length === 0) {
-                isValid = false;
-                errorMsg = 'Este campo es indispensable para el registro';
-            } else {
-                const hasEmptyVariable = tags.some(tag => tag.template.includes('__') && !tag.value.trim());
-                if (hasEmptyVariable) {
-                    isValid = false;
-                    errorMsg = 'Complete los espacios subrayados en las etiquetas';
-                    
-                    document.querySelectorAll('.tag-input').forEach(input => {
-                        if (!input.value.trim()) {
-                            input.classList.add('error');
-                        }
-                    });
-                }
-            }
 
-            const errDiv = document.getElementById('etiquetas-error');
-            if (errDiv) {
-                if (!isValid) {
-                    tagsContainer.classList.add('error');
-                    errDiv.textContent = errorMsg;
-                    errDiv.classList.remove('hidden');
-                } else {
-                    tagsContainer.classList.remove('error');
-                    errDiv.classList.add('hidden');
-                }
-            }
-            return isValid;
-        }
 
         function updateFieldUI(field) {
             const err = validateField(field.name, field.value);
@@ -391,10 +297,8 @@
                                     !!tipoVisita;
 
             const isProjectValid = !validateField('descripcion', descripcion);
-
-            const isTagsValid = validateTags();
             
-            return isPersonalValid && isProjectValid && isTagsValid;
+            return isPersonalValid && isProjectValid;
         }
 
         function updateSubmitButton() {
@@ -446,7 +350,6 @@
 
             try {
                 const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
-                const etiquetasStr = tags.map(t => t.template.includes('__') ? t.template.replace('__', t.value) : t.template).join(', ');
 
                 const payload = {
                     nombre: document.getElementById('nombre').value.trim(),
@@ -455,7 +358,6 @@
                     correo: document.getElementById('correo').value.trim(),
                     tipoVisita: tipoVisita ? tipoVisita.value : '',
                     descripcion: document.getElementById('descripcion').value.trim(),
-                    etiquetas: etiquetasStr,
                     fecha: new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' })
                 };
 
@@ -475,13 +377,11 @@
                     successContainer.classList.remove('fade-in');
                     formContainer.classList.remove('hidden');
                     form.reset();
-                    tags = [];
-                    renderTags();
                     btnText.classList.remove('hidden');
                     btnLoader.classList.add('hidden');
                     updateSubmitButton();
                     document.querySelectorAll('.error-text').forEach(el => el.classList.add('hidden'));
-                    document.querySelectorAll('.input, .tags-container').forEach(el => el.classList.remove('error'));
+                    document.querySelectorAll('.input').forEach(el => el.classList.remove('error'));
                 }, 5000);
             } catch (err) {
                 let banner = document.getElementById('submit-error-banner');
