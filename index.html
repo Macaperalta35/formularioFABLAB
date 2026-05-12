@@ -104,50 +104,6 @@
 
                 <!-- Datos del Proyecto/Visita -->
                 <div class="form-group">
-                    <label class="label" for="titulo">Título <span class="req">*</span></label>
-                    <div class="input-wrapper">
-                        <span class="input-icon">📝</span>
-                        <input type="text" id="titulo" name="titulo" class="input" placeholder="Ej: Sistema de Riego Automatizado" required>
-                    </div>
-                    <div id="titulo-error" class="error-text hidden"></div>
-                </div>
-
-                <div class="form-group">
-                    <label class="label">Categoría <span class="req">*</span></label>
-                    <div class="radio-group" id="categoria-group">
-                        <label class="radio-label" for="cat-impresion3d">
-                            <input type="radio" name="categoria" value="Impresión 3D" id="cat-impresion3d" class="radio-input" required>
-                            <span class="radio-custom"></span>
-                            <span class="radio-text">🖨️ Impresión 3D</span>
-                        </label>
-                        <label class="radio-label" for="cat-corte">
-                            <input type="radio" name="categoria" value="Corte Láser" id="cat-corte" class="radio-input">
-                            <span class="radio-custom"></span>
-                            <span class="radio-text">⚡ Corte Láser</span>
-                        </label>
-                        <label class="radio-label" for="cat-electronica">
-                            <input type="radio" name="categoria" value="Electrónica" id="cat-electronica" class="radio-input">
-                            <span class="radio-custom"></span>
-                            <span class="radio-text">🔌 Electrónica</span>
-                        </label>
-                        <label class="radio-label" for="cat-otro">
-                            <input type="radio" name="categoria" value="Otro" id="cat-otro" class="radio-input">
-                            <span class="radio-custom"></span>
-                            <span class="radio-text">🔧 Otro</span>
-                        </label>
-                    </div>
-                    <div id="categoria-error" class="error-text hidden"></div>
-                </div>
-
-                <div class="form-group">
-                    <label class="label" for="descripcion">Propósito de la Visita / Descripción <span class="req">*</span></label>
-                    <div class="input-wrapper textarea-wrapper">
-                        <textarea id="descripcion" name="descripcion" class="input textarea" placeholder="Ej: Diseño e impresión de piezas para un sistema de riego..." rows="3" required></textarea>
-                    </div>
-                    <div id="descripcion-error" class="error-text hidden"></div>
-                </div>
-
-                <div class="form-group">
                     <label class="label">Etiquetas Rápidas <span class="req">*</span></label>
                     <div class="tags-container" id="tags-container">
                         <div id="selected-tags" class="selected-tags"></div>
@@ -162,6 +118,16 @@
                     <div id="etiquetas-error" class="error-text hidden"></div>
                     <input type="hidden" id="etiquetas-data" name="etiquetas" value="">
                 </div>
+
+                <div class="form-group">
+                    <label class="label" for="descripcion">Propósito de la Visita / Descripción <span class="req">*</span></label>
+                    <div class="input-wrapper textarea-wrapper">
+                        <textarea id="descripcion" name="descripcion" class="input textarea" placeholder="Ej: Diseño e impresión de piezas para un sistema de riego..." rows="3" required></textarea>
+                    </div>
+                    <div id="descripcion-error" class="error-text hidden"></div>
+                </div>
+
+
 
                 <button type="submit" id="submit-btn" class="submit-btn" disabled>
                     <span class="btn-text">Guardar</span>
@@ -351,9 +317,6 @@
                 case 'telefono':
                     if (!validatePhone(value)) return 'Teléfono inválido';
                     return '';
-                case 'titulo':
-                    if (value.trim().length < 3) return 'Mínimo 3 caracteres';
-                    return '';
                 case 'descripcion':
                     if (value.trim().length < 5) return 'Mínimo 5 caracteres';
                     return '';
@@ -419,9 +382,7 @@
             const telefono = document.getElementById('telefono').value;
             const correo = document.getElementById('correo').value;
             const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
-            const titulo = document.getElementById('titulo').value;
             const descripcion = document.getElementById('descripcion').value;
-            const categoria = document.querySelector('input[name="categoria"]:checked');
             
             const isPersonalValid = !validateField('nombre', nombre) && 
                                     !validateField('rut', rut) && 
@@ -429,9 +390,7 @@
                                     !validateField('correo', correo) && 
                                     !!tipoVisita;
 
-            const isProjectValid = !validateField('titulo', titulo) && 
-                                   !validateField('descripcion', descripcion) && 
-                                   !!categoria;
+            const isProjectValid = !validateField('descripcion', descripcion);
 
             const isTagsValid = validateTags();
             
@@ -443,7 +402,7 @@
         }
 
         // ========== EVENT LISTENERS ==========
-        ['nombre', 'rut', 'telefono', 'correo', 'titulo', 'descripcion'].forEach(id => {
+        ['nombre', 'rut', 'telefono', 'correo', 'descripcion'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.addEventListener('input', function(e) { 
@@ -455,7 +414,7 @@
             }
         });
 
-        document.querySelectorAll('input[name="tipoVisita"], input[name="categoria"]').forEach(r => {
+        document.querySelectorAll('input[name="tipoVisita"]').forEach(r => {
             r.addEventListener('change', function() { 
                 const groupName = this.name;
                 const errDiv = document.getElementById(groupName + '-error');
@@ -487,7 +446,6 @@
 
             try {
                 const tipoVisita = document.querySelector('input[name="tipoVisita"]:checked');
-                const categoria = document.querySelector('input[name="categoria"]:checked');
                 const etiquetasStr = tags.map(t => t.template.includes('__') ? t.template.replace('__', t.value) : t.template).join(', ');
 
                 const payload = {
@@ -496,8 +454,6 @@
                     telefono: document.getElementById('telefono').value.trim(),
                     correo: document.getElementById('correo').value.trim(),
                     tipoVisita: tipoVisita ? tipoVisita.value : '',
-                    titulo: document.getElementById('titulo').value.trim(),
-                    categoria: categoria ? categoria.value : '',
                     descripcion: document.getElementById('descripcion').value.trim(),
                     etiquetas: etiquetasStr,
                     fecha: new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' })
