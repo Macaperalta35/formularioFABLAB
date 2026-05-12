@@ -195,10 +195,18 @@
             return { ok: true };
         }
 
-        // ========== TAGS LOGIC (Append to Textarea) ==========
+        // ========== TAGS LOGIC (Append to Textarea & Track for Sheets) ==========
+        let clickedTags = [];
+
         tagButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const textToAdd = btn.dataset.text;
+                const tagValue = btn.innerText; // Get the button label
+                
+                if (!clickedTags.includes(tagValue)) {
+                    clickedTags.push(tagValue);
+                }
+
                 const descripcion = document.getElementById('descripcion');
                 const currentVal = descripcion.value.trim();
                 
@@ -358,6 +366,7 @@
                     correo: document.getElementById('correo').value.trim(),
                     tipoVisita: tipoVisita ? tipoVisita.value : '',
                     descripcion: document.getElementById('descripcion').value.trim(),
+                    etiquetas: clickedTags.join(', '),
                     fecha: new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' })
                 };
 
@@ -377,6 +386,7 @@
                     successContainer.classList.remove('fade-in');
                     formContainer.classList.remove('hidden');
                     form.reset();
+                    clickedTags = [];
                     btnText.classList.remove('hidden');
                     btnLoader.classList.add('hidden');
                     updateSubmitButton();
