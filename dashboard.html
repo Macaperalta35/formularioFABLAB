@@ -619,11 +619,9 @@
             await loadAllData();
             document.getElementById('login-overlay').style.display = 'none';
         } catch (e) {
-            if (e.message && (e.message.includes('autorizado') || e.message.includes('autorizado'))) {
-                sessionStorage.removeItem('fablab_admin_token');
-                document.getElementById('login-error').style.display = 'block';
-                document.getElementById('login-overlay').style.display = 'flex';
-            }
+            sessionStorage.removeItem('fablab_admin_token');
+            document.getElementById('login-error').style.display = 'block';
+            document.getElementById('login-overlay').style.display = 'flex';
         }
     }
 
@@ -715,6 +713,7 @@
 
         } catch (e) {
             document.getElementById('visitas-loading').style.display = 'none';
+            throw e;
         }
     }
 
