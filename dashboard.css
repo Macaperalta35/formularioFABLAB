@@ -1436,3 +1436,96 @@ body {
 .panel-card-body.no-pad {
     padding: 0;
 }
+
+/* ===== LOGIN OVERLAY ===== */
+.login-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 14, 0.85);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.login-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 44px 40px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+}
+
+.login-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 24px;
+}
+
+.login-brand-mark {
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    height: 36px;
+}
+
+.login-brand-block { display: block; width: 26px; height: 100%; background: var(--red); border-radius: 3px; }
+.login-brand-bar   { display: block; width: 6px;  height: 100%; background: var(--red); border-radius: 3px; }
+
+.login-brand-name  { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); letter-spacing: 0.1em; }
+.login-brand-sub   { font-size: 0.7rem; font-weight: 700; color: var(--red); letter-spacing: 0.25em; text-transform: uppercase; }
+
+.login-title { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.login-sub   { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 28px; }
+
+.login-input {
+    width: 100%;
+    padding: 13px 16px;
+    background: var(--bg-base);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+}
+.login-input:focus { border-color: var(--red); }
+
+.login-error {
+    color: var(--red);
+    font-size: 0.78rem;
+    margin-bottom: 12px;
+    display: none;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+.login-btn:hover { background: #c61a1e; transform: translateY(-1px); }
+
+.sidebar-footer-btn {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--red);
+    font: inherit;
+}

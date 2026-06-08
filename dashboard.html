@@ -14,6 +14,27 @@
 <body>
     <div class="ambient-bg"></div>
 
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="login-overlay">
+        <div class="login-box">
+            <div class="login-brand">
+                <div class="login-brand-mark">
+                    <span class="login-brand-block"></span>
+                    <span class="login-brand-bar"></span>
+                </div>
+                <span class="login-brand-name">inacap</span>
+                <span class="login-brand-sub">FAB LAB</span>
+            </div>
+            <div class="login-title">Panel de Administración</div>
+            <div class="login-sub">Ingresa la contraseña para continuar</div>
+            <form onsubmit="doLogin(event)">
+                <input type="password" id="login-pwd" class="login-input" placeholder="Contraseña" required>
+                <div id="login-error" class="login-error">Contraseña incorrecta. Inténtalo nuevamente.</div>
+                <button type="submit" class="login-btn">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div class="toast-container" id="toast-container"></div>
 
@@ -73,6 +94,10 @@
                     <span class="nav-icon">🟢</span>
                     Abrir Google Sheets
                 </a>
+                <button type="button" class="sidebar-footer-link sidebar-footer-btn" onclick="doLogout()">
+                    <span class="nav-icon">🚪</span>
+                    Cerrar Sesión
+                </button>
             </div>
         </aside>
 
@@ -568,33 +593,67 @@
     });
 
     // ===========================
+    //  AUTH
+    // ===========================
+    function doLogin(e) {
+        e.preventDefault();
+        const pwd = document.getElementById('login-pwd').value;
+        if (!pwd) return;
+        sessionStorage.setItem('fablab_admin_token', pwd);
+        document.getElementById('login-error').style.display = 'none';
+        initDashboard();
+    }
+
+    function doLogout() {
+        sessionStorage.removeItem('fablab_admin_token');
+        location.reload();
+    }
+
+    async function initDashboard() {
+        const token = sessionStorage.getItem('fablab_admin_token');
+        if (!token) {
+            document.getElementById('login-overlay').style.display = 'flex';
+            return;
+        }
+        try {
+            await loadAllData();
+            document.getElementById('login-overlay').style.display = 'none';
+        } catch (e) {
+            if (e.message && (e.message.includes('autorizado') || e.message.includes('autorizado'))) {
+                sessionStorage.removeItem('fablab_admin_token');
+                document.getElementById('login-error').style.display = 'block';
+                document.getElementById('login-overlay').style.display = 'flex';
+            }
+        }
+    }
+
+    // ===========================
     //  API FETCH OPERATIONS
     // ===========================
     async function apiRequest(action, payload = {}) {
         try {
             setGlobalLoading(true);
-            const body = { action, ...payload };
-            // Para Apps Script se usa POST (incluso para traer datos si queremos evitar CORS preflight limitados)
-            // Pero como Apps Script maneja GET para consultas puras, usaremos GET para leer, POST para escribir.
-            
+            const token = sessionStorage.getItem('fablab_admin_token') || '';
+            const body = { action, token, ...payload };
+
             let url = GOOGLE_SCRIPT_URL;
             let options = { mode: 'cors' };
-            
+
             if (action.startsWith('get')) {
-                url += '?action=' + action;
+                url += '?action=' + action + '&token=' + encodeURIComponent(token);
                 options.method = 'GET';
             } else {
                 options.method = 'POST';
-                options.headers = { 'Content-Type': 'text/plain;charset=utf-8' }; // text/plain evita preflight
+                options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
                 options.body = JSON.stringify(body);
             }
-            
+
             const response = await fetch(url, options);
             const data = await response.json();
-            
+
             if (data.error) throw new Error(data.error);
             return data;
-            
+
         } catch (e) {
             console.error('API Error:', e);
             showToast('Error de conexión con Sheets: ' + e.message, 'error');
@@ -1239,7 +1298,7 @@
     // ===========================
     //  INIT
     // ===========================
-    loadAllData();
+    initDashboard();
 
     </script>
 </body>
