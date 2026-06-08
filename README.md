@@ -75,7 +75,7 @@ dashboard.html  ──GET/POST──►  Google Apps Script  ──►  Google S
 
 **URL actual del script:**
 ```
-https://script.google.com/macros/s/AKfycbxtLnlmnuXSF73iFijxPN1P4bxBTwfENak-NgpSd29e1yEeaES7S9L18MFh3I0JYbsqiA/exec
+https://script.google.com/macros/s/AKfycbxRtF1SGLJsBAjyKWtvdo9CxjfQMRIq7ODOc_q_76XosaYTK7wj50bV0IabqRKZpL9d9A/exec
 ```
 
 Esta URL está configurada en `index.html` y `dashboard.html` como `GOOGLE_SCRIPT_URL`.
