@@ -187,13 +187,16 @@
 
         // ========== BACKEND: Google Sheets via Apps Script ==========
         async function postRegistro(payload) {
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            // mode: no-cors siempre devuelve opaque response, se asume éxito
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (_) {
+                // Sheets es registro secundario; ignorar errores de red
+            }
             return { ok: true };
         }
 

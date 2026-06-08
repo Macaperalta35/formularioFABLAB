@@ -13,6 +13,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fablab_visitas.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'fablab-secret-key-2024'
 
+# Contraseña para el dashboard de administración
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'fablab2024')
+
 # Inicializar BD
 db = SQLAlchemy(app)
 
@@ -21,7 +24,7 @@ CORS(app, resources={
     r"/api/*": {
         "origins": ["https://macaperalta35.github.io", "http://localhost:8000", "http://127.0.0.1:8000", "*"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+        "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With", "X-Admin-Token"],
         "expose_headers": ["Content-Type"],
         "supports_credentials": False
     }
@@ -34,7 +37,7 @@ def handle_options():
         response = make_response('', 200)
         response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With, X-Admin-Token'
         response.headers['Access-Control-Max-Age'] = '86400'  # 24 horas
         return response
 
@@ -104,6 +107,10 @@ def manejar_visitas():
             return jsonify({'error': str(e)}), 500
 
     elif request.method == 'GET':
+        auth_token = request.headers.get('X-Admin-Token')
+        if not auth_token or auth_token != ADMIN_PASSWORD:
+            return jsonify({'error': 'Acceso no autorizado'}), 401
+
         try:
             visitas = Visita.query.order_by(Visita.created_at.desc()).all()
             return make_response(jsonify([v.to_dict() for v in visitas]), 200)
@@ -114,6 +121,10 @@ def manejar_visitas():
 @app.route('/api/visitas/export', methods=['GET'])
 def exportar_visitas():
     """Exportar visitas en Excel"""
+    auth_token = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if not auth_token or auth_token != ADMIN_PASSWORD:
+        return jsonify({'error': 'Acceso no autorizado'}), 401
+
     formato = request.args.get('format', 'excel').lower()
 
     if formato != 'excel':

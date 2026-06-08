@@ -13,11 +13,7 @@
             --muted: #5a5a5a;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -27,220 +23,93 @@
             color: var(--text);
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1200px; margin: 0 auto; }
 
-        .header {
+        /* Login specific styles */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
             background: var(--surface);
-            padding: 30px;
+            padding: 40px;
             border-radius: 20px;
             box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
-            margin-bottom: 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             text-align: center;
-            gap: 15px;
         }
 
-        .header h1 {
-            color: var(--text);
-            font-size: 30px;
-            letter-spacing: 0.02em;
-        }
+        .login-container h2 { margin-bottom: 20px; color: var(--text); }
 
-        .header .logo {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin: 0 auto;
-        }
-
-        .logo img {
-            max-width: 140px;
-            width: auto;
-            height: auto;
-        }
-
-        .logo-name {
-            font-weight: 900;
-            font-size: 24px;
-            color: var(--text);
-            letter-spacing: 0.12em;
-        }
-
-        .logo-subtitle {
-            color: var(--primary);
-            font-weight: 900;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            font-size: 16px;
-        }
-
-        .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: center;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 700;
-            transition: all 0.25s ease;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #c61a1e;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(237, 28, 36, 0.2);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(237, 28, 36, 0.08);
-        }
-
-        .table-container {
-            background: var(--surface);
-            border-radius: 20px;
-            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-        }
-
-        th {
-            background: var(--primary);
-            color: white;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
-        }
-
-        td {
-            color: var(--text);
-        }
-
-        .stat-card {
-            background: white;
-            border: 1px solid rgba(237, 28, 36, 0.15);
-        }
-
-        table {
+        .form-input {
             width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: #333;
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        td {
             padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-        }
-
-        tr:hover {
-            background: #f9f9f9;
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-            font-size: 16px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid #eee;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
         }
 
-        .stat-card h3 {
-            color: #667eea;
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
+        .form-input:focus { border-color: var(--primary); }
 
-        .stat-card p {
-            color: #999;
-            font-size: 14px;
-        }
+        /* General styles */
+        .header { background: var(--surface); padding: 30px; border-radius: 20px; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08); margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 15px; position: relative; }
+        .header h1 { color: var(--text); font-size: 30px; letter-spacing: 0.02em; }
+        .header .logo { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; margin: 0 auto; }
+        .logo img { max-width: 140px; width: auto; height: auto; }
+        .logo-name { font-weight: 900; font-size: 24px; color: var(--text); letter-spacing: 0.12em; }
+        .logo-subtitle { color: var(--primary); font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; font-size: 16px; }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #667eea;
-        }
+        .logout-btn { position: absolute; top: 20px; right: 20px; }
 
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
+        .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+        .btn { padding: 12px 24px; border: none; border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 700; transition: all 0.25s ease; width: 100%; }
+        .btn-auto { width: auto; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #c61a1e; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(237, 28, 36, 0.2); }
+        .btn-secondary { background: white; color: var(--primary); border: 2px solid var(--primary); }
+        .btn-secondary:hover { background: rgba(237, 28, 36, 0.08); }
+        .btn-danger { background: #5a5a5a; color: white; }
+        .btn-danger:hover { background: #333; }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .table-container { background: var(--surface); border-radius: 20px; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #333; color: white; padding: 15px; text-align: left; font-weight: 600; font-size: 14px; }
+        td { padding: 12px 15px; border-bottom: 1px solid #eee; color: var(--text); }
+        tr:hover { background: #f9f9f9; }
 
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 4px solid #c33;
-        }
+        .no-data { text-align: center; padding: 40px; color: #999; font-size: 16px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); text-align: center; border: 1px solid rgba(237, 28, 36, 0.15); }
+        .stat-card h3 { color: #667eea; font-size: 28px; margin-bottom: 5px; }
+        .stat-card p { color: #999; font-size: 14px; }
 
-        .success {
-            background: #efe;
-            color: #3c3;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 4px solid #3c3;
-        }
+        .loading { text-align: center; padding: 40px; color: #667eea; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .error { background: #fee; color: #c33; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #c33; }
+        .success { background: #efe; color: #3c3; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #3c3; }
     </style>
 </head>
 <body>
-    <div class="container">
+
+    <!-- Pantalla de Login -->
+    <div id="login-view" class="login-container">
+        <div class="logo" style="margin-bottom: 20px;">
+            <img src="logo-inacap.svg" alt="INACAP logo" style="max-width: 100px;"/>
+        </div>
+        <h2>Acceso Administrativo</h2>
+        <form id="login-form" onsubmit="realizarLogin(event)">
+            <input type="password" id="admin-password" class="form-input" placeholder="Contraseña de administrador" required>
+            <div id="login-error-msg" style="color: red; margin-bottom: 15px; font-size: 14px; display: none;">Contraseña incorrecta</div>
+            <button type="submit" class="btn btn-primary">Ingresar</button>
+        </form>
+    </div>
+
+    <!-- Pantalla Dashboard -->
+    <div id="dashboard-view" class="container" style="display: none;">
         <div class="header">
+            <button class="btn btn-danger btn-auto logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
             <div class="logo">
                 <img src="logo-inacap.svg" alt="INACAP logo" />
                 <span class="logo-name">INACAP</span>
@@ -256,9 +125,9 @@
 
         <div style="margin-bottom: 20px;">
             <div class="actions">
-                <a href="dashboard.html" class="btn btn-primary" style="background: #222; text-decoration: none;">🚀 Ir al NUEVO Dashboard Completo</a>
-                <button class="btn btn-primary" onclick="exportarExcel()">📥 Descargar Excel</button>
-                <button class="btn btn-secondary" onclick="recargar()">🔄 Recargar</button>
+                <a href="dashboard.html" class="btn btn-primary btn-auto" style="background: #222; text-decoration: none;">🚀 Ir al NUEVO Dashboard Completo</a>
+                <button class="btn btn-primary btn-auto" onclick="exportarExcel()">📥 Descargar Excel</button>
+                <button class="btn btn-secondary btn-auto" onclick="recargar()">🔄 Recargar</button>
             </div>
         </div>
 
@@ -294,64 +163,100 @@
     </div>
 
     <script>
-        async function getBaseUrl() {
-            // Si estamos en producción (GitHub Pages)
-            if (window.location.hostname.includes('github.io')) {
-                return 'https://macaperalta35.pythonanywhere.com/api';
-            }
+        let BASE_URL = null;
+        let updateInterval = null;
 
+        async function getBaseUrl() {
+            if (window.location.hostname.includes('github.io')) return 'https://macaperalta35.pythonanywhere.com/api';
             let host = window.location.hostname;
             if (host === 'localhost' || !host) host = '127.0.0.1';
-
             const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
             const ports = [5000, 5001];
-
             for (const port of ports) {
                 const apiUrl = `${protocol}//${host}:${port}/api`;
                 try {
-                    const response = await fetch(`${apiUrl}/visitas`, { method: 'GET' });
-                    if (response.ok) return apiUrl;
-                } catch (err) {
-                    // No hay servidor en este puerto, intentar siguiente
-                }
+                    const response = await fetch(apiUrl);
+                    return apiUrl;
+                } catch (err) {}
             }
-
-            // Fallback conservador si no responde ningún puerto
-            return `${protocol}//${host}:5001/api`;
+            return `${protocol}//${host}:5000/api`;
         }
 
-        let BASE_URL = null;
-
-        // Función para prevenir inyección HTML/JS (XSS)
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+
+        function mostrarLogin() {
+            document.getElementById('login-view').style.display = 'block';
+            document.getElementById('dashboard-view').style.display = 'none';
+            if(updateInterval) clearInterval(updateInterval);
+        }
+
+        function mostrarDashboard() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'block';
+        }
+
+        function cerrarSesion() {
+            sessionStorage.removeItem('fablab_admin_token');
+            mostrarLogin();
+        }
+
+        async function realizarLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('admin-password').value;
+            if (!pass) return;
+
+            sessionStorage.setItem('fablab_admin_token', pass);
+            document.getElementById('login-error-msg').style.display = 'none';
+
+            const exito = await cargarDatos();
+            if (exito) {
+                mostrarDashboard();
+                document.getElementById('admin-password').value = '';
+                if(updateInterval) clearInterval(updateInterval);
+                updateInterval = setInterval(cargarDatos, 30000);
+            } else {
+                sessionStorage.removeItem('fablab_admin_token');
+                document.getElementById('login-error-msg').style.display = 'block';
+            }
         }
 
         async function cargarDatos() {
+            const token = sessionStorage.getItem('fablab_admin_token');
+            if (!token) {
+                mostrarLogin();
+                return false;
+            }
+
+            if (!BASE_URL) BASE_URL = await getBaseUrl();
+
             const loadingContainer = document.getElementById('loading-container');
             const tableContainer = document.getElementById('table-container');
             const noDataContainer = document.getElementById('no-data-container');
             const messageContainer = document.getElementById('message-container');
 
-            loadingContainer.style.display = 'block';
-            tableContainer.style.display = 'none';
-            noDataContainer.style.display = 'none';
-            messageContainer.innerHTML = '';
+            if(document.getElementById('dashboard-view').style.display === 'block') {
+                loadingContainer.style.display = 'block';
+                tableContainer.style.display = 'none';
+                noDataContainer.style.display = 'none';
+            }
 
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-                const response = await fetch(`${BASE_URL}/visitas`, { signal: controller.signal });
+                const response = await fetch(`${BASE_URL}/visitas`, {
+                    headers: { 'X-Admin-Token': token },
+                    signal: controller.signal
+                });
                 clearTimeout(timeoutId);
-                
-                if (!response.ok) throw new Error('Error al obtener datos');
+
+                if (response.status === 401) {
+                    throw new Error('No Autorizado');
+                }
+                if (!response.ok) throw new Error('Error al obtener datos del servidor');
 
                 const visitas = await response.json();
                 const tbody = document.getElementById('table-body');
@@ -374,7 +279,6 @@
                         </tr>
                     `).join('');
 
-                    // Calcular estadísticas
                     const tipos = {};
                     visitas.forEach(v => {
                         const tipo = v.tipo_visita || 'Otros';
@@ -383,7 +287,7 @@
 
                     statsContainer.innerHTML = `
                         <div class="stat-card">
-                            <h3>${visitas.length}</h3>
+                            <h3 style="color: var(--primary)">${visitas.length}</h3>
                             <p>Total de Visitas</p>
                         </div>
                         ${Object.entries(tipos).map(([tipo, count]) => `
@@ -397,36 +301,51 @@
                     tableContainer.style.display = 'block';
                     loadingContainer.style.display = 'none';
                 }
+                return true;
             } catch (error) {
+                if (error.message === 'No Autorizado') {
+                    cerrarSesion();
+                    return false;
+                }
                 messageContainer.innerHTML = `<div class="error">Error: ${error.message}</div>`;
                 loadingContainer.style.display = 'none';
+                return false;
             }
         }
 
         function exportarExcel() {
-            window.location.href = `${BASE_URL}/visitas/export?format=excel`;
+            const token = sessionStorage.getItem('fablab_admin_token');
+            if (!token) return;
+            window.location.href = `${BASE_URL}/visitas/export?format=excel&token=${encodeURIComponent(token)}`;
         }
 
         function recargar() {
             cargarDatos();
         }
 
-        async function initAdmin() {
-            // Verificar si se está abriendo desde file://
+        async function initApp() {
             if (window.location.protocol === 'file:') {
-                alert('⚠️ Para que funcione correctamente, abre este panel desde el servidor web:\n\nhttp://127.0.0.1:8000/admin-visitas.html\n\nNo lo abras directamente desde el archivo.');
+                alert('⚠️ Para que funcione correctamente, abre este panel desde el servidor web:\n\nhttp://127.0.0.1:8000/admin-visitas.html');
                 return;
             }
 
             BASE_URL = await getBaseUrl();
-            cargarDatos();
+
+            const token = sessionStorage.getItem('fablab_admin_token');
+            if (token) {
+                const exito = await cargarDatos();
+                if (exito) {
+                    mostrarDashboard();
+                    updateInterval = setInterval(cargarDatos, 30000);
+                } else {
+                    mostrarLogin();
+                }
+            } else {
+                mostrarLogin();
+            }
         }
 
-        // Cargar datos al iniciar
-        initAdmin();
-
-        // Recargar cada 30 segundos
-        setInterval(cargarDatos, 30000);
+        initApp();
     </script>
 </body>
 </html>
