@@ -37,18 +37,22 @@ El panel permite:
 Visitante
    │
    ▼
-index.html  ──POST──►  Google Apps Script  ──►  Google Sheets (hoja "Visitas")
-(formulario)             (doPost sin token)
+index.html  ──POST no-cors──►  Google Apps Script  ──►  Google Sheets (hoja "Visitas")
+(formulario)                    (doPost sin token)
 
 Administrador
    │
    ▼
-dashboard.html  ──GET/POST──►  Google Apps Script  ──►  Google Sheets
-(con login)                     (doGet/doPost con token)   Hojas: Visitas
-                                                                   Ocupaciones
-                                                                   Secciones
-                                                                   Alumnos
+dashboard.html  ──JSONP GET──►  Google Apps Script  ──►  Google Sheets (lectura)
+(con login)     ──POST no-cors─►  Google Apps Script  ──►  Google Sheets (escritura)
+                                  (doGet/doPost con token)   Hojas: Visitas
+                                                                     Ocupaciones
+                                                                     Secciones
+                                                                     Alumnos
 ```
+
+> El dashboard usa **JSONP** para lecturas (evita restricciones CORS de los redirects de Apps Script)
+> y **POST sin CORS** para escrituras. Ambas técnicas funcionan desde cualquier navegador.
 
 - **Frontend:** HTML5 + CSS3 + JavaScript vanilla. Desplegado en GitHub Pages.
 - **Backend:** Google Apps Script como API serverless (sin costo de servidor).

@@ -630,23 +630,46 @@
     // ===========================
     //  API FETCH OPERATIONS
     // ===========================
+
+    // JSONP: carga datos via <script> tag, sin restricciones CORS.
+    // Usado para todas las lecturas (getAll, getOcupaciones, getSecciones).
+    function jsonpRequest(action) {
+        return new Promise((resolve, reject) => {
+            const token = sessionStorage.getItem('fablab_admin_token') || '';
+            const cb = '_gscb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+            const script = document.createElement('script');
+            const cleanup = () => { delete window[cb]; script.remove(); };
+
+            window[cb] = (data) => {
+                cleanup();
+                if (data && data.error) reject(new Error(data.error));
+                else resolve(data);
+            };
+            script.onerror = () => { cleanup(); reject(new Error('No se pudo conectar con Sheets')); };
+            script.src = `${GOOGLE_SCRIPT_URL}?action=${encodeURIComponent(action)}&token=${encodeURIComponent(token)}&callback=${cb}`;
+            document.head.appendChild(script);
+        });
+    }
+
     async function apiRequest(action, payload = {}) {
+        setGlobalLoading(true);
         try {
-            setGlobalLoading(true);
+            // Lecturas via JSONP (evita CORS por completo — funciona siempre)
+            if (action.startsWith('get')) {
+                return await jsonpRequest(action);
+            }
+
+            // Escrituras via POST no-cors (no leemos la respuesta; el estado
+            // local se actualiza optimistamente en cada handler de UI).
             const token = sessionStorage.getItem('fablab_admin_token') || '';
             const body = { action, token, ...payload };
-
-            // Siempre POST con text/plain para evitar preflight CORS y problemas
-            // de redirección que tiene Apps Script con GET desde el navegador.
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
+            await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(body)
-            });
-            const data = await response.json();
-
-            if (data.error) throw new Error(data.error);
-            return data;
+            }).catch(() => {});
+            return { ok: true };
 
         } catch (e) {
             console.error('API Error:', e);

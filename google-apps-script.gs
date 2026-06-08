@@ -41,29 +41,41 @@ function jsonResponse(data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ── GET: leer datos ──────────────────────────────────
+// Responde en JSON o JSONP según el parámetro `callback`
+function respond(data, cb) {
+  var json = JSON.stringify(data);
+  if (cb) {
+    return ContentService
+      .createTextOutput(cb + '(' + json + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return jsonResponse(data);
+}
+
+// ── GET: leer datos (con soporte JSONP para el dashboard) ──
 
 function doGet(e) {
+  var cb = e.parameter.callback || '';
   try {
     var action = e.parameter.action || 'getAll';
     var token  = e.parameter.token  || '';
 
     if (token !== ADMIN_TOKEN) {
-      return jsonResponse({ error: 'No autorizado', status: 401 });
+      return respond({ error: 'No autorizado', status: 401 }, cb);
     }
 
     if (action === 'getAll') {
       var sheet = getOrCreateSheet('Visitas', [
         'fecha','nombre','rut','telefono','correo','tipoVisita','proposito','etiquetas'
       ]);
-      return jsonResponse(sheetToJSON(sheet));
+      return respond(sheetToJSON(sheet), cb);
     }
 
     if (action === 'getOcupaciones') {
       var sheet = getOrCreateSheet('Ocupaciones', [
         'id','nombre','tipo','docente','asignatura','fecha','horaInicio','horaFin','capacidad','observaciones'
       ]);
-      return jsonResponse(sheetToJSON(sheet));
+      return respond(sheetToJSON(sheet), cb);
     }
 
     if (action === 'getSecciones') {
@@ -74,13 +86,13 @@ function doGet(e) {
       secciones.forEach(function(sec) {
         sec.alumnos = alumnos.filter(function(a) { return String(a.seccionId) === String(sec.id); });
       });
-      return jsonResponse(secciones);
+      return respond(secciones, cb);
     }
 
-    return jsonResponse({ ok: true });
+    return respond({ ok: true }, cb);
 
   } catch(err) {
-    return jsonResponse({ error: err.toString() });
+    return respond({ error: err.toString() }, cb);
   }
 }
 
