@@ -1,57 +1,155 @@
-# FAB LAB INACAP - Sistema de Registro de Visitas 🚀 (v1.0)
+# FAB LAB INACAP — Sistema de Registro de Visitas
 
-Bienvenido al repositorio oficial del **Sistema de Registro de Visitas del FAB LAB INACAP Sede San Pedro de la Paz**. 
-Este sistema ha sido diseñado para centralizar y digitalizar el ingreso de estudiantes, docentes, empresas y visitantes externos, facilitando la recolección de datos y el análisis del ecosistema de innovación.
-
-## 🔗 Enlaces Rápidos
-
-*   **💻 Formulario en Vivo (Frontend):** [Registro FAB LAB](https://macaperalta35.github.io/formularioFABLAB/)
-*   **📱 Código QR Oficial:** [Página del QR](https://macaperalta35.github.io/formularioFABLAB/qr.html)
-*   **📊 Base de Datos (Google Sheets):** *(Acceso restringido a administradores)* - [Acceder a Respuestas](https://docs.google.com/spreadsheets/)
+Sistema de registro de visitas del **FAB LAB INACAP Sede San Pedro de la Paz**. Centraliza el ingreso de estudiantes, docentes, empresas y visitantes externos, con panel de administración completo conectado a Google Sheets.
 
 ---
 
-## 🛠️ Características Principales (Versión 1.0)
+## Enlaces Rápidos
 
-- **Diseño Institucional:** Interfaz gráfica moderna, "mobile-first", que respeta los lineamientos de marca de INACAP (colores corporativos, tipografía, logotipo oficial en SVG/CSS).
-- **Acceso mediante Código QR:** Creado específicamente para ser escaneado con rapidez desde la cámara de cualquier teléfono móvil al ingresar al laboratorio.
-- **Validaciones Estrictas (En Tiempo Real):**
-  - *Nombre:* Solo acepta letras y espacios. Eliminación inmediata de números, símbolos especiales (ej: ☆) o emojis.
-  - *RUT:* Autocompletado con formato chileno (XX.XXX.XXX-X). Límite técnico inquebrantable de 9 caracteres base.
-  - *Teléfono:* Campo obligatorio con validación de longitud (mínimo 8 dígitos, máximo 15).
-  - *Correo Electrónico:* Verificación inteligente de estructura estándar.
-  - *Propósito de Visita:* Campo de texto obligatorio con exigencia mínima de descripción (5 caracteres).
-- **Arquitectura Serverless:** No requiere pagar servidores. La comunicación se hace a través de un endpoint API de Google Apps Script (`doPost`).
+| Página | URL |
+|--------|-----|
+| Formulario de registro | https://macaperalta35.github.io/formularioFABLAB/ |
+| Código QR imprimible | https://macaperalta35.github.io/formularioFABLAB/qr.html |
+| Panel de administración | https://macaperalta35.github.io/formularioFABLAB/dashboard.html |
+| Google Sheets (datos) | https://docs.google.com/spreadsheets/d/1wQmC5H388sfJoZpvT3kj-59BPUyNjK9J4YLW5wiNKo8/edit |
 
 ---
 
-## 🏗️ Arquitectura Tecnológica
+## Acceso al Panel de Administración
 
-1. **Frontend:** Construido con HTML5, CSS3 puro y JavaScript moderno. Desplegado en **GitHub Pages**.
-2. **Backend/API:** Google Apps Script procesa las peticiones POST enviadas por el formulario mediante `fetch` (CORS-friendly).
-3. **Base de Datos:** Google Sheets. Almacenamiento directo en tiempo real, lo que permite al administrador descargar la información a Microsoft Excel (`.xlsx`) en 2 clics.
+**URL:** https://macaperalta35.github.io/formularioFABLAB/dashboard.html
 
----
+**Contraseña:** `fablab2024`
 
-## 🧪 Pruebas de QA (Quality Assurance) - Aprobadas
+> No cambiar la contraseña. Está configurada como `ADMIN_TOKEN` en el Google Apps Script y como token esperado en el dashboard.
 
-El sistema superó exitosamente el protocolo de pruebas automatizadas simulando comportamiento humano en la versión final en vivo (V1.0):
-
-✅ **Prueba de Inyección (Nombre):** Imposibilidad física de escribir caracteres no alfabéticos.
-✅ **Prueba de Desbordamiento (RUT):** Ingresar texto masivo no rompe el formato; el sistema recorta a 9 caracteres limpios de forma segura.
-✅ **Prueba de Bloqueo de Envío Vacío:** Intentar enviar el formulario sin los campos obligatorios (`Teléfono`, `Propósito`, etc.) genera alertas visuales precisas impidiendo la recarga de página.
-✅ **Prueba End-to-End (E2E) Completa:** Flujo exitoso de registro simulado, validando la transición del botón a "Registrando...", la aparición de la pantalla de éxito "¡Registro Exitoso!" y el envío final de datos a la nube.
+El panel permite:
+- Ver todas las visitas registradas con filtros por nombre, RUT y tipo
+- Exportar visitas a CSV
+- Registrar ocupación del laboratorio (clases, talleres, eventos)
+- Gestionar secciones de alumnos con lista de inscritos
 
 ---
 
-## 📋 Guía Rápida de Mantenimiento
+## Arquitectura
 
-Para futuras actualizaciones en el destino de los datos:
-1. Abre el panel de **Google Apps Script** asociado a la hoja "FAB LAB - Visitas".
-2. Realiza cambios en `Codigo.gs`.
-3. Presiona **Implementar > Nueva Implementación**.
-4. Copia la nueva URL que te entregue Google.
-5. Edita el archivo `index.html` de este repositorio y reemplaza la constante `GOOGLE_SCRIPT_URL` con la nueva dirección.
+```
+Visitante
+   │
+   ▼
+index.html  ──POST──►  Google Apps Script  ──►  Google Sheets (hoja "Visitas")
+(formulario)             (doPost sin token)
+
+Administrador
+   │
+   ▼
+dashboard.html  ──GET/POST──►  Google Apps Script  ──►  Google Sheets
+(con login)                     (doGet/doPost con token)   Hojas: Visitas
+                                                                   Ocupaciones
+                                                                   Secciones
+                                                                   Alumnos
+```
+
+- **Frontend:** HTML5 + CSS3 + JavaScript vanilla. Desplegado en GitHub Pages.
+- **Backend:** Google Apps Script como API serverless (sin costo de servidor).
+- **Base de datos:** Google Sheets con 4 hojas estructuradas.
 
 ---
-*Desarrollado para el fortalecimiento del ecosistema de innovación, prototipado y transferencia tecnológica de INACAP San Pedro de la Paz.*
+
+## Archivos del Proyecto
+
+| Archivo | Descripción |
+|---------|-------------|
+| `index.html` | Formulario público de registro de visitas |
+| `dashboard.html` | Panel de administración completo (requiere login) |
+| `admin-visitas.html` | Vista alternativa simplificada del panel |
+| `qr.html` | Página con código QR imprimible para el laboratorio |
+| `fablab-simple.html` | Formulario alternativo (apunta al backend Flask local) |
+| `dashboard.css` | Estilos del panel de administración |
+| `google-apps-script.gs` | Código del Google Apps Script (referencia) |
+| `fablab_app.py` | Backend Flask + SQLite para uso local/red interna |
+
+---
+
+## Google Apps Script
+
+**URL actual del script:**
+```
+https://script.google.com/macros/s/AKfycbxtLnlmnuXSF73iFijxPN1P4bxBTwfENak-NgpSd29e1yEeaES7S9L18MFh3I0JYbsqiA/exec
+```
+
+Esta URL está configurada en `index.html` y `dashboard.html` como `GOOGLE_SCRIPT_URL`.
+
+### Hojas de Google Sheets creadas automáticamente
+
+| Hoja | Columnas |
+|------|----------|
+| Visitas | fecha, nombre, rut, telefono, correo, tipoVisita, proposito, etiquetas |
+| Ocupaciones | id, nombre, tipo, docente, asignatura, fecha, horaInicio, horaFin, capacidad, observaciones |
+| Secciones | id, nombre, tipo, docente, fecha, horaInicio, horaFin |
+| Alumnos | seccionId, id, nombre, rut, correo |
+
+### Acciones soportadas por el script
+
+**GET (requieren `?token=fablab2024`):**
+- `?action=getAll` — devuelve todas las visitas
+- `?action=getOcupaciones` — devuelve eventos de ocupación del lab
+- `?action=getSecciones` — devuelve secciones con alumnos
+
+**POST sin token** (formulario público):
+- Sin campo `action` → guarda nueva visita
+
+**POST con token** (acciones de admin):
+- `saveOcupacion`, `deleteOcupacion`
+- `saveSeccion`, `deleteSeccion`
+- `saveAlumno`, `deleteAlumno`
+
+---
+
+## Mantenimiento del Apps Script
+
+Si necesitas redesplegar el script (por ejemplo, para hacer cambios):
+
+1. Abre [script.google.com](https://script.google.com) y entra al proyecto del FAB LAB.
+2. Modifica el código usando `google-apps-script.gs` como referencia.
+3. Haz clic en **Implementar → Nueva implementación**.
+   - Tipo: *Aplicación web*
+   - Ejecutar como: **Yo**
+   - Quién tiene acceso: **Todos**
+4. Copia la nueva URL generada.
+5. Reemplaza `GOOGLE_SCRIPT_URL` en `index.html` y `dashboard.html`.
+6. Haz commit y push al repositorio.
+
+---
+
+## Backend Flask (uso local / red interna)
+
+`fablab_app.py` es un servidor Flask alternativo con base de datos SQLite. Se usa cuando el laboratorio opera sin internet o para pruebas locales.
+
+```bash
+pip install flask flask-cors flask-sqlalchemy openpyxl
+python fablab_app.py
+# Servidor en http://0.0.0.0:5000
+```
+
+**Contraseña del panel local:** `fablab2024` (variable de entorno `ADMIN_PASSWORD`)
+
+Endpoints:
+- `POST /api/visitas` — registrar visita (público)
+- `GET /api/visitas` — listar visitas (requiere header `X-Admin-Token`)
+- `GET /api/visitas/export?format=excel` — exportar Excel (requiere header `X-Admin-Token`)
+
+---
+
+## Validaciones del Formulario
+
+- **Nombre:** solo letras y espacios, mínimo 2 caracteres
+- **RUT:** formato chileno `XX.XXX.XXX-X`, autoformateado
+- **Teléfono:** obligatorio, mínimo 8 dígitos
+- **Correo:** validación de estructura estándar
+- **Tipo de visita:** Estudiante / Docente / Visitante Externo / Empresa
+- **Propósito:** mínimo 5 caracteres. Botones de etiquetas rápidas disponibles
+
+---
+
+*Desarrollado para el ecosistema de innovación y transferencia tecnológica de INACAP San Pedro de la Paz.*
