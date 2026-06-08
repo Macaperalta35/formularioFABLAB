@@ -114,6 +114,32 @@ function doPost(e) {
       return jsonResponse({ error: 'No autorizado' });
     }
 
+    // Lectura via POST (evita problema de CORS con GET redirect)
+    if (action === 'getAll') {
+      var sheet = getOrCreateSheet('Visitas', [
+        'fecha','nombre','rut','telefono','correo','tipoVisita','proposito','etiquetas'
+      ]);
+      return jsonResponse(sheetToJSON(sheet));
+    }
+
+    if (action === 'getOcupaciones') {
+      var sheet = getOrCreateSheet('Ocupaciones', [
+        'id','nombre','tipo','docente','asignatura','fecha','horaInicio','horaFin','capacidad','observaciones'
+      ]);
+      return jsonResponse(sheetToJSON(sheet));
+    }
+
+    if (action === 'getSecciones') {
+      var secSheet  = getOrCreateSheet('Secciones', ['id','nombre','tipo','docente','fecha','horaInicio','horaFin']);
+      var alumSheet = getOrCreateSheet('Alumnos',   ['seccionId','id','nombre','rut','correo']);
+      var secciones = sheetToJSON(secSheet);
+      var alumnos   = sheetToJSON(alumSheet);
+      secciones.forEach(function(sec) {
+        sec.alumnos = alumnos.filter(function(a) { return String(a.seccionId) === String(sec.id); });
+      });
+      return jsonResponse(secciones);
+    }
+
     if (action === 'saveOcupacion') {
       var sheet = getOrCreateSheet('Ocupaciones', [
         'id','nombre','tipo','docente','asignatura','fecha','horaInicio','horaFin','capacidad','observaciones'

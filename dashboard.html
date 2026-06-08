@@ -636,19 +636,13 @@
             const token = sessionStorage.getItem('fablab_admin_token') || '';
             const body = { action, token, ...payload };
 
-            let url = GOOGLE_SCRIPT_URL;
-            let options = { mode: 'cors' };
-
-            if (action.startsWith('get')) {
-                url += '?action=' + action + '&token=' + encodeURIComponent(token);
-                options.method = 'GET';
-            } else {
-                options.method = 'POST';
-                options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
-                options.body = JSON.stringify(body);
-            }
-
-            const response = await fetch(url, options);
+            // Siempre POST con text/plain para evitar preflight CORS y problemas
+            // de redirección que tiene Apps Script con GET desde el navegador.
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(body)
+            });
             const data = await response.json();
 
             if (data.error) throw new Error(data.error);
