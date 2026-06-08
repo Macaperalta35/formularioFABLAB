@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Panel de Administración del FAB LAB INACAP - Gestión de visitas, ocupación del laboratorio y secciones de alumnos">
-    <meta name="theme-color" content="#0b0e14">
+    <meta name="theme-color" content="#f0f2f5">
     <title>FAB LAB INACAP — Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,6 +69,10 @@
                     <span class="nav-icon">📱</span>
                     Código QR
                 </a>
+                <a href="https://docs.google.com/spreadsheets/" target="_blank" class="sidebar-footer-link">
+                    <span class="nav-icon">🟢</span>
+                    Abrir Google Sheets
+                </a>
             </div>
         </aside>
 
@@ -90,6 +94,12 @@
 
             <!-- Page Content -->
             <div class="page-content">
+
+                <!-- Global Loader (for Sheets requests) -->
+                <div id="global-loader" class="loader" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); background:var(--bg-card); padding:10px 20px; border-radius:50px; box-shadow:var(--shadow-md); z-index:9999;">
+                    <div class="loader-spinner" style="width:16px;height:16px;border-width:2px;"></div>
+                    <span style="font-weight:600;">Sincronizando con Google Sheets...</span>
+                </div>
 
                 <!-- ==================== SECTION: OVERVIEW ==================== -->
                 <div class="page-section active" id="section-overview">
@@ -164,7 +174,7 @@
                     <div class="section-header">
                         <h3 class="section-title">📋 Registro de Visitas</h3>
                         <div style="display:flex;gap:8px;">
-                            <button class="btn btn-secondary btn-sm" onclick="loadVisitas()">🔄 Recargar</button>
+                            <button class="btn btn-secondary btn-sm" onclick="loadAllData()">🔄 Recargar Todo</button>
                             <button class="btn btn-primary btn-sm" onclick="exportVisitas()">📥 Exportar</button>
                         </div>
                     </div>
@@ -344,7 +354,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('modal-ocupacion')">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveOcupacion()">💾 Guardar</button>
+                <button class="btn btn-primary" id="btn-save-ocu" onclick="saveOcupacion()">💾 Guardar</button>
             </div>
         </div>
     </div>
@@ -393,7 +403,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('modal-seccion')">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveSeccion()">💾 Crear Sección</button>
+                <button class="btn btn-primary" id="btn-save-sec" onclick="saveSeccion()">💾 Crear Sección</button>
             </div>
         </div>
     </div>
@@ -424,7 +434,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('modal-alumno')">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveAlumno()">➕ Agregar Alumno</button>
+                <button class="btn btn-primary" id="btn-save-alumno" onclick="saveAlumno()">➕ Agregar Alumno</button>
             </div>
         </div>
     </div>
@@ -447,23 +457,17 @@
     <!-- ========== JAVASCRIPT ========== -->
     <script>
     // ===========================
-    //  DATA STORE (localStorage)
+    //  CONFIGURACIÓN BACKEND
     // ===========================
-    const STORE_KEYS = {
-        ocupaciones: 'fablab_ocupaciones',
-        secciones: 'fablab_secciones',
-        visitas_cache: 'fablab_visitas_cache'
+    // INSTRUCCIÓN: Actualiza este enlace con la nueva URL de tu Apps Script implementado
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyjHRl3FbC0EKto7_8p_f_K0sFP9xZUIdEUtXCQhLlXL5tNreG-jAn12izw2ZiRnQgSSA/exec';
+
+    // Estado local para renderizado rápido
+    let db = {
+        visitas: [],
+        ocupaciones: [],
+        secciones: []
     };
-
-    function getData(key) {
-        try {
-            return JSON.parse(localStorage.getItem(STORE_KEYS[key]) || '[]');
-        } catch { return []; }
-    }
-
-    function setData(key, data) {
-        localStorage.setItem(STORE_KEYS[key], JSON.stringify(data));
-    }
 
     function generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
@@ -496,16 +500,9 @@
             });
             headerTitle.textContent = sectionTitles[target] || '';
             closeSidebar();
-
-            // Refresh section data
-            if (target === 'overview') refreshOverview();
-            if (target === 'visitas') loadVisitas();
-            if (target === 'ocupacion') renderOcupaciones('today');
-            if (target === 'secciones') renderSecciones();
         });
     });
 
-    // Mobile sidebar
     document.getElementById('mobile-menu-btn').addEventListener('click', () => {
         sidebar.classList.toggle('open');
         sidebarOverlay.classList.toggle('visible');
@@ -532,7 +529,7 @@
     setInterval(updateClock, 30000);
 
     // ===========================
-    //  TOASTS
+    //  TOASTS & LOADERS
     // ===========================
     function showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
@@ -548,6 +545,11 @@
         setTimeout(() => toast.remove(), 4000);
     }
 
+    const globalLoader = document.getElementById('global-loader');
+    function setGlobalLoading(isLoading) {
+        globalLoader.style.display = isLoading ? 'flex' : 'none';
+    }
+
     // ===========================
     //  MODALS
     // ===========================
@@ -559,7 +561,6 @@
         document.getElementById(id).classList.remove('visible');
     }
 
-    // Close modals on overlay click
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) overlay.classList.remove('visible');
@@ -567,54 +568,83 @@
     });
 
     // ===========================
-    //  VISITAS — Load from Google Sheets or Cache
+    //  API FETCH OPERATIONS
     // ===========================
-    let allVisitas = [];
-
-    async function loadVisitas() {
-        const tbody = document.getElementById('visitas-tbody');
-        const loading = document.getElementById('visitas-loading');
-        const empty = document.getElementById('visitas-empty');
-        const table = document.getElementById('visitas-table');
-
-        loading.style.display = 'flex';
-        empty.style.display = 'none';
-        table.style.display = 'none';
-
-        // Try loading from Google Sheets URL
-        const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyjHRl3FbC0EKto7_8p_f_K0sFP9xZUIdEUtXCQhLlXL5tNreG-jAn12izw2ZiRnQgSSA/exec';
-
+    async function apiRequest(action, payload = {}) {
         try {
-            const resp = await fetch(SHEETS_URL + '?action=getAll', { mode: 'cors' });
-            if (resp.ok) {
-                const data = await resp.json();
-                if (Array.isArray(data)) {
-                    allVisitas = data;
-                    setData('visitas_cache', data);
-                }
+            setGlobalLoading(true);
+            const body = { action, ...payload };
+            // Para Apps Script se usa POST (incluso para traer datos si queremos evitar CORS preflight limitados)
+            // Pero como Apps Script maneja GET para consultas puras, usaremos GET para leer, POST para escribir.
+            
+            let url = GOOGLE_SCRIPT_URL;
+            let options = { mode: 'cors' };
+            
+            if (action.startsWith('get')) {
+                url += '?action=' + action;
+                options.method = 'GET';
             } else {
-                throw new Error('No se pudo conectar');
+                options.method = 'POST';
+                options.headers = { 'Content-Type': 'text/plain;charset=utf-8' }; // text/plain evita preflight
+                options.body = JSON.stringify(body);
             }
+            
+            const response = await fetch(url, options);
+            const data = await response.json();
+            
+            if (data.error) throw new Error(data.error);
+            return data;
+            
         } catch (e) {
-            // Use cached data or localStorage
-            allVisitas = getData('visitas_cache');
+            console.error('API Error:', e);
+            showToast('Error de conexión con Sheets: ' + e.message, 'error');
+            throw e;
+        } finally {
+            setGlobalLoading(false);
         }
-
-        loading.style.display = 'none';
-
-        if (allVisitas.length === 0) {
-            empty.style.display = 'block';
-            table.style.display = 'none';
-        } else {
-            empty.style.display = 'none';
-            table.style.display = 'table';
-            renderVisitasTable(allVisitas);
-        }
-
-        // Update badge
-        document.getElementById('badge-visitas').textContent = allVisitas.length;
     }
 
+    // ===========================
+    //  LOAD ALL DATA
+    // ===========================
+    async function loadAllData() {
+        try {
+            document.getElementById('visitas-loading').style.display = 'flex';
+            document.getElementById('visitas-table').style.display = 'none';
+
+            // Ejecutamos las llamadas en paralelo para mayor rapidez
+            const [visitas, ocupaciones, secciones] = await Promise.all([
+                apiRequest('getAll'), // Visitas
+                apiRequest('getOcupaciones'),
+                apiRequest('getSecciones')
+            ]);
+
+            db.visitas = Array.isArray(visitas) ? visitas : [];
+            db.ocupaciones = Array.isArray(ocupaciones) ? ocupaciones : [];
+            db.secciones = Array.isArray(secciones) ? secciones : [];
+
+            document.getElementById('visitas-loading').style.display = 'none';
+            document.getElementById('visitas-table').style.display = 'table';
+
+            // Render UI
+            filterVisitas();
+            renderOcupaciones(currentOcuTab);
+            renderSecciones();
+            refreshOverview();
+
+            document.getElementById('badge-visitas').textContent = db.visitas.length;
+            document.getElementById('badge-secciones').textContent = db.secciones.length;
+            
+            showToast('Datos sincronizados correctamente', 'success');
+
+        } catch (e) {
+            document.getElementById('visitas-loading').style.display = 'none';
+        }
+    }
+
+    // ===========================
+    //  VISITAS (Lectura solamente aquí)
+    // ===========================
     function renderVisitasTable(data) {
         const tbody = document.getElementById('visitas-tbody');
         tbody.innerHTML = data.map((v, i) => {
@@ -624,7 +654,14 @@
                               tipo.includes('docente') ? 'docente' :
                               tipo.includes('externo') ? 'externo' :
                               tipo.includes('empresa') ? 'empresa' : 'estudiante';
-            const fecha = v.fecha || v.created_at || '';
+            
+            // Format Date safely
+            let fecha = v.fecha || v.created_at || '';
+            if (typeof fecha === 'string' && fecha.includes('T')) {
+                const d = new Date(fecha);
+                if (!isNaN(d)) fecha = d.toLocaleString('es-CL');
+            }
+
             return `
                 <tr>
                     <td style="color:var(--text-muted);">${i + 1}</td>
@@ -643,7 +680,8 @@
     function filterVisitas() {
         const search = document.getElementById('search-visitas').value.toLowerCase();
         const tipo = document.getElementById('filter-tipo').value.toLowerCase();
-        const filtered = allVisitas.filter(v => {
+        
+        const filtered = db.visitas.filter(v => {
             const name = (v.nombre || '').toLowerCase();
             const rut = (v.rut || '').toLowerCase();
             const vTipo = (v.tipoVisita || v.tipo_visita || v.tipo || '').toLowerCase();
@@ -666,13 +704,12 @@
     }
 
     function exportVisitas() {
-        if (allVisitas.length === 0) {
+        if (db.visitas.length === 0) {
             showToast('No hay visitas para exportar', 'error');
             return;
         }
-        // Export as CSV
         const headers = ['Nombre', 'RUT', 'Correo', 'Teléfono', 'Tipo', 'Propósito', 'Fecha'];
-        const rows = allVisitas.map(v => [
+        const rows = db.visitas.map(v => [
             v.nombre || '', v.rut || '', v.correo || '', v.telefono || '',
             v.tipoVisita || v.tipo_visita || '', v.proposito || '', v.fecha || v.created_at || ''
         ]);
@@ -698,16 +735,14 @@
     let currentOcuTab = 'today';
 
     function openOcupacionModal() {
-        // Reset form
         ['ocu-nombre', 'ocu-tipo', 'ocu-docente', 'ocu-asignatura', 'ocu-fecha', 'ocu-hora-inicio', 'ocu-hora-fin', 'ocu-capacidad', 'ocu-observaciones'].forEach(id => {
             document.getElementById(id).value = '';
         });
-        // Default date to today
         document.getElementById('ocu-fecha').value = new Date().toISOString().slice(0, 10);
         openModal('modal-ocupacion');
     }
 
-    function saveOcupacion() {
+    async function saveOcupacion() {
         const nombre = document.getElementById('ocu-nombre').value.trim();
         const tipo = document.getElementById('ocu-tipo').value;
         const docente = document.getElementById('ocu-docente').value.trim();
@@ -723,30 +758,42 @@
             return;
         }
 
-        const ocupaciones = getData('ocupaciones');
-        ocupaciones.push({
+        const btn = document.getElementById('btn-save-ocu');
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+
+        const nuevaOcu = {
             id: generateId(),
             nombre, tipo, docente, asignatura, fecha, horaInicio, horaFin,
             capacidad: capacidad ? parseInt(capacidad) : null,
-            observaciones,
-            createdAt: new Date().toISOString()
-        });
-        setData('ocupaciones', ocupaciones);
+            observaciones
+        };
 
-        closeModal('modal-ocupacion');
-        renderOcupaciones(currentOcuTab);
-        refreshOverview();
-        showToast('Ocupación registrada correctamente', 'success');
+        try {
+            await apiRequest('saveOcupacion', nuevaOcu);
+            db.ocupaciones.push(nuevaOcu);
+            closeModal('modal-ocupacion');
+            renderOcupaciones(currentOcuTab);
+            refreshOverview();
+            showToast('Ocupación registrada en Google Sheets', 'success');
+        } catch (e) {
+            // error ya mostrado por apiRequest
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '💾 Guardar';
+        }
     }
 
-    function deleteOcupacion(id) {
+    async function deleteOcupacion(id) {
         if (!confirm('¿Eliminar esta actividad?')) return;
-        let data = getData('ocupaciones');
-        data = data.filter(o => o.id !== id);
-        setData('ocupaciones', data);
-        renderOcupaciones(currentOcuTab);
-        refreshOverview();
-        showToast('Actividad eliminada', 'info');
+        
+        try {
+            await apiRequest('deleteOcupacion', { id });
+            db.ocupaciones = db.ocupaciones.filter(o => o.id !== id);
+            renderOcupaciones(currentOcuTab);
+            refreshOverview();
+            showToast('Actividad eliminada de Sheets', 'info');
+        } catch (e) {}
     }
 
     function switchOcupacionTab(tab, btn) {
@@ -759,7 +806,7 @@
     function renderOcupaciones(tab) {
         const list = document.getElementById('ocupacion-list');
         const empty = document.getElementById('ocupacion-empty');
-        let data = getData('ocupaciones');
+        let data = [...db.ocupaciones];
 
         const today = new Date().toISOString().slice(0, 10);
         const now = new Date();
@@ -782,15 +829,22 @@
                 const tipoLabels = { clase: '🎓 Clase', capacitacion: '🛠️ Capacitación', taller: '🔧 Taller', evento: '🎪 Evento', mantencion: '⚙️ Mantención' };
                 const tipoClass = o.tipo === 'clase' ? 'clase' : 'capacitacion';
 
-                // Determine status
                 let status = 'upcoming';
                 let statusText = 'Programado';
-                const startDT = new Date(o.fecha + 'T' + o.horaInicio);
-                const endDT = new Date(o.fecha + 'T' + o.horaFin);
-                if (now >= startDT && now <= endDT) {
-                    status = 'active';
-                    statusText = 'En curso';
-                } else if (now > endDT) {
+                // Solo asignar estado active si es el dia correcto
+                if (o.fecha === today) {
+                    const startStr = o.fecha + 'T' + o.horaInicio;
+                    const endStr = o.fecha + 'T' + o.horaFin;
+                    const startDT = new Date(startStr);
+                    const endDT = new Date(endStr);
+                    if (now >= startDT && now <= endDT) {
+                        status = 'active';
+                        statusText = 'En curso';
+                    } else if (now > endDT) {
+                        status = 'ended';
+                        statusText = 'Finalizado';
+                    }
+                } else if (o.fecha < today) {
                     status = 'ended';
                     statusText = 'Finalizado';
                 }
@@ -816,8 +870,8 @@
             }).join('');
         }
 
-        // Update stats
-        const allOcu = getData('ocupaciones');
+        // Stats updates
+        const allOcu = db.ocupaciones;
         const todayOcu = allOcu.filter(o => o.fecha === today);
         const weekEnd = new Date(now);
         weekEnd.setDate(weekEnd.getDate() + 7);
@@ -827,7 +881,6 @@
         document.getElementById('lab-today-count').textContent = todayOcu.length;
         document.getElementById('lab-week-count').textContent = weekOcu.length;
 
-        // Current status
         const currentOcu = todayOcu.find(o => {
             const s = new Date(o.fecha + 'T' + o.horaInicio);
             const e = new Date(o.fecha + 'T' + o.horaFin);
@@ -850,6 +903,7 @@
     function formatDate(dateStr) {
         if (!dateStr) return '';
         const d = new Date(dateStr + 'T12:00:00');
+        if (isNaN(d)) return dateStr;
         return d.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     }
 
@@ -864,7 +918,7 @@
         openModal('modal-seccion');
     }
 
-    function saveSeccion() {
+    async function saveSeccion() {
         const nombre = document.getElementById('sec-nombre').value.trim();
         const tipo = document.getElementById('sec-tipo').value;
         const docente = document.getElementById('sec-docente').value.trim();
@@ -877,29 +931,42 @@
             return;
         }
 
-        const secciones = getData('secciones');
-        secciones.push({
+        const btn = document.getElementById('btn-save-sec');
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+
+        const nuevaSec = {
             id: generateId(),
             nombre, tipo, docente, fecha, horaInicio, horaFin,
-            alumnos: [],
-            createdAt: new Date().toISOString()
-        });
-        setData('secciones', secciones);
+            alumnos: []
+        };
 
-        closeModal('modal-seccion');
-        renderSecciones();
-        refreshOverview();
-        showToast('Sección creada exitosamente', 'success');
+        try {
+            await apiRequest('saveSeccion', nuevaSec);
+            db.secciones.push(nuevaSec);
+            closeModal('modal-seccion');
+            renderSecciones();
+            refreshOverview();
+            document.getElementById('badge-secciones').textContent = db.secciones.length;
+            showToast('Sección creada en Google Sheets', 'success');
+        } catch (e) {
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '💾 Crear Sección';
+        }
     }
 
-    function deleteSeccion(id) {
-        if (!confirm('¿Eliminar esta sección y todos sus alumnos?')) return;
-        let data = getData('secciones');
-        data = data.filter(s => s.id !== id);
-        setData('secciones', data);
-        renderSecciones();
-        refreshOverview();
-        showToast('Sección eliminada', 'info');
+    async function deleteSeccion(id) {
+        if (!confirm('¿Eliminar esta sección y todos sus alumnos de Google Sheets?')) return;
+        
+        try {
+            await apiRequest('deleteSeccion', { id });
+            db.secciones = db.secciones.filter(s => s.id !== id);
+            renderSecciones();
+            refreshOverview();
+            document.getElementById('badge-secciones').textContent = db.secciones.length;
+            showToast('Sección eliminada', 'info');
+        } catch (e) {}
     }
 
     function openAddAlumno(seccionId) {
@@ -910,7 +977,7 @@
         openModal('modal-alumno');
     }
 
-    function saveAlumno() {
+    async function saveAlumno() {
         const seccionId = document.getElementById('alumno-seccion-id').value;
         const nombre = document.getElementById('alumno-nombre').value.trim();
         const rut = document.getElementById('alumno-rut').value.trim();
@@ -921,47 +988,63 @@
             return;
         }
 
-        const secciones = getData('secciones');
-        const seccion = secciones.find(s => s.id === seccionId);
-        if (!seccion) {
-            showToast('Sección no encontrada', 'error');
-            return;
-        }
+        const seccion = db.secciones.find(s => s.id === seccionId);
+        if (!seccion) return;
 
-        // Check if RUT already exists in section
-        if (seccion.alumnos.some(a => a.rut === rut)) {
+        if (seccion.alumnos && seccion.alumnos.some(a => a.rut === rut)) {
             showToast('Este RUT ya está inscrito en la sección', 'error');
             return;
         }
 
-        seccion.alumnos.push({
-            id: generateId(),
-            nombre, rut, correo,
-            addedAt: new Date().toISOString()
-        });
-        setData('secciones', secciones);
+        const btn = document.getElementById('btn-save-alumno');
+        btn.disabled = true;
+        btn.textContent = 'Agregando...';
 
-        closeModal('modal-alumno');
-        renderSecciones();
-        refreshOverview();
-        showToast(`${nombre} agregado a la sección`, 'success');
+        const nuevoAlumno = {
+            id: generateId(),
+            nombre, rut, correo
+        };
+
+        try {
+            await apiRequest('saveAlumno', {
+                seccionId: seccionId,
+                alumno: nuevoAlumno
+            });
+            if (!seccion.alumnos) seccion.alumnos = [];
+            seccion.alumnos.push(nuevoAlumno);
+            
+            closeModal('modal-alumno');
+            renderSecciones();
+            if (document.getElementById('modal-ver-seccion').classList.contains('visible')) {
+                viewSeccion(seccionId); // refresh modal if open
+            }
+            refreshOverview();
+            showToast('Alumno agregado en Sheets', 'success');
+        } catch (e) {
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '➕ Agregar Alumno';
+        }
     }
 
-    function removeAlumno(seccionId, alumnoId) {
-        const secciones = getData('secciones');
-        const seccion = secciones.find(s => s.id === seccionId);
-        if (!seccion) return;
-        seccion.alumnos = seccion.alumnos.filter(a => a.id !== alumnoId);
-        setData('secciones', secciones);
-        renderSecciones();
-        viewSeccion(seccionId);
-        refreshOverview();
-        showToast('Alumno removido', 'info');
+    async function removeAlumno(seccionId, alumnoId) {
+        if (!confirm('¿Remover a este alumno?')) return;
+        try {
+            await apiRequest('deleteAlumno', { alumnoId });
+            
+            const seccion = db.secciones.find(s => s.id === seccionId);
+            if (seccion) {
+                seccion.alumnos = seccion.alumnos.filter(a => a.id !== alumnoId);
+                renderSecciones();
+                viewSeccion(seccionId);
+                refreshOverview();
+                showToast('Alumno removido de Sheets', 'info');
+            }
+        } catch (e) {}
     }
 
     function viewSeccion(seccionId) {
-        const secciones = getData('secciones');
-        const sec = secciones.find(s => s.id === seccionId);
+        const sec = db.secciones.find(s => s.id === seccionId);
         if (!sec) return;
 
         const tipoLabels = { clase: '🎓 Clase', capacitacion: '🛠️ Capacitación', taller: '🔧 Taller' };
@@ -975,10 +1058,10 @@
                 ${sec.horaInicio ? `<div class="meta-row"><span class="meta-icon">🕐</span> ${sec.horaInicio}${sec.horaFin ? ' — ' + sec.horaFin : ''}</div>` : ''}
             </div>
             <div class="section-header" style="margin-bottom:12px;">
-                <span class="section-title" style="font-size:0.9rem;">👥 Alumnos Inscritos (${sec.alumnos.length})</span>
+                <span class="section-title" style="font-size:0.9rem;">👥 Alumnos Inscritos (${sec.alumnos ? sec.alumnos.length : 0})</span>
                 <button class="btn btn-primary btn-sm" onclick="closeModal('modal-ver-seccion'); openAddAlumno('${sec.id}')">➕ Agregar</button>
             </div>
-            ${sec.alumnos.length === 0 ?
+            ${(!sec.alumnos || sec.alumnos.length === 0) ?
                 '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:0.82rem;">No hay alumnos inscritos aún</div>' :
                 '<div class="student-list">' + sec.alumnos.map(a => `
                     <div class="student-item">
@@ -1003,10 +1086,7 @@
     function renderSecciones() {
         const list = document.getElementById('secciones-list');
         const empty = document.getElementById('secciones-empty');
-        const data = getData('secciones');
-
-        const totalAlumnos = data.reduce((sum, s) => sum + (s.alumnos ? s.alumnos.length : 0), 0);
-        document.getElementById('badge-secciones').textContent = data.length;
+        const data = db.secciones;
 
         if (data.length === 0) {
             list.innerHTML = '';
@@ -1019,8 +1099,9 @@
 
         list.innerHTML = data.map(s => {
             const tipoClass = s.tipo === 'clase' ? 'clase' : 'capacitacion';
-            const alumnoCount = s.alumnos ? s.alumnos.length : 0;
-            const previewAlumnos = (s.alumnos || []).slice(0, 3);
+            const alumnosArr = s.alumnos || [];
+            const alumnoCount = alumnosArr.length;
+            const previewAlumnos = alumnosArr.slice(0, 3);
 
             return `
                 <div class="info-card">
@@ -1061,23 +1142,16 @@
     //  OVERVIEW
     // ===========================
     function refreshOverview() {
-        // Total visitas
-        document.getElementById('ov-total-visitas').textContent = allVisitas.length;
+        document.getElementById('ov-total-visitas').textContent = db.visitas.length;
+        document.getElementById('ov-secciones').textContent = db.secciones.length;
 
-        // Secciones
-        const secciones = getData('secciones');
-        document.getElementById('ov-secciones').textContent = secciones.length;
-
-        // Total alumnos
-        const totalAlumnos = secciones.reduce((sum, s) => sum + (s.alumnos ? s.alumnos.length : 0), 0);
+        const totalAlumnos = db.secciones.reduce((sum, s) => sum + (s.alumnos ? s.alumnos.length : 0), 0);
         document.getElementById('ov-alumnos').textContent = totalAlumnos;
 
-        // Lab status
-        const ocupaciones = getData('ocupaciones');
         const today = new Date().toISOString().slice(0, 10);
         const now = new Date();
 
-        const currentOcu = ocupaciones.find(o => {
+        const currentOcu = db.ocupaciones.find(o => {
             if (o.fecha !== today) return false;
             const s = new Date(o.fecha + 'T' + o.horaInicio);
             const e = new Date(o.fecha + 'T' + o.horaFin);
@@ -1102,8 +1176,7 @@
             labDetail.style.color = '';
         }
 
-        // Upcoming activities
-        const upcoming = ocupaciones
+        const upcoming = db.ocupaciones
             .filter(o => o.fecha >= today)
             .sort((a, b) => (a.fecha + a.horaInicio).localeCompare(b.fecha + b.horaInicio))
             .slice(0, 5);
@@ -1127,9 +1200,8 @@
             `).join('') + '</div>';
         }
 
-        // Recent visits
         const recentEl = document.getElementById('ov-recent-visits');
-        const recentVisits = allVisitas.slice(0, 5);
+        const recentVisits = db.visitas.slice(0, 5); // Suponemos que ya vienen ordenadas desc
         if (recentVisits.length === 0) {
             recentEl.innerHTML = '<div class="empty-state" style="padding:30px 20px;"><div class="empty-icon">📋</div><p class="empty-text">No hay visitas registradas</p></div>';
         } else {
@@ -1153,7 +1225,7 @@
     }
 
     // ===========================
-    //  RUT FORMATTING (for add student modal)
+    //  RUT FORMATTING
     // ===========================
     document.getElementById('alumno-rut').addEventListener('input', function(e) {
         let val = e.target.value.replace(/[^\dkK]/g, '');
@@ -1167,16 +1239,8 @@
     // ===========================
     //  INIT
     // ===========================
-    async function init() {
-        // Load visitas
-        await loadVisitas();
-        // Render sections
-        renderOcupaciones('today');
-        renderSecciones();
-        refreshOverview();
-    }
+    loadAllData();
 
-    init();
     </script>
 </body>
 </html>
