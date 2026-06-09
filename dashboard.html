@@ -207,6 +207,7 @@
                                         <th>Tipo</th>
                                         <th>Propósito</th>
                                         <th>Fecha</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="visitas-tbody">
@@ -439,6 +440,58 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL: EDITAR VISITA ==================== -->
+    <div class="modal-overlay" id="modal-editar-visita">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Editar Registro de Visita</h3>
+                <button class="modal-close" onclick="closeModal('modal-editar-visita')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-visita-row">
+                <div class="form-group">
+                    <label class="form-label">Nombre Completo *</label>
+                    <input type="text" class="form-input" id="edit-nombre" placeholder="Nombre del visitante">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">RUT *</label>
+                        <input type="text" class="form-input" id="edit-rut" maxlength="12" placeholder="12.345.678-9">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input type="tel" class="form-input" id="edit-telefono" placeholder="+56 9 1234 5678">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Correo</label>
+                    <input type="email" class="form-input" id="edit-correo" placeholder="correo@ejemplo.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo de Visita *</label>
+                    <select class="form-select" id="edit-tipo">
+                        <option value="estudiante">🎓 Estudiante</option>
+                        <option value="docente">👨‍🏫 Docente</option>
+                        <option value="externo">🏢 Visitante Externo</option>
+                        <option value="empresa">🏭 Empresa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Propósito *</label>
+                    <textarea class="form-input" id="edit-proposito" rows="3" style="resize:vertical;padding:10px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Etiquetas</label>
+                    <input type="text" class="form-input" id="edit-etiquetas" placeholder="Impresión 3D, Corte Láser...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-editar-visita')">Cancelar</button>
+                <button class="btn btn-primary" id="btn-save-visita-edit" onclick="saveEditVisita()">💾 Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== MODAL: VER SECCIÓN ==================== -->
     <div class="modal-overlay" id="modal-ver-seccion">
         <div class="modal" style="max-width: 620px;">
@@ -598,7 +651,7 @@
                 else resolve(data);
             };
             script.onerror = () => { cleanup(); reject(new Error('No se pudo conectar con Sheets')); };
-            script.src = `${GOOGLE_SCRIPT_URL}?action=${encodeURIComponent(action)}&token=${encodeURIComponent(token)}&callback=${cb}`;
+            script.src = `${GOOGLE_SCRIPT_URL}?action=${encodeURIComponent(action)}&token=${encodeURIComponent(token)}&callback=${cb}&t=${Date.now()}`;
             document.head.appendChild(script);
         });
     }
@@ -672,24 +725,36 @@
     }
 
     // ===========================
-    //  VISITAS (Lectura solamente aquí)
+    //  VISITAS
     // ===========================
+    let visitaMap = {}; // rowIndex → visita, para el modal de edición
+
     function renderVisitasTable(data) {
         const tbody = document.getElementById('visitas-tbody');
+        visitaMap = {};
         tbody.innerHTML = data.map((v, i) => {
+            const rowIndex = v._rowIndex || null;
+            if (rowIndex) visitaMap[rowIndex] = v;
+
             const tipo = (v.tipoVisita || v.tipo_visita || v.tipo || '').toLowerCase();
             const tipoLabel = tipo || 'otro';
             const tipoClass = tipo.includes('estudiante') ? 'estudiante' :
                               tipo.includes('docente') ? 'docente' :
                               tipo.includes('externo') ? 'externo' :
                               tipo.includes('empresa') ? 'empresa' : 'estudiante';
-            
-            // Format Date safely
+
             let fecha = v.fecha || v.created_at || '';
             if (typeof fecha === 'string' && fecha.includes('T')) {
                 const d = new Date(fecha);
                 if (!isNaN(d)) fecha = d.toLocaleString('es-CL');
             }
+
+            const acciones = rowIndex
+                ? `<div style="display:flex;gap:4px;">
+                       <button class="btn btn-secondary btn-sm" style="padding:4px 10px;font-size:0.7rem;" onclick="openEditVisitaModal(${rowIndex})">✏️ Editar</button>
+                       <button class="btn btn-danger btn-sm" style="padding:4px 10px;font-size:0.7rem;" onclick="deleteVisita(${rowIndex})">🗑️</button>
+                   </div>`
+                : '—';
 
             return `
                 <tr>
@@ -701,9 +766,83 @@
                     <td><span class="type-badge ${tipoClass}">${escapeHTML(tipoLabel)}</span></td>
                     <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHTML(v.proposito || '')}">${escapeHTML(v.proposito || '-')}</td>
                     <td style="white-space:nowrap;font-size:0.75rem;">${escapeHTML(fecha)}</td>
+                    <td>${acciones}</td>
                 </tr>
             `;
         }).join('');
+    }
+
+    function openEditVisitaModal(rowIndex) {
+        const v = visitaMap[rowIndex];
+        if (!v) return;
+        document.getElementById('edit-visita-row').value = rowIndex;
+        document.getElementById('edit-nombre').value = v.nombre || '';
+        document.getElementById('edit-rut').value = v.rut || '';
+        document.getElementById('edit-telefono').value = v.telefono || '';
+        document.getElementById('edit-correo').value = v.correo || '';
+        document.getElementById('edit-tipo').value = (v.tipoVisita || v.tipo_visita || 'estudiante').toLowerCase();
+        document.getElementById('edit-proposito').value = v.proposito || '';
+        document.getElementById('edit-etiquetas').value = v.etiquetas || '';
+        openModal('modal-editar-visita');
+    }
+
+    async function saveEditVisita() {
+        const rowIndex = parseInt(document.getElementById('edit-visita-row').value);
+        const nombre = document.getElementById('edit-nombre').value.trim();
+        const rut = document.getElementById('edit-rut').value.trim();
+        const tipo = document.getElementById('edit-tipo').value;
+        const proposito = document.getElementById('edit-proposito').value.trim();
+
+        if (!nombre || !rut || !tipo || !proposito) {
+            showToast('Completa los campos obligatorios (*)', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btn-save-visita-edit');
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+
+        const original = visitaMap[rowIndex] || {};
+        const updated = {
+            rowIndex,
+            fecha: original.fecha || '',
+            nombre,
+            rut,
+            telefono: document.getElementById('edit-telefono').value.trim(),
+            correo: document.getElementById('edit-correo').value.trim(),
+            tipoVisita: tipo,
+            proposito,
+            etiquetas: document.getElementById('edit-etiquetas').value.trim()
+        };
+
+        try {
+            await apiRequest('updateVisita', updated);
+            const idx = db.visitas.findIndex(v => v._rowIndex === rowIndex);
+            if (idx >= 0) Object.assign(db.visitas[idx], { nombre: updated.nombre, rut: updated.rut, telefono: updated.telefono, correo: updated.correo, tipoVisita: updated.tipoVisita, proposito: updated.proposito, etiquetas: updated.etiquetas });
+            closeModal('modal-editar-visita');
+            filterVisitas();
+            refreshOverview();
+            showToast('Visita actualizada en Google Sheets', 'success');
+        } catch (e) {
+            // error ya mostrado por apiRequest
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '💾 Guardar Cambios';
+        }
+    }
+
+    async function deleteVisita(rowIndex) {
+        if (!confirm('¿Eliminar este registro de visita? Esta acción no se puede deshacer.')) return;
+        try {
+            await apiRequest('deleteVisita', { rowIndex });
+            db.visitas = db.visitas.filter(v => v._rowIndex !== rowIndex);
+            // Actualizar índices de filas posteriores (Sheets desplaza hacia arriba)
+            db.visitas.forEach(v => { if (v._rowIndex > rowIndex) v._rowIndex--; });
+            filterVisitas();
+            refreshOverview();
+            document.getElementById('badge-visitas').textContent = db.visitas.length;
+            showToast('Visita eliminada de Google Sheets', 'info');
+        } catch (e) {}
     }
 
     function filterVisitas() {

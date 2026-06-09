@@ -26,11 +26,12 @@ function sheetToJSON(sheet) {
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
   var headers = data[0].map(String);
-  return data.slice(1).map(function(row) {
+  return data.slice(1).map(function(row, i) {
     var obj = {};
-    headers.forEach(function(h, i) {
-      obj[h] = row[i] === '' ? null : row[i];
+    headers.forEach(function(h, j) {
+      obj[h] = row[j] === '' ? null : row[j];
     });
+    obj._rowIndex = i + 2; // fila real en Sheets (1=cabecera, datos desde 2)
     return obj;
   });
 }
@@ -152,6 +153,41 @@ function doPost(e) {
       return jsonResponse(secciones);
     }
 
+    // ── Gestión de visitas ───────────────────────────
+
+    if (action === 'deleteVisita') {
+      var sheet = getOrCreateSheet('Visitas', [
+        'fecha','nombre','rut','telefono','correo','tipoVisita','proposito','etiquetas'
+      ]);
+      var rowIndex = parseInt(body.rowIndex);
+      if (rowIndex >= 2 && rowIndex <= sheet.getLastRow()) {
+        sheet.deleteRow(rowIndex);
+      }
+      return jsonResponse({ ok: true });
+    }
+
+    if (action === 'updateVisita') {
+      var sheet = getOrCreateSheet('Visitas', [
+        'fecha','nombre','rut','telefono','correo','tipoVisita','proposito','etiquetas'
+      ]);
+      var rowIndex = parseInt(body.rowIndex);
+      if (rowIndex >= 2 && rowIndex <= sheet.getLastRow()) {
+        sheet.getRange(rowIndex, 1, 1, 8).setValues([[
+          body.fecha      || '',
+          body.nombre     || '',
+          body.rut        || '',
+          body.telefono   || '',
+          body.correo     || '',
+          body.tipoVisita || '',
+          body.proposito  || '',
+          body.etiquetas  || ''
+        ]]);
+      }
+      return jsonResponse({ ok: true });
+    }
+
+    // ── Ocupaciones ──────────────────────────────────
+
     if (action === 'saveOcupacion') {
       var sheet = getOrCreateSheet('Ocupaciones', [
         'id','nombre','tipo','docente','asignatura','fecha','horaInicio','horaFin','capacidad','observaciones'
@@ -174,6 +210,8 @@ function doPost(e) {
       return jsonResponse({ ok: true });
     }
 
+    // ── Secciones ────────────────────────────────────
+
     if (action === 'saveSeccion') {
       var sheet = getOrCreateSheet('Secciones', ['id','nombre','tipo','docente','fecha','horaInicio','horaFin']);
       sheet.appendRow([body.id, body.nombre, body.tipo, body.docente, body.fecha, body.horaInicio || '', body.horaFin || '']);
@@ -193,6 +231,8 @@ function doPost(e) {
       }
       return jsonResponse({ ok: true });
     }
+
+    // ── Alumnos ──────────────────────────────────────
 
     if (action === 'saveAlumno') {
       var sheet = getOrCreateSheet('Alumnos', ['seccionId','id','nombre','rut','correo']);
