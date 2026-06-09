@@ -19,9 +19,7 @@ Sistema de registro de visitas del **FAB LAB INACAP Sede San Pedro de la Paz**. 
 
 **URL:** https://macaperalta35.github.io/formularioFABLAB/dashboard.html
 
-**Contraseña:** `fablab2024`
-
-> No cambiar la contraseña. Está configurada como `ADMIN_TOKEN` en el Google Apps Script y como token esperado en el dashboard.
+El panel se abre directamente sin contraseña. El token de administración (`fablab2024`) está hardcodeado en el código del dashboard y se usa internamente para autenticar las llamadas al Google Apps Script.
 
 El panel permite:
 - Ver todas las visitas registradas con filtros por nombre, RUT y tipo
@@ -44,7 +42,7 @@ Administrador
    │
    ▼
 dashboard.html  ──JSONP GET──►  Google Apps Script  ──►  Google Sheets (lectura)
-(con login)     ──POST no-cors─►  Google Apps Script  ──►  Google Sheets (escritura)
+(sin login)     ──POST no-cors─►  Google Apps Script  ──►  Google Sheets (escritura)
                                   (doGet/doPost con token)   Hojas: Visitas
                                                                      Ocupaciones
                                                                      Secciones
@@ -65,7 +63,7 @@ dashboard.html  ──JSONP GET──►  Google Apps Script  ──►  Google 
 | Archivo | Descripción |
 |---------|-------------|
 | `index.html` | Formulario público de registro de visitas |
-| `dashboard.html` | Panel de administración completo (requiere login) |
+| `dashboard.html` | Panel de administración completo (acceso directo, sin login) |
 | `admin-visitas.html` | Vista alternativa simplificada del panel |
 | `qr.html` | Página con código QR imprimible para el laboratorio |
 | `fablab-simple.html` | Formulario alternativo (apunta al backend Flask local) |
@@ -79,7 +77,7 @@ dashboard.html  ──JSONP GET──►  Google Apps Script  ──►  Google 
 
 **URL actual del script:**
 ```
-https://script.google.com/macros/s/AKfycbwT85ZC3jQA0KaC0_qYlAEfbDmbaTK1kljnoOk4OjNFhyU4Z6HpKP1Cpw9g_IfSfH4KTg/exec
+https://script.google.com/macros/s/AKfycbylfHGW-YJG6pJhmEQTV2SwZKe2Cxx09DjhnCA3-ySdrgyvxUyGkSXivFl7vBGztrOLNg/exec
 ```
 
 Esta URL está configurada en `index.html` y `dashboard.html` como `GOOGLE_SCRIPT_URL`.
@@ -153,6 +151,39 @@ Endpoints:
 - **Correo:** validación de estructura estándar
 - **Tipo de visita:** Estudiante / Docente / Visitante Externo / Empresa
 - **Propósito:** mínimo 5 caracteres. Botones de etiquetas rápidas disponibles
+
+---
+
+## QA — Resultados de Verificación (09-06-2026)
+
+Verificación completa del sistema. Todos los módulos pasan.
+
+### Formulario `index.html`
+- Todos los campos presentes y validados correctamente (nombre, RUT, teléfono, correo, tipo de visita, propósito)
+- `Content-Type: text/plain` en el POST a Apps Script (corrección crítica — el anterior `application/json` causaba que el navegador bloqueara el envío silenciosamente en modo `no-cors`)
+- URL del Apps Script actualizada a la implementación vigente
+- Sin pantalla de login
+
+### Panel `dashboard.html`
+- Acceso directo sin login ni contraseña
+- Token de admin hardcodeado como constante (`ADMIN_TOKEN`)
+- JSONP para lecturas (evita problema de CORS con redirects de Apps Script)
+- POST `no-cors` + `text/plain` para escrituras
+- Navegación completa: Visitas, Ocupación, Secciones
+
+### Panel `admin-visitas.html`
+- Formulario de login eliminado por completo
+- Dashboard visible por defecto al cargar la página
+
+### Google Sheets (API en vivo)
+| Test | Resultado |
+|------|-----------|
+| GET sin token → rechazado | PASS — `{"error":"No autorizado","status":401}` |
+| GET con token → retorna datos | PASS — registros reales devueltos correctamente |
+| POST visita de prueba → guardada | PASS — entrada confirmada en Google Sheets |
+
+### Observaciones
+- Los números de teléfono se almacenan como número en Google Sheets (Google Sheets convierte strings numéricos automáticamente — comportamiento de la hoja, no del código).
 
 ---
 
