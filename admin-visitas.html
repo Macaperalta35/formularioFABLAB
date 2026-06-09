@@ -93,23 +93,9 @@
 </head>
 <body>
 
-    <!-- Pantalla de Login -->
-    <div id="login-view" class="login-container">
-        <div class="logo" style="margin-bottom: 20px;">
-            <img src="logo-inacap.svg" alt="INACAP logo" style="max-width: 100px;"/>
-        </div>
-        <h2>Acceso Administrativo</h2>
-        <form id="login-form" onsubmit="realizarLogin(event)">
-            <input type="password" id="admin-password" class="form-input" placeholder="Contraseña de administrador" required>
-            <div id="login-error-msg" style="color: red; margin-bottom: 15px; font-size: 14px; display: none;">Contraseña incorrecta</div>
-            <button type="submit" class="btn btn-primary">Ingresar</button>
-        </form>
-    </div>
-
     <!-- Pantalla Dashboard -->
-    <div id="dashboard-view" class="container" style="display: none;">
+    <div id="dashboard-view" class="container">
         <div class="header">
-            <button class="btn btn-danger btn-auto logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
             <div class="logo">
                 <img src="logo-inacap.svg" alt="INACAP logo" />
                 <span class="logo-name">INACAP</span>
@@ -187,49 +173,7 @@
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
 
-        function mostrarLogin() {
-            document.getElementById('login-view').style.display = 'block';
-            document.getElementById('dashboard-view').style.display = 'none';
-            if(updateInterval) clearInterval(updateInterval);
-        }
-
-        function mostrarDashboard() {
-            document.getElementById('login-view').style.display = 'none';
-            document.getElementById('dashboard-view').style.display = 'block';
-        }
-
-        function cerrarSesion() {
-            sessionStorage.removeItem('fablab_admin_token');
-            mostrarLogin();
-        }
-
-        async function realizarLogin(e) {
-            e.preventDefault();
-            const pass = document.getElementById('admin-password').value;
-            if (!pass) return;
-
-            sessionStorage.setItem('fablab_admin_token', pass);
-            document.getElementById('login-error-msg').style.display = 'none';
-
-            const exito = await cargarDatos();
-            if (exito) {
-                mostrarDashboard();
-                document.getElementById('admin-password').value = '';
-                if(updateInterval) clearInterval(updateInterval);
-                updateInterval = setInterval(cargarDatos, 30000);
-            } else {
-                sessionStorage.removeItem('fablab_admin_token');
-                document.getElementById('login-error-msg').style.display = 'block';
-            }
-        }
-
         async function cargarDatos() {
-            const token = sessionStorage.getItem('fablab_admin_token');
-            if (!token) {
-                mostrarLogin();
-                return false;
-            }
-
             if (!BASE_URL) BASE_URL = await getBaseUrl();
 
             const loadingContainer = document.getElementById('loading-container');
@@ -248,7 +192,6 @@
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                 const response = await fetch(`${BASE_URL}/visitas`, {
-                    headers: { 'X-Admin-Token': token },
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
@@ -303,10 +246,6 @@
                 }
                 return true;
             } catch (error) {
-                if (error.message === 'No Autorizado') {
-                    cerrarSesion();
-                    return false;
-                }
                 messageContainer.innerHTML = `<div class="error">Error: ${error.message}</div>`;
                 loadingContainer.style.display = 'none';
                 return false;
@@ -314,9 +253,7 @@
         }
 
         function exportarExcel() {
-            const token = sessionStorage.getItem('fablab_admin_token');
-            if (!token) return;
-            window.location.href = `${BASE_URL}/visitas/export?format=excel&token=${encodeURIComponent(token)}`;
+            window.location.href = `${BASE_URL}/visitas/export?format=excel`;
         }
 
         function recargar() {
@@ -324,25 +261,9 @@
         }
 
         async function initApp() {
-            if (window.location.protocol === 'file:') {
-                alert('⚠️ Para que funcione correctamente, abre este panel desde el servidor web:\n\nhttp://127.0.0.1:8000/admin-visitas.html');
-                return;
-            }
-
             BASE_URL = await getBaseUrl();
-
-            const token = sessionStorage.getItem('fablab_admin_token');
-            if (token) {
-                const exito = await cargarDatos();
-                if (exito) {
-                    mostrarDashboard();
-                    updateInterval = setInterval(cargarDatos, 30000);
-                } else {
-                    mostrarLogin();
-                }
-            } else {
-                mostrarLogin();
-            }
+            await cargarDatos();
+            updateInterval = setInterval(cargarDatos, 30000);
         }
 
         initApp();

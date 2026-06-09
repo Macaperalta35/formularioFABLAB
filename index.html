@@ -165,7 +165,7 @@
         // ========== CONFIG ==========
         // URL de tu Google Apps Script (Web App)
         // INSTRUCCIONES: Reemplaza esta URL con la de tu Google Apps Script desplegado
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwT85ZC3jQA0KaC0_qYlAEfbDmbaTK1kljnoOk4OjNFhyU4Z6HpKP1Cpw9g_IfSfH4KTg/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylfHGW-YJG6pJhmEQTV2SwZKe2Cxx09DjhnCA3-ySdrgyvxUyGkSXivFl7vBGztrOLNg/exec';
 
         // ========== DOM ==========
         const form = document.getElementById('registro-form');
@@ -191,11 +191,11 @@
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload)
                 });
-            } catch (_) {
-                // Sheets es registro secundario; ignorar errores de red
+            } catch (err) {
+                console.error('Error al enviar a Google Sheets:', err);
             }
             return { ok: true };
         }
