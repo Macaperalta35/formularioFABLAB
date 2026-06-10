@@ -225,18 +225,23 @@ function doPost(e) {
 
     // ── Visita pública (sin token) ──────────────────
     if (!action) {
+      var nombre = String(body.nombre || '').trim();
+      var rut    = String(body.rut    || '').trim();
+      if (!nombre || !rut) {
+        return jsonResponse({ error: 'Nombre y RUT son obligatorios', status: 400 });
+      }
       var sheet = getOrCreateSheet('Visitas', [
         'fecha','nombre','rut','telefono','correo','tipoVisita','proposito','etiquetas'
       ]);
       sheet.appendRow([
         body.fecha     || Utilities.formatDate(new Date(), 'America/Santiago', 'dd/MM/yyyy HH:mm'),
-        body.nombre    || '',
-        body.rut       || '',
-        body.telefono  || '',
-        body.correo    || '',
-        body.tipoVisita|| '',
-        body.proposito || '',
-        body.etiquetas || ''
+        nombre,
+        rut,
+        String(body.telefono  || '').trim(),
+        String(body.correo    || '').trim(),
+        String(body.tipoVisita|| '').trim(),
+        String(body.proposito || '').trim(),
+        String(body.etiquetas || '').trim()
       ]);
       return jsonResponse({ ok: true });
     }

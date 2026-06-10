@@ -108,12 +108,26 @@ Esta URL está configurada en `index.html` y `dashboard.html` como `GOOGLE_SCRIP
 
 ---
 
-## Mantenimiento del Apps Script
+## Acción pendiente — Migración de registros históricos
 
-Si necesitas redesplegar el script (por ejemplo, para hacer cambios):
+La hoja **"Hoja 1"** contiene ~105 registros anteriores al dashboard que aún no están en la hoja "Visitas". Para importarlos:
 
 1. Abre [script.google.com](https://script.google.com) y entra al proyecto del FAB LAB.
-2. Modifica el código usando `google-apps-script.gs` como referencia.
+2. En el selector de función (arriba al centro), selecciona `mergeHoja1ToVisitas`.
+3. Haz clic en **▶ Ejecutar** (no es necesario redesplegar).
+4. Acepta los permisos si te los pide.
+5. Al terminar aparece un diálogo con el número de registros importados.
+
+> La función omite duplicados (compara RUT + fecha), así que es seguro ejecutarla más de una vez.
+
+---
+
+## Mantenimiento del Apps Script
+
+Cada vez que modifiques `google-apps-script.gs` debes pegar el código actualizado en script.google.com **y redesplegar**:
+
+1. Abre [script.google.com](https://script.google.com) y entra al proyecto del FAB LAB.
+2. Pega el contenido de `google-apps-script.gs` y guarda (`Ctrl+S`).
 3. Haz clic en **Implementar → Nueva implementación**.
    - Tipo: *Aplicación web*
    - Ejecutar como: **Yo**
@@ -154,7 +168,7 @@ Endpoints:
 
 ---
 
-## QA — Resultados de Verificación (09-06-2026)
+## QA — Resultados de Verificación (10-06-2026)
 
 Verificación completa del sistema. Todos los módulos pasan.
 
@@ -170,6 +184,8 @@ Verificación completa del sistema. Todos los módulos pasan.
 - JSONP para lecturas (evita problema de CORS con redirects de Apps Script)
 - POST `no-cors` + `text/plain` para escrituras
 - Navegación completa: Visitas, Ocupación, Secciones
+- Exportación de visitas en **CSV**, **Excel (.xlsx)** y **PDF** (A4 horizontal, tabla con colores INACAP)
+- Exporta el conjunto filtrado actualmente visible (respeta búsqueda y filtro de tipo)
 
 ### Panel `admin-visitas.html`
 - Formulario de login eliminado por completo
@@ -179,11 +195,18 @@ Verificación completa del sistema. Todos los módulos pasan.
 | Test | Resultado |
 |------|-----------|
 | GET sin token → rechazado | PASS — `{"error":"No autorizado","status":401}` |
-| GET con token → retorna datos | PASS — registros reales devueltos correctamente |
-| POST visita de prueba → guardada | PASS — entrada confirmada en Google Sheets |
+| GET token incorrecto → rechazado | PASS — `{"error":"No autorizado","status":401}` |
+| GET con token → retorna datos | PASS — 126 registros reales devueltos con `_rowIndex` |
+| POST visita de prueba → guardada y confirmada | PASS |
+| POST `deleteVisita` → elimina fila correcta | PASS |
+| POST `updateVisita` → actualiza sin alterar otros | PASS |
+| JSONP callback → formato correcto | PASS — `_gscb_xxx([...])` |
+| POST con campos vacíos → rechazado | PASS — `{"error":"Nombre y RUT son obligatorios","status":400}` |
+| POST admin sin token → rechazado | PASS — `{"error":"No autorizado"}` |
 
 ### Observaciones
-- Los números de teléfono se almacenan como número en Google Sheets (Google Sheets convierte strings numéricos automáticamente — comportamiento de la hoja, no del código).
+- Los números de teléfono se almacenan como número en Google Sheets (comportamiento automático de la hoja). El CSV y Excel los fuerzan a string para evitar notación científica.
+- La hoja "Hoja 1" (~105 registros históricos) requiere migración manual con `mergeHoja1ToVisitas()` — ver sección **Acción pendiente** arriba.
 
 ---
 
