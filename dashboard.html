@@ -671,7 +671,7 @@
             await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(body)
             }).catch(() => {});
             return { ok: true };
@@ -721,6 +721,29 @@
         } catch (e) {
             document.getElementById('visitas-loading').style.display = 'none';
             throw e;
+        }
+    }
+
+    // Recarga datos de Sheets sin spinner — verifica que la escritura anterior llegó.
+    // Si el dato no llegó, la UI se corrige automáticamente con lo real de Sheets.
+    async function silentSync() {
+        try {
+            const [visitas, ocupaciones, secciones] = await Promise.all([
+                jsonpRequest('getAll'),
+                jsonpRequest('getOcupaciones'),
+                jsonpRequest('getSecciones')
+            ]);
+            if (Array.isArray(visitas))    db.visitas     = visitas;
+            if (Array.isArray(ocupaciones)) db.ocupaciones = ocupaciones;
+            if (Array.isArray(secciones))  db.secciones   = secciones;
+            filterVisitas();
+            renderOcupaciones(currentOcuTab);
+            renderSecciones();
+            refreshOverview();
+            document.getElementById('badge-visitas').textContent   = db.visitas.length;
+            document.getElementById('badge-secciones').textContent = db.secciones.length;
+        } catch (e) {
+            console.warn('silentSync falló:', e.message);
         }
     }
 
@@ -823,6 +846,7 @@
             filterVisitas();
             refreshOverview();
             showToast('Visita actualizada en Google Sheets', 'success');
+            setTimeout(silentSync, 2000);
         } catch (e) {
             // error ya mostrado por apiRequest
         } finally {
@@ -836,12 +860,12 @@
         try {
             await apiRequest('deleteVisita', { rowIndex });
             db.visitas = db.visitas.filter(v => v._rowIndex !== rowIndex);
-            // Actualizar índices de filas posteriores (Sheets desplaza hacia arriba)
             db.visitas.forEach(v => { if (v._rowIndex > rowIndex) v._rowIndex--; });
             filterVisitas();
             refreshOverview();
             document.getElementById('badge-visitas').textContent = db.visitas.length;
             showToast('Visita eliminada de Google Sheets', 'info');
+            setTimeout(silentSync, 2000);
         } catch (e) {}
     }
 
@@ -944,6 +968,7 @@
             renderOcupaciones(currentOcuTab);
             refreshOverview();
             showToast('Ocupación registrada en Google Sheets', 'success');
+            setTimeout(silentSync, 2000);
         } catch (e) {
             // error ya mostrado por apiRequest
         } finally {
@@ -961,6 +986,7 @@
             renderOcupaciones(currentOcuTab);
             refreshOverview();
             showToast('Actividad eliminada de Sheets', 'info');
+            setTimeout(silentSync, 2000);
         } catch (e) {}
     }
 
@@ -1117,6 +1143,7 @@
             refreshOverview();
             document.getElementById('badge-secciones').textContent = db.secciones.length;
             showToast('Sección creada en Google Sheets', 'success');
+            setTimeout(silentSync, 2000);
         } catch (e) {
         } finally {
             btn.disabled = false;
@@ -1126,7 +1153,7 @@
 
     async function deleteSeccion(id) {
         if (!confirm('¿Eliminar esta sección y todos sus alumnos de Google Sheets?')) return;
-        
+
         try {
             await apiRequest('deleteSeccion', { id });
             db.secciones = db.secciones.filter(s => s.id !== id);
@@ -1134,6 +1161,7 @@
             refreshOverview();
             document.getElementById('badge-secciones').textContent = db.secciones.length;
             showToast('Sección eliminada', 'info');
+            setTimeout(silentSync, 2000);
         } catch (e) {}
     }
 
@@ -1188,6 +1216,7 @@
             }
             refreshOverview();
             showToast('Alumno agregado en Sheets', 'success');
+            setTimeout(silentSync, 2000);
         } catch (e) {
         } finally {
             btn.disabled = false;
@@ -1199,7 +1228,7 @@
         if (!confirm('¿Remover a este alumno?')) return;
         try {
             await apiRequest('deleteAlumno', { alumnoId });
-            
+
             const seccion = db.secciones.find(s => s.id === seccionId);
             if (seccion) {
                 seccion.alumnos = seccion.alumnos.filter(a => a.id !== alumnoId);
@@ -1207,6 +1236,7 @@
                 viewSeccion(seccionId);
                 refreshOverview();
                 showToast('Alumno removido de Sheets', 'info');
+                setTimeout(silentSync, 2000);
             }
         } catch (e) {}
     }
