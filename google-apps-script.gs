@@ -102,8 +102,9 @@ function mergeHoja1ToVisitas() {
     added++;
   }
 
-  Logger.log('✅ Migración completa: ' + added + ' registros importados, ' + skipped + ' duplicados omitidos.');
-  SpreadsheetApp.getUi().alert('✅ Migración completa\n\n' + added + ' registros importados desde Hoja 1.\n' + skipped + ' duplicados omitidos.');
+  var msg = '✅ Migración completa: ' + added + ' registros importados, ' + skipped + ' duplicados omitidos.';
+  Logger.log(msg);
+  try { SpreadsheetApp.getUi().alert(msg); } catch(e) { /* ejecutado fuera de contexto UI */ }
 }
 
 // ── Utilidades ──────────────────────────────────────
