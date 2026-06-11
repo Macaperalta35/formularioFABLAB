@@ -77,7 +77,7 @@ dashboard.html  ──JSONP GET──►  Google Apps Script  ──►  Google 
 
 **URL actual del script:**
 ```
-https://script.google.com/macros/s/AKfycbwjsHdbFXwwn_9dSJZniuEOayd8R3I-6y8c68EC8wV_-WuvB0UNuW7IPrv4zWYpFfPTPA/exec
+https://script.google.com/macros/s/AKfycbxqySNZqlHt2Iy6_v6xUE4X0pUWoQO2IwxRea2XfEUFSE1qohRE22Qlg3oL43a5Drozmw/exec
 ```
 
 Esta URL está configurada en `index.html` y `dashboard.html` como `GOOGLE_SCRIPT_URL`.
