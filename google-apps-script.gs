@@ -335,6 +335,29 @@ function doPost(e) {
       return jsonResponse({ ok: true });
     }
 
+    if (action === 'updateOcupacion') {
+      var sheet = getOrCreateSheet('Ocupaciones', []);
+      var data  = sheet.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(body.id)) {
+          sheet.getRange(i + 1, 1, 1, 10).setValues([[
+            body.id,
+            body.nombre        || '',
+            body.tipo          || '',
+            body.docente       || '',
+            body.asignatura    || '',
+            body.fecha         || '',
+            body.horaInicio    || '',
+            body.horaFin       || '',
+            body.capacidad     || '',
+            body.observaciones || ''
+          ]]);
+          break;
+        }
+      }
+      return jsonResponse({ ok: true });
+    }
+
     // ── Secciones ────────────────────────────────────
 
     if (action === 'saveSeccion') {

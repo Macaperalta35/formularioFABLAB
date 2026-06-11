@@ -385,6 +385,70 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL: EDITAR OCUPACIÓN ==================== -->
+    <div class="modal-overlay" id="modal-editar-ocupacion">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Editar Ocupación</h3>
+                <button class="modal-close" onclick="closeModal('modal-editar-ocupacion')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-ocu-id">
+                <div class="form-group">
+                    <label class="form-label">Nombre de la Actividad *</label>
+                    <input type="text" class="form-input" id="edit-ocu-nombre" placeholder="Ej: Taller de Impresión 3D">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo *</label>
+                    <select class="form-select" id="edit-ocu-tipo">
+                        <option value="">Seleccionar...</option>
+                        <option value="clase">🎓 Clase</option>
+                        <option value="capacitacion">🛠️ Capacitación</option>
+                        <option value="taller">🔧 Taller</option>
+                        <option value="evento">🎪 Evento</option>
+                        <option value="mantencion">⚙️ Mantención</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Docente / Responsable *</label>
+                    <input type="text" class="form-input" id="edit-ocu-docente" placeholder="Nombre del docente o responsable">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Asignatura / Tema</label>
+                    <input type="text" class="form-input" id="edit-ocu-asignatura" placeholder="Ej: Diseño Industrial">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Fecha *</label>
+                        <input type="date" class="form-input" id="edit-ocu-fecha">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hora Inicio *</label>
+                        <input type="time" class="form-input" id="edit-ocu-hora-inicio">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Hora Fin *</label>
+                        <input type="time" class="form-input" id="edit-ocu-hora-fin">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Capacidad estimada</label>
+                        <input type="number" class="form-input" id="edit-ocu-capacidad" placeholder="Ej: 20" min="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observaciones</label>
+                    <input type="text" class="form-input" id="edit-ocu-observaciones" placeholder="Notas adicionales...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-editar-ocupacion')">Cancelar</button>
+                <button class="btn btn-primary" id="btn-save-ocu-edit" onclick="saveEditOcupacion()">💾 Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== MODAL: NUEVA SECCIÓN ==================== -->
     <div class="modal-overlay" id="modal-seccion">
         <div class="modal">
@@ -1083,7 +1147,7 @@
 
     async function deleteOcupacion(id) {
         if (!confirm('¿Eliminar esta actividad?')) return;
-        
+
         try {
             await apiRequest('deleteOcupacion', { id });
             db.ocupaciones = db.ocupaciones.filter(o => o.id !== id);
@@ -1092,6 +1156,62 @@
             showToast('Actividad eliminada de Sheets', 'info');
             setTimeout(silentSync, 2000);
         } catch (e) {}
+    }
+
+    function openEditOcupacionModal(id) {
+        const o = db.ocupaciones.find(x => x.id === id);
+        if (!o) return;
+        document.getElementById('edit-ocu-id').value          = o.id;
+        document.getElementById('edit-ocu-nombre').value      = o.nombre || '';
+        document.getElementById('edit-ocu-tipo').value        = o.tipo || '';
+        document.getElementById('edit-ocu-docente').value     = o.docente || '';
+        document.getElementById('edit-ocu-asignatura').value  = o.asignatura || '';
+        document.getElementById('edit-ocu-fecha').value       = o.fecha || '';
+        document.getElementById('edit-ocu-hora-inicio').value = o.horaInicio || '';
+        document.getElementById('edit-ocu-hora-fin').value    = o.horaFin || '';
+        document.getElementById('edit-ocu-capacidad').value   = o.capacidad || '';
+        document.getElementById('edit-ocu-observaciones').value = o.observaciones || '';
+        openModal('modal-editar-ocupacion');
+    }
+
+    async function saveEditOcupacion() {
+        const id          = document.getElementById('edit-ocu-id').value;
+        const nombre      = document.getElementById('edit-ocu-nombre').value.trim();
+        const tipo        = document.getElementById('edit-ocu-tipo').value;
+        const docente     = document.getElementById('edit-ocu-docente').value.trim();
+        const asignatura  = document.getElementById('edit-ocu-asignatura').value.trim();
+        const fecha       = document.getElementById('edit-ocu-fecha').value;
+        const horaInicio  = document.getElementById('edit-ocu-hora-inicio').value;
+        const horaFin     = document.getElementById('edit-ocu-hora-fin').value;
+        const capacidad   = document.getElementById('edit-ocu-capacidad').value;
+        const observaciones = document.getElementById('edit-ocu-observaciones').value.trim();
+
+        if (!nombre || !tipo || !docente || !fecha || !horaInicio || !horaFin) {
+            showToast('Completa todos los campos obligatorios (*)', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btn-save-ocu-edit');
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+
+        const updated = { id, nombre, tipo, docente, asignatura, fecha, horaInicio, horaFin,
+                          capacidad: capacidad ? parseInt(capacidad) : '', observaciones };
+
+        try {
+            await apiRequest('updateOcupacion', updated);
+            const idx = db.ocupaciones.findIndex(o => o.id === id);
+            if (idx >= 0) db.ocupaciones[idx] = { ...db.ocupaciones[idx], ...updated };
+            closeModal('modal-editar-ocupacion');
+            renderOcupaciones(currentOcuTab);
+            refreshOverview();
+            showToast('Actividad actualizada en Google Sheets', 'success');
+            setTimeout(silentSync, 2000);
+        } catch (e) {
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '💾 Guardar Cambios';
+        }
     }
 
     function switchOcupacionTab(tab, btn) {
@@ -1162,7 +1282,10 @@
                             ${o.capacidad ? `<div class="meta-row"><span class="meta-icon">👥</span> ${o.capacidad} personas</div>` : ''}
                             ${o.observaciones ? `<div class="meta-row"><span class="meta-icon">📝</span> ${escapeHTML(o.observaciones)}</div>` : ''}
                         </div>
-                        <button class="btn btn-danger btn-sm" onclick="deleteOcupacion('${o.id}')">🗑️ Eliminar</button>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="btn btn-secondary btn-sm" onclick="openEditOcupacionModal('${o.id}')">✏️ Editar</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteOcupacion('${o.id}')">🗑️ Eliminar</button>
+                        </div>
                     </div>
                 `;
             }).join('');
