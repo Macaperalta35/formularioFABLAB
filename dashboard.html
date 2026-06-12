@@ -646,12 +646,21 @@
         });
     });
 
-    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+
+    mobileMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         sidebar.classList.toggle('open');
         sidebarOverlay.classList.toggle('visible');
     });
 
-    sidebarOverlay.addEventListener('click', closeSidebar);
+    document.addEventListener('click', (e) => {
+        if (sidebar.classList.contains('open') &&
+            !sidebar.contains(e.target) &&
+            !mobileMenuBtn.contains(e.target)) {
+            closeSidebar();
+        }
+    });
 
     function closeSidebar() {
         sidebar.classList.remove('open');
