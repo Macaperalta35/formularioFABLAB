@@ -100,6 +100,17 @@
                     <div id="tipoVisita-error" class="error-text hidden"></div>
                 </div>
 
+                <!-- Actividad programada del lab (se carga dinámicamente) -->
+                <div class="form-group" id="actividad-lab-group" style="display:none;">
+                    <label class="label">¿Asistes a una actividad programada? <span style="font-size:0.75rem;font-weight:400;color:#888;">(opcional)</span></label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🏫</span>
+                        <select id="actividad-lab" class="input" style="cursor:pointer;" onchange="onActividadChange()">
+                            <option value="">— No / Visita libre —</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Datos del Proyecto/Visita -->
                 <div class="form-group">
                     <label class="label">Etiquetas Rápidas</label>
@@ -416,6 +427,82 @@
                 submitBtn.disabled = false;
             }
         });
+
+        // ========== ACTIVIDADES DEL LAB (JSONP) ==========
+        const ADMIN_TOKEN = 'fablab2024';
+
+        function jsonpFetch(action) {
+            return new Promise((resolve, reject) => {
+                const cb = '_labcb_' + Date.now();
+                const script = document.createElement('script');
+                window[cb] = (data) => { delete window[cb]; script.remove(); resolve(data); };
+                script.onerror = () => { delete window[cb]; script.remove(); reject(); };
+                script.src = GOOGLE_SCRIPT_URL + '?action=' + action + '&token=' + ADMIN_TOKEN + '&callback=' + cb + '&t=' + Date.now();
+                document.head.appendChild(script);
+            });
+        }
+
+        function fechaCorta(str) {
+            const today = new Date().toISOString().slice(0, 10);
+            if (str === today) return 'Hoy';
+            const d = new Date(str + 'T12:00:00');
+            return d.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' });
+        }
+
+        async function loadActividades() {
+            try {
+                const data = await jsonpFetch('getOcupaciones');
+                if (!Array.isArray(data) || data.length === 0) return;
+
+                const today = new Date().toISOString().slice(0, 10);
+                const weekEnd = new Date();
+                weekEnd.setDate(weekEnd.getDate() + 7);
+                const weekStr = weekEnd.toISOString().slice(0, 10);
+
+                const vigentes = data
+                    .filter(o => o.fecha >= today && o.fecha <= weekStr)
+                    .sort((a, b) => (a.fecha + (a.horaInicio || '')).localeCompare(b.fecha + (b.horaInicio || '')));
+
+                if (vigentes.length === 0) return;
+
+                const select = document.getElementById('actividad-lab');
+                vigentes.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o.id;
+                    opt.dataset.nombre = o.nombre || '';
+                    opt.dataset.hora = (o.horaInicio || '') + (o.horaFin ? ' - ' + o.horaFin : '');
+                    const label = fechaCorta(o.fecha) + (o.horaInicio ? ' ' + o.horaInicio : '');
+                    opt.textContent = o.nombre + ' · ' + label;
+                    select.appendChild(opt);
+                });
+
+                document.getElementById('actividad-lab-group').style.display = 'block';
+            } catch(e) {
+                // sección queda oculta si falla la carga
+            }
+        }
+
+        function onActividadChange() {
+            const select = document.getElementById('actividad-lab');
+            const opt = select.options[select.selectedIndex];
+            if (!opt || !opt.value) return;
+
+            const nombre = opt.dataset.nombre || '';
+            const hora   = opt.dataset.hora   || '';
+            const propEl = document.getElementById('proposito');
+            const actText = hora ? nombre + ' (' + hora + ')' : nombre;
+
+            if (!propEl.value.includes(nombre)) {
+                propEl.value = propEl.value.trim() ? propEl.value.trim() + ', ' + actText : actText;
+            }
+            updateFieldUI(propEl);
+
+            if (nombre && !clickedTags.includes(nombre)) {
+                clickedTags.push(nombre);
+            }
+        }
+
+        loadActividades();
 
         updateSubmitButton();
     </script>
