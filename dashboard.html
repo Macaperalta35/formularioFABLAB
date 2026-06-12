@@ -11,6 +11,46 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="dashboard.css">
     <style>
+        /* ── Accesibilidad ── */
+        body.high-contrast {
+            --bg-deep: #000;
+            --bg-base: #000;
+            --bg-card: #111;
+            --bg-elevated: #111;
+            --bg-input: #111;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #fff;
+            --text-secondary: #eee;
+            --text-muted: #ccc;
+            --border: #fff;
+            --border-light: #888;
+            --red: #ff3b3b;
+        }
+        body.high-contrast .card,
+        body.high-contrast .modal,
+        body.high-contrast .sidebar,
+        body.high-contrast .top-header { border: 1px solid #fff !important; }
+
+        body.large-text { font-size: 18px; }
+        body.large-text .nav-item,
+        body.large-text .section-title,
+        body.large-text td, body.large-text th { font-size: 1rem; }
+
+        /* Toggle switch */
+        .acc-switch { position:relative; display:inline-block; width:48px; height:26px; flex-shrink:0; }
+        .acc-switch input { opacity:0; width:0; height:0; }
+        .acc-slider {
+            position:absolute; inset:0; cursor:pointer;
+            background:#ccc; border-radius:26px; transition:.3s;
+        }
+        .acc-slider:before {
+            content:""; position:absolute;
+            width:20px; height:20px; left:3px; bottom:3px;
+            background:#fff; border-radius:50%; transition:.3s;
+        }
+        .acc-switch input:checked + .acc-slider { background:var(--red); }
+        .acc-switch input:checked + .acc-slider:before { transform:translateX(22px); }
+
         .export-menu-item {
             width: 100%;
             text-align: left;
@@ -83,6 +123,12 @@
                     <span class="nav-icon">👥</span>
                     Secciones y Alumnos
                     <span class="nav-badge" id="badge-secciones">0</span>
+                </button>
+
+                <div class="nav-label" style="margin-top: 8px;">Sistema</div>
+                <button class="nav-item" data-section="accesibilidad" id="nav-accesibilidad">
+                    <span class="nav-icon">♿</span>
+                    Accesibilidad
                 </button>
             </nav>
 
@@ -471,6 +517,53 @@
                         <p class="empty-title">Sin secciones</p>
                         <p class="empty-text">Crea una sección para inscribir alumnos a clases o capacitaciones del laboratorio.</p>
                         <button class="btn btn-primary btn-sm" onclick="openSeccionModal()">➕ Crear Sección</button>
+                    </div>
+                </div>
+
+                <!-- ==================== SECTION: ACCESIBILIDAD ==================== -->
+                <div class="page-section" id="section-accesibilidad">
+                    <div class="section-header">
+                        <h3 class="section-title">♿ Accesibilidad</h3>
+                    </div>
+
+                    <div class="card" style="max-width:540px;">
+                        <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+                                <div>
+                                    <div style="font-weight:600;margin-bottom:0.25rem;">🌗 Alto Contraste</div>
+                                    <div style="font-size:0.85rem;color:var(--text-muted);">Aumenta el contraste de colores para mejorar la visibilidad.</div>
+                                </div>
+                                <label class="acc-switch">
+                                    <input type="checkbox" id="toggle-contrast">
+                                    <span class="acc-slider"></span>
+                                </label>
+                            </div>
+
+                            <hr style="border:none;border-top:1px solid var(--border);">
+
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+                                <div>
+                                    <div style="font-weight:600;margin-bottom:0.25rem;">🔤 Texto Grande</div>
+                                    <div style="font-size:0.85rem;color:var(--text-muted);">Aumenta el tamaño de fuente para facilitar la lectura.</div>
+                                </div>
+                                <label class="acc-switch">
+                                    <input type="checkbox" id="toggle-large-text">
+                                    <span class="acc-slider"></span>
+                                </label>
+                            </div>
+
+                            <hr style="border:none;border-top:1px solid var(--border);">
+
+                            <div>
+                                <div style="font-weight:600;margin-bottom:0.5rem;">🌐 Idioma</div>
+                                <select class="filter-select" style="min-width:200px;">
+                                    <option>Español (Chile)</option>
+                                    <option disabled>English (Próximamente)</option>
+                                </select>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
 
@@ -937,11 +1030,12 @@
     const sidebarOverlay = document.getElementById('sidebar-overlay');
 
     const sectionTitles = {
-        overview: 'Panel General',
-        visitas: 'Gestión de Visitas',
-        inventario: 'Inventario FabLab',
-        ocupacion: 'Ocupación del Laboratorio',
-        secciones: 'Secciones y Alumnos'
+        overview:      'Panel General',
+        visitas:       'Gestión de Visitas',
+        inventario:    'Inventario FabLab',
+        ocupacion:     'Ocupación del Laboratorio',
+        secciones:     'Secciones y Alumnos',
+        accesibilidad: 'Accesibilidad'
     };
 
     function goToSection(name) {
@@ -983,6 +1077,37 @@
         sidebar.classList.remove('open');
         sidebarOverlay.classList.remove('visible');
     }
+
+    // ===========================
+    //  ACCESIBILIDAD
+    // ===========================
+    const acc = {
+        highContrast: localStorage.getItem('acc_contrast') === '1',
+        largeText:    localStorage.getItem('acc_large')    === '1'
+    };
+
+    function syncAccessibility() {
+        document.body.classList.toggle('high-contrast', acc.highContrast);
+        document.body.classList.toggle('large-text',    acc.largeText);
+        const tc = document.getElementById('toggle-contrast');
+        const tl = document.getElementById('toggle-large-text');
+        if (tc) tc.checked = acc.highContrast;
+        if (tl) tl.checked = acc.largeText;
+        localStorage.setItem('acc_contrast', acc.highContrast ? '1' : '0');
+        localStorage.setItem('acc_large',    acc.largeText    ? '1' : '0');
+    }
+
+    document.getElementById('toggle-contrast').addEventListener('change', e => {
+        acc.highContrast = e.target.checked;
+        syncAccessibility();
+    });
+
+    document.getElementById('toggle-large-text').addEventListener('change', e => {
+        acc.largeText = e.target.checked;
+        syncAccessibility();
+    });
+
+    syncAccessibility();
 
     // ===========================
     //  CLOCK
