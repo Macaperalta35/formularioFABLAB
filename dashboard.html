@@ -1239,12 +1239,12 @@
         const now = new Date();
 
         if (tab === 'today') {
-            data = data.filter(o => o.fecha === today);
+            data = data.filter(o => normFecha(o.fecha) === today);
         } else if (tab === 'upcoming') {
-            data = data.filter(o => o.fecha >= today);
-            data.sort((a, b) => (a.fecha + a.horaInicio).localeCompare(b.fecha + b.horaInicio));
+            data = data.filter(o => normFecha(o.fecha) >= today);
+            data.sort((a, b) => (normFecha(a.fecha) + normHora(a.horaInicio)).localeCompare(normFecha(b.fecha) + normHora(b.horaInicio)));
         } else {
-            data.sort((a, b) => (b.fecha + b.horaInicio).localeCompare(a.fecha + a.horaInicio));
+            data.sort((a, b) => (normFecha(b.fecha) + normHora(b.horaInicio)).localeCompare(normFecha(a.fecha) + normHora(a.horaInicio)));
         }
 
         if (data.length === 0) {
@@ -1258,12 +1258,12 @@
 
                 let status = 'upcoming';
                 let statusText = 'Programado';
-                // Solo asignar estado active si es el dia correcto
-                if (o.fecha === today) {
-                    const startStr = o.fecha + 'T' + o.horaInicio;
-                    const endStr = o.fecha + 'T' + o.horaFin;
-                    const startDT = new Date(startStr);
-                    const endDT = new Date(endStr);
+                const oFecha = normFecha(o.fecha);
+                if (oFecha === today) {
+                    const hi = normHora(o.horaInicio);
+                    const hf = normHora(o.horaFin);
+                    const startDT = new Date(oFecha + 'T' + (hi || '00:00') + ':00');
+                    const endDT   = new Date(oFecha + 'T' + (hf || '23:59') + ':00');
                     if (now >= startDT && now <= endDT) {
                         status = 'active';
                         statusText = 'En curso';
@@ -1271,7 +1271,7 @@
                         status = 'ended';
                         statusText = 'Finalizado';
                     }
-                } else if (o.fecha < today) {
+                } else if (oFecha < today) {
                     status = 'ended';
                     statusText = 'Finalizado';
                 }
@@ -1287,7 +1287,7 @@
                             <div class="meta-row"><span class="meta-icon">👨‍🏫</span> ${escapeHTML(o.docente)}</div>
                             ${o.asignatura ? `<div class="meta-row"><span class="meta-icon">📖</span> ${escapeHTML(o.asignatura)}</div>` : ''}
                             <div class="meta-row"><span class="meta-icon">📅</span> ${formatDate(o.fecha)}</div>
-                            <div class="meta-row"><span class="meta-icon">🕐</span> ${o.horaInicio} — ${o.horaFin}</div>
+                            <div class="meta-row"><span class="meta-icon">🕐</span> ${normHora(o.horaInicio)} — ${normHora(o.horaFin)}</div>
                             ${o.capacidad ? `<div class="meta-row"><span class="meta-icon">👥</span> ${o.capacidad} personas</div>` : ''}
                             ${o.observaciones ? `<div class="meta-row"><span class="meta-icon">📝</span> ${escapeHTML(o.observaciones)}</div>` : ''}
                         </div>
@@ -1302,11 +1302,11 @@
 
         // Stats updates
         const allOcu = db.ocupaciones;
-        const todayOcu = allOcu.filter(o => o.fecha === today);
+        const todayOcu = allOcu.filter(o => normFecha(o.fecha) === today);
         const weekEnd = new Date(now);
         weekEnd.setDate(weekEnd.getDate() + 7);
         const weekStr = weekEnd.toISOString().slice(0, 10);
-        const weekOcu = allOcu.filter(o => o.fecha >= today && o.fecha <= weekStr);
+        const weekOcu = allOcu.filter(o => normFecha(o.fecha) >= today && normFecha(o.fecha) <= weekStr);
 
         document.getElementById('lab-today-count').textContent = todayOcu.length;
         document.getElementById('lab-week-count').textContent = weekOcu.length;
@@ -1330,10 +1330,23 @@
         }
     }
 
+    function normFecha(val) {
+        return val ? String(val).slice(0, 10) : '';
+    }
+
+    function normHora(val) {
+        if (!val) return '';
+        const s = String(val);
+        if (!s.includes('T')) return s.slice(0, 5);
+        const d = new Date(s);
+        return isNaN(d) ? '' : ('0' + d.getUTCHours()).slice(-2) + ':' + ('0' + d.getUTCMinutes()).slice(-2);
+    }
+
     function formatDate(dateStr) {
         if (!dateStr) return '';
-        const d = new Date(dateStr + 'T12:00:00');
-        if (isNaN(d)) return dateStr;
+        const s = normFecha(dateStr);
+        const d = new Date(s + 'T12:00:00');
+        if (isNaN(d)) return s;
         return d.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     }
 
@@ -1586,9 +1599,11 @@
         const now = new Date();
 
         const currentOcu = db.ocupaciones.find(o => {
-            if (o.fecha !== today) return false;
-            const s = new Date(o.fecha + 'T' + o.horaInicio);
-            const e = new Date(o.fecha + 'T' + o.horaFin);
+            if (normFecha(o.fecha) !== today) return false;
+            const hi = normHora(o.horaInicio);
+            const hf = normHora(o.horaFin);
+            const s = new Date(today + 'T' + (hi || '00:00') + ':00');
+            const e = new Date(today + 'T' + (hf || '23:59') + ':00');
             return now >= s && now <= e;
         });
 
@@ -1611,8 +1626,8 @@
         }
 
         const upcoming = db.ocupaciones
-            .filter(o => o.fecha >= today)
-            .sort((a, b) => (a.fecha + a.horaInicio).localeCompare(b.fecha + b.horaInicio))
+            .filter(o => normFecha(o.fecha) >= today)
+            .sort((a, b) => (normFecha(a.fecha) + normHora(a.horaInicio)).localeCompare(normFecha(b.fecha) + normHora(b.horaInicio)))
             .slice(0, 5);
 
         const upcomingEl = document.getElementById('ov-upcoming');
@@ -1620,18 +1635,26 @@
             upcomingEl.innerHTML = '<div class="empty-state" style="padding:30px 20px;"><div class="empty-icon">📅</div><p class="empty-text">No hay actividades programadas</p></div>';
         } else {
             const tipoIcons = { clase: '🎓', capacitacion: '🛠️', taller: '🔧', evento: '🎪', mantencion: '⚙️' };
-            upcomingEl.innerHTML = '<div class="activity-list">' + upcoming.map(o => `
+            upcomingEl.innerHTML = '<div class="activity-list">' + upcoming.map(o => {
+                const hi = normHora(o.horaInicio);
+                const hf = normHora(o.horaFin);
+                const horaStr = hi ? (hf ? hi + ' – ' + hf : hi) : '';
+                const fechaStr = formatDate(o.fecha);
+                return `
                 <div class="activity-item">
                     <div class="activity-icon" style="background:${o.tipo === 'clase' ? 'var(--blue-glow)' : 'var(--amber-glow)'}">
                         ${tipoIcons[o.tipo] || '📌'}
                     </div>
-                    <div class="activity-info">
-                        <div class="activity-name">${escapeHTML(o.nombre)}</div>
-                        <div class="activity-detail">${escapeHTML(o.docente)} · ${o.horaInicio} - ${o.horaFin}</div>
+                    <div class="activity-info" style="min-width:0;">
+                        <div class="activity-name" style="white-space:normal;line-height:1.3;">${escapeHTML(o.nombre)}</div>
+                        <div class="activity-detail" style="margin-top:2px;">
+                            ${o.docente ? '<span>' + escapeHTML(o.docente) + '</span>' : ''}
+                            ${horaStr ? '<span style="color:var(--text-primary);font-weight:600;">🕐 ' + horaStr + '</span>' : ''}
+                        </div>
+                        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">📅 ${fechaStr}</div>
                     </div>
-                    <span class="activity-time">${formatDate(o.fecha)}</span>
-                </div>
-            `).join('') + '</div>';
+                </div>`;
+            }).join('') + '</div>';
         }
 
         const recentEl = document.getElementById('ov-recent-visits');
