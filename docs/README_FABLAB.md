@@ -1,197 +1,154 @@
-# 📋 FAB LAB INACAP - Sistema de Registro de Visitas
+# Documentación Técnica — FAB LAB INACAP
 
-Sistema completo de registro de visitas para FAB LAB INACAP con formulario web interactivo, validación de datos, almacenamiento en base de datos y exportación a Excel.
-
-## ✨ Características
-
-- **Formulario web 100% compatible** con móviles, tablets y PCs
-- **Validación de campos**:
-  - Nombre requerido (mínimo 2 caracteres)
-  - RUT con formato validado (XX.XXX.XXX-X o XX.XXX.XXX-K)
-  - Correo electrónico válido
-  - Teléfono opcional con formato flexible
-  - Tipo de visita obligatorio (Estudiante, Docente, Externo, Empresa)
-  - Campo de propósito opcional
-  
-- **Base de datos SQLite** para almacenar registros
-- **Panel administrativo** para visualizar y descargar datos
-- **Exportación a Excel** con formato profesional
-- **Diseño corporativo** con colores y logo de INACAP
-- **Backend Flask** con API REST
-- **Compatibilidad total** con navegadores móviles modernos
-
-## 🚀 Instalación y Configuración
-
-### 1. Instalar dependencias
-
-```bash
-cd "c:\Users\SSP_LAB\Desktop\formularioFABLAB"
-pip install -r requirements.txt
-```
-
-### 2. Iniciar el servidor Flask
-
-```bash
-python fablab_app.py
-```
-
-El servidor estará disponible en: `http://127.0.0.1:5000`
-
-### 3. Servir el formulario
-
-En otra terminal, ejecuta:
-
-```bash
-cd "c:\Users\SSP_LAB\Desktop\formularioFABLAB"
-python serve.py
-```
-
-### 4. Acceder al formulario
-
-**Para máxima compatibilidad (recomendado):**
-- **PC/Tablet:** `http://localhost:8000/index.html`
-- **Móvil:** `http://<TU_IP_LOCAL>:8000/index.html` (desde la misma red)
-
-**Versión alternativa:**
-- **PC/Tablet:** `http://localhost:8000/fablab-simple.html`
-
-### 5. Solución de problemas comunes
-
-**Problema: "No puedo apretar el botón Registrar Visita en móviles"**
-- ✅ **Solucionado**: El formulario `index.html` ahora usa validación directa de datos.
-- ✅ **Campo teléfono ahora opcional** (antes se validaba como requerido)
-- ✅ **Botón se habilita automáticamente** cuando todos los campos requeridos están completos
-- ✅ **Validación de RUT más flexible** para ingreso desde móviles
-- ✅ **Feedback visual claro** sobre el estado del formulario
-
-**Problema: "El formulario no funciona en celulares"**
-- ✅ **Solucionado**: Eliminada dependencia de React/Babel
-- ✅ **JavaScript vanilla puro (index.html)** compatible con todos los navegadores móviles
-- ✅ **Detección automática de red** (localhost vs IP de red local)
-
-> **Nota:** La versión `index.html` está optimizada para funcionar en todos los dispositivos móviles, tablets y PCs con máxima compatibilidad.
-
-## 📱 Uso del Formulario
-
-1. Abre [http://localhost:8000/fablab-simple.html](http://localhost:8000/fablab-simple.html)
-2. Completa todos los campos obligatorios (marcados con *)
-3. El botón "Registrar Visita" se habilitará cuando todos los campos sean válidos
-4. Al enviar, los datos se guardarán en la base de datos
-5. Verás un mensaje de confirmación
-
-## 📊 Panel Administrativo
-
-Para visualizar y exportar todos los registros:
-
-1. Abre [http://localhost:8000/admin-visitas.html](http://localhost:8000/admin-visitas.html)
-2. Verás un resumen de estadísticas (total de visitas, visitas por tipo)
-3. **Descargar Excel**: Descarga un archivo .xlsx con formato profesional
-4. **Recargar**: Actualiza la tabla con nuevos registros
-
-## 🔌 Endpoints de API
-
-### Crear registro
-```
-POST /api/visitas
-Content-Type: application/json
-
-{
-  "nombre": "Juan Pérez",
-  "rut": "12.345.678-9",
-  "correo": "juan@example.com",
-  "tipoVisita": "estudiante",
-  "telefono": "+56 9 1234 5678",
-  "proposito": "Conocer las herramientas"
-}
-```
-
-### Obtener todos los registros
-```
-GET /api/visitas
-```
-
-### Descargar Excel
-```
-GET /api/visitas/export?format=excel
-```
-
-## 📁 Estructura de archivos
-
-```
-fablab-formulario/
-├── fablab-simple.html      # Formulario principal
-├── admin-visitas.html       # Panel administrativo
-├── serve.py                 # Servidor HTTP local
-└── README.md               # Este archivo
-
-├── fablab_app.py           # Aplicación Flask principal
-├── models.py               # Modelos de base de datos
-├── requirements.txt        # Dependencias Python
-├── routes/
-│   └── visitas.py          # API de visitas
-```
-
-## 🗄️ Base de Datos
-
-La base de datos SQLite se crea automáticamente al iniciar el servidor. Los datos se guardan en:
-```
-backend/instance/carbo_cheddar_new.db
-```
-
-Tabla `visitas`:
-- `id` - Identificador único
-- `nombre` - Nombre completo del visitante
-- `rut` - RUT del visitante
-- `correo` - Correo electrónico
-- `tipo_visita` - Tipo de visita (estudiante, docente, externo, empresa)
-- `telefono` - Teléfono de contacto
-- `proposito` - Propósito de la visita
-- `created_at` - Fecha y hora de registro
-
-## 🔒 Validaciones
-
-El formulario valida:
-- **Nombre**: No vacío, mínimo 2 caracteres
-- **RUT**: Formato XX.XXX.XXX-X
-- **Correo**: Formato válido de email
-- **Tipo de Visita**: Uno de los 4 tipos seleccionados
-- **Teléfono**: Opcional, si se proporciona debe tener formato válido
-
-## 🎨 Diseño
-
-- Colores corporativos INACAP (Rojo #ED1C24, Azul marino)
-- Interfaz moderna y responsive
-- Indicadores visuales de errores en rojo
-- Botones deshabilitados hasta completar validación
-- Animaciones suaves y transiciones
-
-## 📝 Notas
-
-- El servidor Flask debe estar ejecutándose para que el formulario funcione
-- CORS está habilitado para permitir solicitudes desde el navegador
-- Los datos se conservan en la base de datos SQLite
-- Las exportaciones se descargan automáticamente en el navegador
-
-## 🐛 Solución de problemas
-
-**Error: "Error al conectar con el servidor"**
-- Asegúrate que el servidor Flask está ejecutándose en `http://127.0.0.1:5000`
-- Verifica que no hay errores en la consola del servidor Flask
-
-**No puedo ver el formulario**
-- Asegúrate que el servidor HTTP está ejecutándose en `http://localhost:8000`
-- Verifica que ambos servidores están activos (Flask y HTTP)
-
-**Los datos no se guardan**
-- Verifica en la consola del navegador (F12) si hay errores en la red
-- Comprueba que la base de datos tiene permisos de escritura
-
-## 📞 Soporte
-
-Para reportar problemas o sugerencias, contacta al administrador del sistema.
+> Este archivo contiene notas técnicas de implementación. Para la documentación general del proyecto, ver el [README principal](../README.md).
 
 ---
 
-**Versión**: 1.0  
-**Última actualización**: 2024  
-**Estado**: Producción
+## Flujo de datos completo
+
+### Registro de visita (formulario público)
+
+```
+Usuario llena index.html
+  └─► fetch POST no-cors → GOOGLE_SCRIPT_URL
+        body: JSON.stringify({ nombre, rut, telefono, correo, tipoVisita, proposito })
+        Content-Type: text/plain   ← obligatorio para no-cors
+        └─► Google Apps Script doPost()
+              └─► Sheets.getActiveSpreadsheet().getSheetByName('Visitas').appendRow([...])
+```
+
+> No se puede leer la respuesta en modo `no-cors`. El estado local se actualiza optimistamente.
+
+### Lectura de datos en el dashboard (JSONP)
+
+```
+dashboard.html crea <script src="GOOGLE_SCRIPT_URL?action=getAll&token=...&callback=_cb_xxx">
+  └─► Google Apps Script doGet()
+        └─► devuelve: _cb_xxx([{ nombre, rut, ... }, ...])
+              └─► window['_cb_xxx'] se ejecuta con los datos
+```
+
+> JSONP evita el problema de CORS que genera el redirect 302 de Apps Script hacia `script.googleusercontent.com`. Un fetch normal falla en ese redirect; un `<script>` tag no tiene esa restricción.
+
+### Operaciones de inventario (Supabase REST)
+
+```
+dashboard.html
+  └─► supabase.from('assets').select('*')
+        └─► HTTPS → https://jcojygzofplajvnpobpw.supabase.co/rest/v1/assets
+              Headers: apikey: <anon_key>, Authorization: Bearer <anon_key>
+              └─► PostgreSQL RLS: política anon permite SELECT/INSERT/UPDATE/DELETE
+```
+
+---
+
+## Esquema Supabase
+
+```sql
+-- assets: inventario de activos
+CREATE TABLE assets (
+  id          TEXT PRIMARY KEY,   -- código NFC / identificador
+  name        TEXT NOT NULL,
+  description TEXT,
+  category    TEXT,               -- Herramientas | Insumos | Electrónica | Químicos
+  owner       TEXT,               -- Laboratorio | Prestado
+  status      TEXT,               -- active | maintenance | lost
+  total       INTEGER DEFAULT 1,
+  available   INTEGER DEFAULT 1,
+  borrowed    INTEGER DEFAULT 0,
+  location    TEXT,
+  image       TEXT                -- base64 de la foto
+);
+
+-- loans: historial de movimientos
+CREATE TABLE loans (
+  id            SERIAL PRIMARY KEY,
+  asset_id      TEXT REFERENCES assets(id),
+  asset_name    TEXT,
+  user_name     TEXT,             -- nombre del solicitante
+  borrower_rut  TEXT,
+  action        TEXT,             -- loan | return
+  qty           INTEGER DEFAULT 1,
+  condition     TEXT,             -- good | damaged | incomplete (solo en return)
+  notes         TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- users: solo para inventariofablab standalone
+CREATE TABLE users (
+  id       SERIAL PRIMARY KEY,
+  name     TEXT NOT NULL,
+  email    TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role     TEXT DEFAULT 'operator',  -- admin | operator
+  active   BOOLEAN DEFAULT TRUE
+);
+```
+
+**Políticas RLS (Row Level Security):**
+```sql
+-- Acceso abierto para anon (el dashboard no usa auth de Supabase)
+CREATE POLICY "anon_all" ON assets FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON loans  FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all" ON users  FOR ALL TO anon USING (true) WITH CHECK (true);
+```
+
+---
+
+## Librerías cargadas en dashboard.html
+
+| Librería | CDN | Uso |
+|----------|-----|-----|
+| SheetJS (xlsx) | cdn.sheetjs.com | Exportar Excel en visitas e inventario |
+| jsPDF | cdnjs.cloudflare.com | Exportar PDF en visitas e inventario |
+| jspdf-autotable | cdnjs.cloudflare.com | Tablas en los PDF |
+| Supabase JS (UMD) | cdn.jsdelivr.net | Cliente REST para inventario |
+| Google Fonts (Montserrat) | fonts.googleapis.com | Tipografía |
+
+---
+
+## Variables globales en dashboard.html
+
+```javascript
+const GOOGLE_SCRIPT_URL = '...'   // URL del Apps Script
+const ADMIN_TOKEN       = 'fablab2024'
+const SUPABASE_URL      = 'https://jcojygzofplajvnpobpw.supabase.co'
+const SUPABASE_KEY      = 'sb_publishable_...'
+const supabaseClient    = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+let db = {
+  visitas:    [],   // cargado via JSONP desde Google Sheets
+  ocupaciones:[],   // cargado via JSONP
+  secciones:  [],   // cargado via JSONP
+  assets:     []    // cargado desde Supabase
+}
+```
+
+---
+
+## Notas de implementación
+
+### Por qué `Content-Type: text/plain` en el POST del formulario
+`fetch` con `mode: 'no-cors'` solo permite "simple requests". Un body con `Content-Type: application/json` convierte la petición en "preflighted" (CORS), lo que hace que el navegador envíe un OPTIONS previo que Apps Script no sabe responder. Con `text/plain` la petición es simple y pasa sin OPTIONS.
+
+### Por qué JSONP y no fetch para las lecturas del dashboard
+Apps Script responde a GET con un redirect 302 hacia `script.googleusercontent.com`. `fetch` no sigue ese redirect en modo cors (falla con "opaque response"). Un `<script>` tag sigue redirects sin restricciones, por eso JSONP funciona donde fetch no.
+
+### Por qué la imagen del activo se guarda como base64
+El plan gratuito de Supabase incluye Storage, pero implica una URL pública y un bucket separado. Para simplificar, la imagen se convierte a base64 con `FileReader` y se guarda directamente en la columna `image` de la tabla `assets`. Esto funciona bien para imágenes pequeñas (< 200 KB recomendado).
+
+### Cambio de estado automático en devolución
+Cuando se registra una devolución con condición `damaged` o `incomplete`, la función `saveInvReturn()` actualiza el campo `status` del activo a `maintenance` en Supabase, bloqueando futuros préstamos de esa unidad hasta que sea reparada.
+
+---
+
+## Historial de versiones
+
+| Fecha | Cambio |
+|-------|--------|
+| Jun 2026 | Integración del inventario Supabase en el dashboard; historial de préstamos; exportación Excel/PDF del inventario; stat card Baja/Perdidos |
+| Jun 2026 | Módulo NFC (lectura real + simulación) y modales completos para activos |
+| Jun 2026 | Primera integración del inventario en el dashboard (tabla básica) |
+| Jun 2026 | Link directo al inventario en el sidebar footer |
+| Jun 2026 | Normalización de fechas/horas de Sheets; fixes de overlay móvil |
+| 2025 | Versión inicial: formulario de visitas + dashboard Google Sheets |
