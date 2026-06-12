@@ -28,6 +28,7 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.mini.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
     <div class="ambient-bg"></div>
@@ -64,6 +65,13 @@
                     <span class="nav-icon">📋</span>
                     Gestión de Visitas
                     <span class="nav-badge" id="badge-visitas">0</span>
+                </button>
+
+                <div class="nav-label" style="margin-top: 8px;">Inventario</div>
+                <button class="nav-item" data-section="inventario" id="nav-inventario">
+                    <span class="nav-icon">📦</span>
+                    Inventario FabLab
+                    <span class="nav-badge" id="badge-inventario">0</span>
                 </button>
 
                 <div class="nav-label" style="margin-top: 8px;">Laboratorio</div>
@@ -154,6 +162,14 @@
                             </div>
                             <div class="stat-value" id="ov-alumnos">0</div>
                             <div class="stat-change neutral">En todas las secciones</div>
+                        </div>
+                        <div class="stat-card amber" style="cursor:pointer;" onclick="goToSection('inventario')">
+                            <div class="stat-header">
+                                <div class="stat-icon amber">📦</div>
+                                <span class="stat-label">Activos en Inventario</span>
+                            </div>
+                            <div class="stat-value" id="ov-inventario">—</div>
+                            <div class="stat-change neutral" id="ov-inventario-detail">Ver inventario →</div>
                         </div>
                     </div>
 
@@ -297,6 +313,85 @@
                         <p class="empty-title">Sin actividades</p>
                         <p class="empty-text">No hay actividades registradas en esta vista. Registra una nueva ocupación del laboratorio.</p>
                         <button class="btn btn-primary btn-sm" onclick="openOcupacionModal()">➕ Registrar Ocupación</button>
+                    </div>
+                </div>
+
+                <!-- ==================== SECTION: INVENTARIO ==================== -->
+                <div class="page-section" id="section-inventario">
+                    <div class="section-header">
+                        <h3 class="section-title">📦 Inventario FabLab</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="loadInventario()">🔄 Recargar</button>
+                    </div>
+
+                    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 1.5rem;">
+                        <div class="stat-card amber">
+                            <div class="stat-header"><div class="stat-icon amber">📦</div><span class="stat-label">Total Activos</span></div>
+                            <div class="stat-value" id="inv-total">—</div>
+                        </div>
+                        <div class="stat-card green">
+                            <div class="stat-header"><div class="stat-icon green">✅</div><span class="stat-label">Disponibles</span></div>
+                            <div class="stat-value" id="inv-disponibles">—</div>
+                        </div>
+                        <div class="stat-card red">
+                            <div class="stat-header"><div class="stat-icon red">🤝</div><span class="stat-label">Prestados</span></div>
+                            <div class="stat-value" id="inv-prestados">—</div>
+                        </div>
+                        <div class="stat-card blue">
+                            <div class="stat-header"><div class="stat-icon blue">🔧</div><span class="stat-label">Mantenimiento</span></div>
+                            <div class="stat-value" id="inv-mantenimiento">—</div>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <div class="table-toolbar">
+                            <div class="search-box">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="search-inventario" placeholder="Buscar por nombre o código..." oninput="filterInventario()">
+                            </div>
+                            <div class="filter-group">
+                                <select class="filter-select" id="filter-categoria" onchange="filterInventario()">
+                                    <option value="">Todas las categorías</option>
+                                    <option value="Herramientas">🔨 Herramientas</option>
+                                    <option value="Insumos">📦 Insumos</option>
+                                    <option value="Electrónica">⚡ Electrónica</option>
+                                    <option value="Químicos">🧪 Químicos</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <select class="filter-select" id="filter-estado-inv" onchange="filterInventario()">
+                                    <option value="">Todos los estados</option>
+                                    <option value="active">✅ Activo</option>
+                                    <option value="maintenance">🔧 Mantenimiento</option>
+                                    <option value="lost">❌ Baja</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table class="data-table" id="inventario-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Nombre</th>
+                                        <th>Descripción</th>
+                                        <th>Categoría</th>
+                                        <th>Stock Total</th>
+                                        <th>Disponible</th>
+                                        <th>Prestado</th>
+                                        <th>Estado</th>
+                                        <th>Ubicación</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventario-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div id="inventario-empty" class="table-empty" style="display:none;">
+                            <div class="table-empty-icon">📦</div>
+                            <p>No se encontraron activos</p>
+                        </div>
+                        <div id="inventario-loading" class="loader">
+                            <div class="loader-spinner"></div>
+                            Conectando con Supabase...
+                        </div>
                     </div>
                 </div>
 
@@ -581,6 +676,9 @@
         </div>
     </div>
 
+    <!-- ==================== SECTION: INVENTARIO ==================== -->
+    <!-- inserted inside .page-content via JS goToSection, but rendered as page-section -->
+
     <!-- ==================== MODAL: VER SECCIÓN ==================== -->
     <div class="modal-overlay" id="modal-ver-seccion">
         <div class="modal" style="max-width: 620px;">
@@ -605,11 +703,17 @@
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqySNZqlHt2Iy6_v6xUE4X0pUWoQO2IwxRea2XfEUFSE1qohRE22Qlg3oL43a5Drozmw/exec';
     const ADMIN_TOKEN = 'fablab2024';
 
+    // ── Supabase (Inventario) ──────────────────────────────────
+    const SUPABASE_URL = 'https://jcojygzofplajvnpobpw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_HDpoSL0zZ53yDvo-7Lw8Nw_kYGt8pGd';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     // Estado local para renderizado rápido
     let db = {
         visitas: [],
         ocupaciones: [],
-        secciones: []
+        secciones: [],
+        assets: []
     };
 
     function generateId() {
@@ -628,9 +732,15 @@
     const sectionTitles = {
         overview: 'Panel General',
         visitas: 'Gestión de Visitas',
+        inventario: 'Inventario FabLab',
         ocupacion: 'Ocupación del Laboratorio',
         secciones: 'Secciones y Alumnos'
     };
+
+    function goToSection(name) {
+        const btn = document.querySelector(`.nav-item[data-section="${name}"]`);
+        if (btn) btn.click();
+    }
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -728,6 +838,7 @@
         } catch (e) {
             showToast('Error al cargar datos desde Sheets', 'error');
         }
+        loadInventario().catch(() => {});
     }
 
     // ===========================
@@ -1684,6 +1795,105 @@
     // ===========================
     //  RUT / STARTUP
     // ===========================
+    // ===========================
+    //  INVENTARIO (Supabase)
+    // ===========================
+
+    async function loadInventario() {
+        const loading = document.getElementById('inventario-loading');
+        const empty   = document.getElementById('inventario-empty');
+        const tbody   = document.getElementById('inventario-tbody');
+        if (loading) loading.style.display = 'flex';
+        if (empty)   empty.style.display   = 'none';
+        if (tbody)   tbody.innerHTML = '';
+
+        const { data, error } = await supabaseClient
+            .from('assets')
+            .select('*')
+            .order('id');
+
+        if (loading) loading.style.display = 'none';
+
+        if (error || !data) {
+            showToast('Error al cargar inventario: ' + (error?.message || 'Sin conexión'), 'error');
+            return;
+        }
+
+        db.assets = data;
+        renderInventario();
+        updateInventarioStats();
+
+        // Badge del sidebar
+        const badge = document.getElementById('badge-inventario');
+        if (badge) badge.textContent = data.length;
+
+        // Stat card del overview
+        const ovInv = document.getElementById('ov-inventario');
+        if (ovInv) ovInv.textContent = data.length;
+        const ovDet = document.getElementById('ov-inventario-detail');
+        const prestados = data.reduce((s, a) => s + (a.borrowed || 0), 0);
+        if (ovDet) ovDet.textContent = `${prestados} prestado${prestados !== 1 ? 's' : ''}`;
+    }
+
+    function renderInventario() {
+        const search  = (document.getElementById('search-inventario')?.value || '').toLowerCase();
+        const cat     = document.getElementById('filter-categoria')?.value || '';
+        const estado  = document.getElementById('filter-estado-inv')?.value || '';
+        const tbody   = document.getElementById('inventario-tbody');
+        const empty   = document.getElementById('inventario-empty');
+
+        const filtered = db.assets.filter(a => {
+            const matchSearch = (a.name || '').toLowerCase().includes(search) ||
+                                (a.id   || '').toLowerCase().includes(search);
+            const matchCat    = !cat    || a.category === cat;
+            const matchEstado = !estado || a.status   === estado;
+            return matchSearch && matchCat && matchEstado;
+        });
+
+        if (!filtered.length) {
+            if (tbody) tbody.innerHTML = '';
+            if (empty) empty.style.display = 'block';
+            return;
+        }
+        if (empty) empty.style.display = 'none';
+
+        const statusLabel = { active: '✅ Activo', maintenance: '🔧 Mantenimiento', lost: '❌ Baja' };
+        if (tbody) tbody.innerHTML = filtered.map(a => `
+            <tr>
+                <td><code style="font-size:0.8rem;">${escapeHTML(a.id)}</code></td>
+                <td><strong>${escapeHTML(a.name)}</strong></td>
+                <td style="max-width:160px;white-space:normal;font-size:0.83rem;">${escapeHTML(a.description || '')}</td>
+                <td>${escapeHTML(a.category || '')}</td>
+                <td style="text-align:center;">${a.total ?? '—'}</td>
+                <td style="text-align:center;font-weight:600;color:${a.available > 0 ? 'var(--green)' : 'var(--red)'};">${a.available ?? '—'}</td>
+                <td style="text-align:center;">${a.borrowed || 0}</td>
+                <td><span style="font-size:0.82rem;">${statusLabel[a.status] || a.status}</span></td>
+                <td style="font-size:0.83rem;">${escapeHTML(a.location || '')}</td>
+            </tr>
+        `).join('');
+    }
+
+    function filterInventario() { renderInventario(); }
+
+    function updateInventarioStats() {
+        const assets = db.assets;
+        const el = id => document.getElementById(id);
+        if (el('inv-total'))        el('inv-total').textContent        = assets.length;
+        if (el('inv-disponibles'))  el('inv-disponibles').textContent  = assets.filter(a => a.available > 0).length;
+        if (el('inv-prestados'))    el('inv-prestados').textContent    = assets.reduce((s, a) => s + (a.borrowed || 0), 0);
+        if (el('inv-mantenimiento'))el('inv-mantenimiento').textContent= assets.filter(a => a.status === 'maintenance').length;
+    }
+
+    // Cargar inventario cuando se navega a esa sección
+    const origNavHandler = navItems;
+    document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.dataset.section === 'inventario' && !db.assets.length) {
+                loadInventario();
+            }
+        });
+    });
+
     document.getElementById('alumno-rut').addEventListener('input', function(e) {
         let val = e.target.value.replace(/[^\dkK]/g, '');
         if (val.length > 9) val = val.slice(0, 9);
