@@ -320,7 +320,27 @@
                 <div class="page-section" id="section-inventario">
                     <div class="section-header">
                         <h3 class="section-title">📦 Inventario FabLab</h3>
-                        <button class="btn btn-secondary btn-sm" onclick="loadInventario()">🔄 Recargar</button>
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            <button class="btn btn-secondary btn-sm" onclick="toggleInvNFC()">📡 Scan NFC</button>
+                            <button class="btn btn-primary btn-sm" onclick="openInvModal()">➕ Nuevo Activo</button>
+                            <button class="btn btn-secondary btn-sm" onclick="loadInventario()">🔄 Recargar</button>
+                        </div>
+                    </div>
+
+                    <!-- NFC Scanner panel (hidden by default) -->
+                    <div id="inv-nfc-panel" style="display:none;margin-bottom:1.5rem;">
+                        <div class="card" style="text-align:center;padding:2rem;">
+                            <div style="font-size:3rem;margin-bottom:1rem;">📡</div>
+                            <h4 style="margin-bottom:0.5rem;">Escáner NFC</h4>
+                            <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem;">Acerque el tag NFC al dispositivo para identificar el activo.</p>
+                            <div id="inv-scan-status" style="margin-bottom:1.5rem;padding:1rem;background:var(--bg-secondary);border-radius:8px;min-height:50px;display:flex;align-items:center;justify-content:center;">
+                                Esperando lectura...
+                            </div>
+                            <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+                                <button class="btn btn-primary" onclick="startInvNFCScan()">📡 Iniciar Lectura NFC</button>
+                                <button class="btn btn-secondary" onclick="simulateInvScan()">🎲 Simular Lectura</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 1.5rem;">
@@ -374,11 +394,13 @@
                                         <th>Nombre</th>
                                         <th>Descripción</th>
                                         <th>Categoría</th>
-                                        <th>Stock Total</th>
+                                        <th>Prop.</th>
+                                        <th>Stock</th>
                                         <th>Disponible</th>
                                         <th>Prestado</th>
                                         <th>Estado</th>
                                         <th>Ubicación</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="inventario-tbody"></tbody>
@@ -690,6 +712,152 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('modal-ver-seccion')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODALES INVENTARIO ========== -->
+
+    <!-- Modal: Agregar / Editar Activo -->
+    <div class="modal-overlay" id="modal-inv-asset">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="inv-asset-modal-title">➕ Agregar Activo</h3>
+                <button class="modal-close" onclick="closeModal('modal-inv-asset')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Código NFC / ID *</label>
+                        <input type="text" class="form-input" id="inv-asset-nfc" placeholder="Ej: HER-001">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nombre del Activo *</label>
+                        <input type="text" class="form-input" id="inv-asset-name" placeholder="Ej: Impresora 3D Ender 3">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" class="form-input" id="inv-asset-desc" placeholder="Detalles del activo">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Categoría</label>
+                        <select class="form-select" id="inv-asset-category">
+                            <option value="Herramientas">Herramientas</option>
+                            <option value="Insumos">Insumos</option>
+                            <option value="Electrónica">Electrónica</option>
+                            <option value="Químicos">Químicos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Propietario</label>
+                        <select class="form-select" id="inv-asset-owner">
+                            <option value="Laboratorio">Laboratorio</option>
+                            <option value="Prestado">Prestado / Externo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Stock Total</label>
+                        <input type="number" class="form-input" id="inv-asset-total" value="1" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Disponible</label>
+                        <input type="number" class="form-input" id="inv-asset-avail" value="1" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prestado</label>
+                        <input type="number" class="form-input" id="inv-asset-borrowed" value="0" min="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Estado</label>
+                        <select class="form-select" id="inv-asset-status">
+                            <option value="active">✅ Activo</option>
+                            <option value="maintenance">🔧 Mantenimiento</option>
+                            <option value="lost">❌ Baja / Perdido</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ubicación</label>
+                        <input type="text" class="form-input" id="inv-asset-location" placeholder="Ej: Laboratorio 1, Estante B">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fotografía del Activo</label>
+                    <input type="file" class="form-input" id="inv-asset-image-file" accept="image/*">
+                    <input type="hidden" id="inv-asset-image">
+                    <div id="inv-image-preview" style="margin-top:0.75rem;text-align:center;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-inv-asset')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveInvAsset()">💾 Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Prestar Activo -->
+    <div class="modal-overlay" id="modal-inv-loan">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">🤝 Prestar Activo</h3>
+                <button class="modal-close" onclick="closeModal('modal-inv-loan')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="inv-loan-asset-id">
+                <div class="form-group">
+                    <label class="form-label">Cantidad a Prestar</label>
+                    <input type="number" class="form-input" id="inv-loan-qty" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nombre del Solicitante *</label>
+                    <input type="text" class="form-input" id="inv-loan-borrower-name" placeholder="Ej: Juan Pérez">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">RUT / ID (Opcional)</label>
+                    <input type="text" class="form-input" id="inv-loan-borrower-rut" placeholder="Ej: 12.345.678-9">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-inv-loan')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveInvLoan()">✅ Registrar Préstamo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Recibir Activo -->
+    <div class="modal-overlay" id="modal-inv-return">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">↩️ Recibir Activo</h3>
+                <button class="modal-close" onclick="closeModal('modal-inv-return')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="inv-return-asset-id">
+                <div class="form-group">
+                    <label class="form-label">Cantidad a Devolver</label>
+                    <input type="number" class="form-input" id="inv-return-qty" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estado de Recepción</label>
+                    <select class="form-select" id="inv-return-condition">
+                        <option value="good">✅ Bueno (Sin daños)</option>
+                        <option value="damaged">⚠️ Dañado</option>
+                        <option value="incomplete">🔧 Incompleto / Faltan partes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observaciones</label>
+                    <textarea class="form-input" id="inv-return-notes" rows="3" placeholder="Detalle el estado o problemas encontrados..." style="resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-inv-return')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveInvReturn()">✅ Confirmar Recepción</button>
             </div>
         </div>
     </div>
@@ -1799,6 +1967,8 @@
     //  INVENTARIO (Supabase)
     // ===========================
 
+    let invEditingId = null;
+
     async function loadInventario() {
         const loading = document.getElementById('inventario-loading');
         const empty   = document.getElementById('inventario-empty');
@@ -1823,11 +1993,9 @@
         renderInventario();
         updateInventarioStats();
 
-        // Badge del sidebar
         const badge = document.getElementById('badge-inventario');
         if (badge) badge.textContent = data.length;
 
-        // Stat card del overview
         const ovInv = document.getElementById('ov-inventario');
         if (ovInv) ovInv.textContent = data.length;
         const ovDet = document.getElementById('ov-inventario-detail');
@@ -1858,19 +2026,45 @@
         if (empty) empty.style.display = 'none';
 
         const statusLabel = { active: '✅ Activo', maintenance: '🔧 Mantenimiento', lost: '❌ Baja' };
-        if (tbody) tbody.innerHTML = filtered.map(a => `
-            <tr>
-                <td><code style="font-size:0.8rem;">${escapeHTML(a.id)}</code></td>
-                <td><strong>${escapeHTML(a.name)}</strong></td>
-                <td style="max-width:160px;white-space:normal;font-size:0.83rem;">${escapeHTML(a.description || '')}</td>
-                <td>${escapeHTML(a.category || '')}</td>
-                <td style="text-align:center;">${a.total ?? '—'}</td>
-                <td style="text-align:center;font-weight:600;color:${a.available > 0 ? 'var(--green)' : 'var(--red)'};">${a.available ?? '—'}</td>
-                <td style="text-align:center;">${a.borrowed || 0}</td>
-                <td><span style="font-size:0.82rem;">${statusLabel[a.status] || a.status}</span></td>
-                <td style="font-size:0.83rem;">${escapeHTML(a.location || '')}</td>
-            </tr>
-        `).join('');
+
+        // Agrupar por categoría
+        const grouped = filtered.reduce((acc, a) => {
+            if (!acc[a.category]) acc[a.category] = [];
+            acc[a.category].push(a);
+            return acc;
+        }, {});
+
+        let html = '';
+        for (const [cat, items] of Object.entries(grouped)) {
+            html += `<tr><td colspan="11" style="background:var(--bg-secondary);font-weight:700;padding:0.6rem 1rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">📁 ${escapeHTML(cat)}</td></tr>`;
+            html += items.map(a => `
+                <tr>
+                    <td><code style="font-size:0.78rem;">${escapeHTML(a.id)}</code></td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            ${a.image ? `<img src="${a.image}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" title="${escapeHTML(a.name)}">` : ''}
+                            <strong>${escapeHTML(a.name)}</strong>
+                        </div>
+                    </td>
+                    <td style="max-width:160px;white-space:normal;font-size:0.82rem;">${escapeHTML(a.description || '')}</td>
+                    <td style="font-size:0.82rem;">${escapeHTML(a.category || '')}</td>
+                    <td style="font-size:0.82rem;">${escapeHTML(a.owner || 'Laboratorio')}</td>
+                    <td style="text-align:center;">${a.total ?? '—'}</td>
+                    <td style="text-align:center;font-weight:600;color:${a.available > 0 ? '#16a34a' : '#dc2626'};">${a.available ?? '—'}</td>
+                    <td style="text-align:center;">${a.borrowed || 0}</td>
+                    <td><span style="font-size:0.8rem;padding:2px 8px;border-radius:20px;background:${a.status==='active'?'#dcfce7':a.status==='maintenance'?'#fef9c3':'#fee2e2'};color:${a.status==='active'?'#166534':a.status==='maintenance'?'#854d0e':'#991b1b'};">${statusLabel[a.status] || a.status}</span></td>
+                    <td style="font-size:0.82rem;">${escapeHTML(a.location || '')}</td>
+                    <td style="white-space:nowrap;">
+                        ${a.available > 0 ? `<button class="btn btn-ghost btn-sm" onclick="invOpenLoanModal('${escapeHTML(a.id)}')" title="Prestar" style="color:#2563eb;">🤝</button>` : ''}
+                        ${a.borrowed > 0  ? `<button class="btn btn-ghost btn-sm" onclick="invOpenReturnModal('${escapeHTML(a.id)}')" title="Recibir" style="color:#16a34a;">↩️</button>` : ''}
+                        <button class="btn btn-ghost btn-sm" onclick="invEditAsset('${escapeHTML(a.id)}')" title="Editar">✏️</button>
+                        <button class="btn btn-ghost btn-sm" onclick="invDeleteAsset('${escapeHTML(a.id)}')" title="Eliminar" style="color:#dc2626;">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        if (tbody) tbody.innerHTML = html;
     }
 
     function filterInventario() { renderInventario(); }
@@ -1884,8 +2078,220 @@
         if (el('inv-mantenimiento'))el('inv-mantenimiento').textContent= assets.filter(a => a.status === 'maintenance').length;
     }
 
+    // ── Modal Asset ─────────────────────────────────────────────────
+
+    function openInvModal(asset = null) {
+        invEditingId = asset ? asset.id : null;
+        document.getElementById('inv-asset-modal-title').textContent = asset ? '✏️ Editar Activo' : '➕ Agregar Activo';
+        document.getElementById('inv-asset-nfc').value      = asset?.id          || '';
+        document.getElementById('inv-asset-name').value     = asset?.name        || '';
+        document.getElementById('inv-asset-desc').value     = asset?.description || '';
+        document.getElementById('inv-asset-category').value = asset?.category    || 'Herramientas';
+        document.getElementById('inv-asset-owner').value    = asset?.owner       || 'Laboratorio';
+        document.getElementById('inv-asset-status').value   = asset?.status      || 'active';
+        document.getElementById('inv-asset-location').value = asset?.location    || 'FabLab';
+        document.getElementById('inv-asset-total').value    = asset?.total       ?? 1;
+        document.getElementById('inv-asset-avail').value    = asset?.available   ?? 1;
+        document.getElementById('inv-asset-borrowed').value = asset?.borrowed    || 0;
+        document.getElementById('inv-asset-image').value    = asset?.image       || '';
+        document.getElementById('inv-asset-image-file').value = '';
+        const preview = document.getElementById('inv-image-preview');
+        preview.innerHTML = asset?.image ? `<img src="${asset.image}" style="max-height:100px;border-radius:6px;">` : '';
+        openModal('modal-inv-asset');
+    }
+
+    async function saveInvAsset() {
+        const nfc  = document.getElementById('inv-asset-nfc').value.trim();
+        const name = document.getElementById('inv-asset-name').value.trim();
+        if (!nfc || !name) { showToast('El código y el nombre son obligatorios.', 'error'); return; }
+
+        const asset = {
+            id:          nfc,
+            name,
+            description: document.getElementById('inv-asset-desc').value.trim(),
+            category:    document.getElementById('inv-asset-category').value,
+            owner:       document.getElementById('inv-asset-owner').value,
+            status:      document.getElementById('inv-asset-status').value,
+            location:    document.getElementById('inv-asset-location').value.trim() || 'FabLab',
+            total:       parseInt(document.getElementById('inv-asset-total').value)    || 0,
+            available:   parseInt(document.getElementById('inv-asset-avail').value)    || 0,
+            borrowed:    parseInt(document.getElementById('inv-asset-borrowed').value) || 0,
+            image:       document.getElementById('inv-asset-image').value || null,
+        };
+
+        if (invEditingId) {
+            const { error } = await supabaseClient.from('assets').update(asset).eq('id', invEditingId);
+            if (error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
+            db.assets = db.assets.map(a => a.id === invEditingId ? asset : a);
+            showToast('Activo actualizado correctamente.', 'success');
+        } else {
+            const { data, error } = await supabaseClient.from('assets').insert(asset).select().single();
+            if (error) { showToast('Error al crear activo: ' + error.message, 'error'); return; }
+            db.assets.push(data);
+            showToast('Activo creado correctamente.', 'success');
+        }
+
+        renderInventario();
+        updateInventarioStats();
+        closeModal('modal-inv-asset');
+    }
+
+    document.getElementById('inv-asset-image-file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = evt => {
+            document.getElementById('inv-asset-image').value = evt.target.result;
+            document.getElementById('inv-image-preview').innerHTML = `<img src="${evt.target.result}" style="max-height:100px;border-radius:6px;">`;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    window.invEditAsset = id => {
+        const asset = db.assets.find(a => a.id === id);
+        if (asset) openInvModal(asset);
+    };
+
+    window.invDeleteAsset = async id => {
+        if (!confirm('¿Eliminar este activo del inventario?')) return;
+        const { error } = await supabaseClient.from('assets').delete().eq('id', id);
+        if (error) { showToast('Error al eliminar: ' + error.message, 'error'); return; }
+        db.assets = db.assets.filter(a => a.id !== id);
+        renderInventario();
+        updateInventarioStats();
+        showToast('Activo eliminado.', 'success');
+    };
+
+    // ── Modal Préstamo ────────────────────────────────────────────
+
+    window.invOpenLoanModal = id => {
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset) return;
+        document.getElementById('inv-loan-asset-id').value      = id;
+        document.getElementById('inv-loan-qty').value           = 1;
+        document.getElementById('inv-loan-qty').max             = asset.available;
+        document.getElementById('inv-loan-borrower-name').value = '';
+        document.getElementById('inv-loan-borrower-rut').value  = '';
+        openModal('modal-inv-loan');
+    };
+
+    async function saveInvLoan() {
+        const id   = document.getElementById('inv-loan-asset-id').value;
+        const qty  = parseInt(document.getElementById('inv-loan-qty').value);
+        const name = document.getElementById('inv-loan-borrower-name').value.trim();
+        const rut  = document.getElementById('inv-loan-borrower-rut').value.trim();
+        if (!name) { showToast('El nombre del solicitante es obligatorio.', 'error'); return; }
+
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset || asset.available < qty) { showToast('Stock insuficiente.', 'error'); return; }
+
+        const newAvail = asset.available - qty;
+        const newBorrowed = asset.borrowed + qty;
+
+        const { error } = await supabaseClient.from('assets').update({ available: newAvail, borrowed: newBorrowed }).eq('id', id);
+        if (error) { showToast('Error al registrar préstamo: ' + error.message, 'error'); return; }
+
+        await supabaseClient.from('loans').insert({ asset_id: id, asset_name: asset.name, user_name: name, borrower_rut: rut, action: 'loan', qty, condition: null, notes: null });
+
+        asset.available = newAvail;
+        asset.borrowed  = newBorrowed;
+        renderInventario();
+        updateInventarioStats();
+        closeModal('modal-inv-loan');
+        showToast(`Préstamo registrado: ${qty}× ${asset.name}.`, 'success');
+    }
+
+    // ── Modal Devolución ──────────────────────────────────────────
+
+    window.invOpenReturnModal = id => {
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset) return;
+        document.getElementById('inv-return-asset-id').value   = id;
+        document.getElementById('inv-return-qty').value        = 1;
+        document.getElementById('inv-return-qty').max          = asset.borrowed;
+        document.getElementById('inv-return-condition').value  = 'good';
+        document.getElementById('inv-return-notes').value      = '';
+        openModal('modal-inv-return');
+    };
+
+    async function saveInvReturn() {
+        const id        = document.getElementById('inv-return-asset-id').value;
+        const qty       = parseInt(document.getElementById('inv-return-qty').value);
+        const condition = document.getElementById('inv-return-condition').value;
+        const notes     = document.getElementById('inv-return-notes').value.trim();
+
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset || asset.borrowed < qty) { showToast('Cantidad a devolver no válida.', 'error'); return; }
+
+        const newBorrowed = asset.borrowed - qty;
+        const newAvail    = asset.available + qty;
+        const newStatus   = (condition === 'damaged' || condition === 'incomplete') ? 'maintenance' : asset.status;
+
+        const { error } = await supabaseClient.from('assets').update({ available: newAvail, borrowed: newBorrowed, status: newStatus }).eq('id', id);
+        if (error) { showToast('Error al registrar devolución: ' + error.message, 'error'); return; }
+
+        await supabaseClient.from('loans').insert({ asset_id: id, asset_name: asset.name, user_name: 'Admin', borrower_rut: null, action: 'return', qty, condition, notes });
+
+        asset.borrowed  = newBorrowed;
+        asset.available = newAvail;
+        asset.status    = newStatus;
+        renderInventario();
+        updateInventarioStats();
+        closeModal('modal-inv-return');
+        showToast(`Devolución registrada: ${qty}× ${asset.name}.`, 'success');
+    }
+
+    // ── NFC Scanner ───────────────────────────────────────────────
+
+    function toggleInvNFC() {
+        const panel = document.getElementById('inv-nfc-panel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function startInvNFCScan() {
+        const status = document.getElementById('inv-scan-status');
+        if (!('NDEFReader' in window)) {
+            status.innerHTML = '⚠️ Web NFC no compatible con este dispositivo/navegador.<br><small>Use el botón "Simular Lectura" para probar.</small>';
+            return;
+        }
+        try {
+            const ndef = new NDEFReader();
+            await ndef.scan();
+            status.innerHTML = '⏳ Escaneando… acerque el tag NFC.';
+            ndef.addEventListener('reading', ({ serialNumber }) => handleInvScan(serialNumber));
+        } catch (err) {
+            status.innerHTML = `❌ Error: ${err.message}`;
+        }
+    }
+
+    function simulateInvScan() {
+        if (!db.assets.length) { showToast('Cargue el inventario primero.', 'error'); return; }
+        const asset = db.assets[Math.floor(Math.random() * db.assets.length)];
+        handleInvScan(asset.id);
+    }
+
+    function handleInvScan(serialNumber) {
+        const status = document.getElementById('inv-scan-status');
+        const asset = db.assets.find(a => a.id === serialNumber);
+        if (asset) {
+            const statusLabel = { active: '✅ Activo', maintenance: '🔧 Mantenimiento', lost: '❌ Baja' };
+            status.innerHTML = `
+                <div style="text-align:left;width:100%;">
+                    <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.25rem;">✅ ${escapeHTML(asset.name)}</div>
+                    <div style="font-size:0.85rem;color:var(--text-muted);">Código: <code>${escapeHTML(asset.id)}</code> · ${escapeHTML(asset.category)}</div>
+                    <div style="font-size:0.85rem;margin-top:0.25rem;">Stock: ${asset.available}/${asset.total} disponible · ${statusLabel[asset.status]}</div>
+                    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        <button class="btn btn-primary btn-sm" onclick="invEditAsset('${escapeHTML(asset.id)}')">✏️ Editar</button>
+                        ${asset.available > 0 ? `<button class="btn btn-secondary btn-sm" onclick="invOpenLoanModal('${escapeHTML(asset.id)}')">🤝 Prestar</button>` : ''}
+                        ${asset.borrowed > 0  ? `<button class="btn btn-secondary btn-sm" onclick="invOpenReturnModal('${escapeHTML(asset.id)}')">↩️ Devolver</button>` : ''}
+                    </div>
+                </div>`;
+        } else {
+            status.innerHTML = `⚠️ Tag no encontrado en el inventario: <code>${escapeHTML(serialNumber)}</code>`;
+        }
+    }
+
     // Cargar inventario cuando se navega a esa sección
-    const origNavHandler = navItems;
     document.querySelectorAll('.nav-item[data-section]').forEach(item => {
         item.addEventListener('click', () => {
             if (item.dataset.section === 'inventario' && !db.assets.length) {
