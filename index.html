@@ -442,10 +442,26 @@
             });
         }
 
-        function fechaCorta(str) {
+        // Sheets devuelve fechas como "2026-06-16T00:00:00.000Z" → extraer "2026-06-16"
+        function normFecha(val) {
+            return val ? String(val).slice(0, 10) : '';
+        }
+
+        // Sheets devuelve horas como "1899-12-30T17:00:00.000Z" → extraer "17:00"
+        function normHora(val) {
+            if (!val) return '';
+            const s = String(val);
+            if (!s.includes('T')) return s.slice(0, 5);
+            const d = new Date(s);
+            return isNaN(d) ? '' : ('0' + d.getUTCHours()).slice(-2) + ':' + ('0' + d.getUTCMinutes()).slice(-2);
+        }
+
+        function fechaCorta(val) {
+            const str = normFecha(val);
             const today = new Date().toISOString().slice(0, 10);
             if (str === today) return 'Hoy';
             const d = new Date(str + 'T12:00:00');
+            if (isNaN(d)) return str;
             return d.toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' });
         }
 
@@ -460,8 +476,8 @@
                 const weekStr = weekEnd.toISOString().slice(0, 10);
 
                 const vigentes = data
-                    .filter(o => o.fecha >= today && o.fecha <= weekStr)
-                    .sort((a, b) => (a.fecha + (a.horaInicio || '')).localeCompare(b.fecha + (b.horaInicio || '')));
+                    .filter(o => { const f = normFecha(o.fecha); return f >= today && f <= weekStr; })
+                    .sort((a, b) => (normFecha(a.fecha) + normHora(a.horaInicio)).localeCompare(normFecha(b.fecha) + normHora(b.horaInicio)));
 
                 if (vigentes.length === 0) return;
 
@@ -470,15 +486,17 @@
                     const opt = document.createElement('option');
                     opt.value = o.id;
                     opt.dataset.nombre = o.nombre || '';
-                    opt.dataset.hora = (o.horaInicio || '') + (o.horaFin ? ' - ' + o.horaFin : '');
-                    const label = fechaCorta(o.fecha) + (o.horaInicio ? ' ' + o.horaInicio : '');
-                    opt.textContent = o.nombre + ' · ' + label;
+                    const hi = normHora(o.horaInicio);
+                    const hf = normHora(o.horaFin);
+                    opt.dataset.hora = hi + (hf ? ' - ' + hf : '');
+                    const label = fechaCorta(o.fecha) + (hi ? ' ' + hi : '');
+                    opt.textContent = (o.nombre || '') + ' · ' + label;
                     select.appendChild(opt);
                 });
 
                 document.getElementById('actividad-lab-group').style.display = 'block';
             } catch(e) {
-                // sección queda oculta si falla la carga
+                console.warn('loadActividades:', e);
             }
         }
 
