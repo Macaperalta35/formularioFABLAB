@@ -157,7 +157,12 @@
                 </div>
                 <div class="form-group" style="margin-bottom:1.5rem;">
                     <label class="form-label">Contraseña</label>
-                    <input type="password" class="form-input" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                    <div style="position:relative;">
+                        <input type="password" class="form-input" id="login-password" placeholder="••••••••" required autocomplete="current-password" style="padding-right:2.8rem;">
+                        <button type="button" id="toggle-pwd-btn" onclick="toggleLoginPwd()" tabindex="-1"
+                            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--text-muted);padding:4px;line-height:1;"
+                            title="Mostrar / ocultar contraseña">👁️</button>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.9rem;" id="login-btn">
                     Iniciar Sesión
@@ -246,10 +251,6 @@
                 <a href="https://docs.google.com/spreadsheets/d/1wQmC5H388sfJoZpvT3kj-59BPUyNjK9J4YLW5wiNKo8/edit?gid=0#gid=0" target="_blank" class="sidebar-footer-link">
                     <span class="nav-icon">🟢</span>
                     Abrir Google Sheets
-                </a>
-                <a href="javascript:void(0)" class="sidebar-footer-link" onclick="goToSection('inventario')">
-                    <span class="nav-icon">📦</span>
-                    Inventario FabLab
                 </a>
                 <a href="javascript:void(0)" class="sidebar-footer-link" onclick="doLogout()" style="color:#dc2626;">
                     <span class="nav-icon">🚪</span>
@@ -411,9 +412,10 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="visitas-count" style="font-size:0.8rem;color:var(--text-muted);padding:0.4rem 0.5rem;text-align:right;"></div>
                         <div id="visitas-empty" class="table-empty" style="display:none;">
                             <div class="table-empty-icon">📋</div>
-                            <p>No se encontraron visitas</p>
+                            <p id="visitas-empty-msg">No se encontraron visitas</p>
                         </div>
                         <div id="visitas-loading" class="loader">
                             <div class="loader-spinner"></div>
@@ -558,7 +560,7 @@
                                         <th>Nombre</th>
                                         <th>Descripción</th>
                                         <th>Categoría</th>
-                                        <th>Prop.</th>
+                                        <th>Propietario</th>
                                         <th>Stock</th>
                                         <th>Disponible</th>
                                         <th>Prestado</th>
@@ -570,9 +572,11 @@
                                 <tbody id="inventario-tbody"></tbody>
                             </table>
                         </div>
+                        <div id="inventario-count" style="font-size:0.8rem;color:var(--text-muted);padding:0.4rem 0.5rem;text-align:right;"></div>
                         <div id="inventario-empty" class="table-empty" style="display:none;">
                             <div class="table-empty-icon">📦</div>
-                            <p>No se encontraron activos</p>
+                            <p id="inventario-empty-msg">No se encontraron activos</p>
+                            <button class="btn btn-ghost btn-sm" style="margin-top:0.75rem;" onclick="document.getElementById('search-inventario').value='';document.getElementById('filter-categoria').value='';document.getElementById('filter-estado-inv').value='';filterInventario();">Limpiar filtros</button>
                         </div>
                         <div id="inventario-loading" class="loader">
                             <div class="loader-spinner"></div>
@@ -1553,6 +1557,21 @@
         });
     });
 
+    // Cerrar modales con Escape
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.visible').forEach(m => m.classList.remove('visible'));
+        }
+    });
+
+    // Mostrar / ocultar contraseña en login
+    function toggleLoginPwd() {
+        const input = document.getElementById('login-password');
+        const btn   = document.getElementById('toggle-pwd-btn');
+        if (input.type === 'password') { input.type = 'text';     btn.textContent = '🙈'; }
+        else                           { input.type = 'password'; btn.textContent = '👁️'; }
+    }
+
     // ===========================
     //  INIT
     // ===========================
@@ -1708,7 +1727,7 @@
             const acciones = rowIndex
                 ? `<div style="display:flex;gap:4px;">
                        <button class="btn btn-secondary btn-sm" style="padding:4px 10px;font-size:0.7rem;" onclick="openEditVisitaModal(${rowIndex})">✏️ Editar</button>
-                       <button class="btn btn-danger btn-sm" style="padding:4px 10px;font-size:0.7rem;" onclick="deleteVisita(${rowIndex})">🗑️</button>
+                       <button class="btn btn-danger btn-sm" style="padding:4px 10px;font-size:0.7rem;" onclick="deleteVisita(${rowIndex})" title="Eliminar visita">🗑️ Eliminar</button>
                    </div>`
                 : '—';
 
@@ -1804,16 +1823,26 @@
 
     function filterVisitas() {
         const filtered = getFilteredVisitas();
+        const hasFilter = document.getElementById('search-visitas').value || document.getElementById('filter-tipo').value;
 
-        const empty = document.getElementById('visitas-empty');
-        const table = document.getElementById('visitas-table');
+        const empty   = document.getElementById('visitas-empty');
+        const emptyMsg = document.getElementById('visitas-empty-msg');
+        const table   = document.getElementById('visitas-table');
+        const counter = document.getElementById('visitas-count');
 
         if (filtered.length === 0) {
             empty.style.display = 'block';
             table.style.display = 'none';
+            counter.textContent = '';
+            emptyMsg.textContent = hasFilter
+                ? 'No hay visitas que coincidan con la búsqueda. Prueba otros términos o limpia el filtro.'
+                : 'Aún no hay visitas registradas.';
         } else {
             empty.style.display = 'none';
             table.style.display = 'table';
+            counter.textContent = filtered.length === db.visitas.length
+                ? `${filtered.length} visitas en total`
+                : `${filtered.length} de ${db.visitas.length} visitas`;
             renderVisitasTable(filtered);
         }
     }
@@ -2413,7 +2442,7 @@
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
                         <button class="btn btn-secondary btn-sm" onclick="viewSeccion('${s.id}')">👁️ Ver Detalle</button>
                         <button class="btn btn-success btn-sm" onclick="openAddAlumno('${s.id}')">➕ Agregar Alumno</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteSeccion('${s.id}')">🗑️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteSeccion('${s.id}')">🗑️ Eliminar</button>
                     </div>
                 </div>
             `;
@@ -2575,12 +2604,24 @@
             return matchSearch && matchCat && matchEstado;
         });
 
+        const counter = document.getElementById('inventario-count');
+        const hasFilter = search || cat || estado;
         if (!filtered.length) {
             if (tbody) tbody.innerHTML = '';
-            if (empty) empty.style.display = 'block';
+            if (empty) {
+                empty.style.display = 'block';
+                const msg = empty.querySelector('#inventario-empty-msg');
+                if (msg) msg.textContent = hasFilter
+                    ? 'No hay activos que coincidan. Prueba otros términos o usa "Limpiar filtros".'
+                    : 'No hay activos registrados en el inventario.';
+            }
+            if (counter) counter.textContent = '';
             return;
         }
         if (empty) empty.style.display = 'none';
+        if (counter) counter.textContent = filtered.length === db.assets.length
+            ? `${filtered.length} activos en total`
+            : `${filtered.length} de ${db.assets.length} activos`;
 
         const statusLabel = { active: '✅ Activo', maintenance: '🔧 Mantenimiento', lost: '❌ Baja' };
 
@@ -2612,8 +2653,8 @@
                     <td><span style="font-size:0.8rem;padding:2px 8px;border-radius:20px;background:${a.status==='active'?'#dcfce7':a.status==='maintenance'?'#fef9c3':'#fee2e2'};color:${a.status==='active'?'#166534':a.status==='maintenance'?'#854d0e':'#991b1b'};">${statusLabel[a.status] || a.status}</span></td>
                     <td style="font-size:0.82rem;">${escapeHTML(a.location || '')}</td>
                     <td style="white-space:nowrap;">
-                        ${a.available > 0 ? `<button class="btn btn-ghost btn-sm" onclick="invOpenLoanModal('${escapeHTML(a.id)}')" title="Prestar" style="color:#2563eb;">🤝</button>` : ''}
-                        ${a.borrowed > 0  ? `<button class="btn btn-ghost btn-sm" onclick="invOpenReturnModal('${escapeHTML(a.id)}')" title="Recibir" style="color:#16a34a;">↩️</button>` : ''}
+                        ${a.available > 0 ? `<button class="btn btn-ghost btn-sm" onclick="invOpenLoanModal('${escapeHTML(a.id)}')" style="color:#2563eb;">🤝 Prestar</button>` : ''}
+                        ${a.borrowed > 0  ? `<button class="btn btn-ghost btn-sm" onclick="invOpenReturnModal('${escapeHTML(a.id)}')" style="color:#16a34a;">↩️ Devolver</button>` : ''}
                         ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invEditAsset('${escapeHTML(a.id)}')" title="Editar">✏️</button>` : ''}
                         ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invDeleteAsset('${escapeHTML(a.id)}')" title="Eliminar" style="color:#dc2626;">🗑️</button>` : ''}
                     </td>
