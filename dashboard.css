@@ -827,6 +827,7 @@ body {
     max-width: 540px;
     max-height: 90vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     box-shadow: var(--shadow-lg);
     animation: modalSlideIn 0.3s ease-out;
 }
