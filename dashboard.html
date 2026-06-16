@@ -220,6 +220,12 @@
                     <span class="nav-badge" id="badge-secciones">0</span>
                 </button>
 
+                <button class="nav-item" data-section="recordatorios" id="nav-recordatorios">
+                    <span class="nav-icon">📌</span>
+                    Recordatorios
+                    <span class="nav-badge" id="badge-recordatorios" style="display:none;">0</span>
+                </button>
+
                 <div class="nav-label" style="margin-top: 8px;">Sistema</div>
                 <button class="nav-item superadmin-only" data-section="usuarios" id="nav-usuarios">
                     <span class="nav-icon">👤</span>
@@ -341,6 +347,19 @@
                                 <div class="empty-state" style="padding:30px 20px;">
                                     <div class="empty-icon">📅</div>
                                     <p class="empty-text">No hay actividades programadas</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending reminders -->
+                        <div class="panel-card" style="cursor:pointer;" onclick="goToSection('recordatorios')">
+                            <div class="panel-card-header">
+                                <span class="panel-card-title">📌 Recordatorios Pendientes</span>
+                                <span class="panel-card-action">Ver todos →</span>
+                            </div>
+                            <div class="panel-card-body" id="ov-recordatorios">
+                                <div class="empty-state" style="padding:20px;">
+                                    <p class="empty-text">Sin recordatorios pendientes</p>
                                 </div>
                             </div>
                         </div>
@@ -630,6 +649,28 @@
                     </div>
                 </div>
 
+                <!-- ==================== SECTION: RECORDATORIOS ==================== -->
+                <div class="page-section" id="section-recordatorios">
+                    <div class="section-header">
+                        <h3 class="section-title">📌 Recordatorios y Pedidos</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openRecordatorioModal()">➕ Nuevo</button>
+                    </div>
+
+                    <div class="tab-bar" style="margin-bottom:1rem;">
+                        <button class="tab-btn active" onclick="switchRecordatorioTab('pendientes', this)">🔔 Pendientes</button>
+                        <button class="tab-btn" onclick="switchRecordatorioTab('todos', this)">📋 Todos</button>
+                        <button class="tab-btn" onclick="switchRecordatorioTab('completados', this)">✅ Completados</button>
+                    </div>
+
+                    <div id="recordatorios-list" class="cards-grid"></div>
+                    <div id="recordatorios-empty" class="empty-state" style="display:none;">
+                        <div class="empty-icon">📌</div>
+                        <p class="empty-title">Sin recordatorios</p>
+                        <p class="empty-text">Agrega pedidos, tareas y recordatorios del laboratorio.</p>
+                        <button class="btn btn-primary btn-sm" onclick="openRecordatorioModal()">➕ Nuevo Recordatorio</button>
+                    </div>
+                </div>
+
                 <!-- ==================== SECTION: USUARIOS ==================== -->
                 <div class="page-section" id="section-usuarios">
                     <div class="section-header">
@@ -702,6 +743,54 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: RECORDATORIO ==================== -->
+    <div class="modal-overlay" id="modal-recordatorio">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-rec-title">📌 Nuevo Recordatorio</h3>
+                <button class="modal-close" onclick="closeModal('modal-recordatorio')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="rec-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Tipo *</label>
+                        <select class="form-select" id="rec-tipo">
+                            <option value="recordatorio">📌 Recordatorio</option>
+                            <option value="pedido">🛒 Pedido / Compra</option>
+                            <option value="mantenimiento">🔧 Mantenimiento</option>
+                            <option value="tarea">✅ Tarea</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prioridad</label>
+                        <select class="form-select" id="rec-prioridad">
+                            <option value="media">🟡 Media</option>
+                            <option value="alta">🔴 Alta</option>
+                            <option value="baja">🟢 Baja</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Título *</label>
+                    <input type="text" class="form-input" id="rec-titulo" placeholder="Ej: Comprar filamento PLA negro">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción / Detalle</label>
+                    <textarea class="form-input" id="rec-descripcion" rows="3" placeholder="Cantidad, proveedor, instrucciones u otros detalles..." style="resize:vertical;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha Límite <span style="color:var(--text-muted);font-size:0.8rem;">(opcional)</span></label>
+                    <input type="date" class="form-input" id="rec-fecha-limite">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-recordatorio')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveRecordatorio()">💾 Guardar</button>
             </div>
         </div>
     </div>
@@ -1194,7 +1283,8 @@
         visitas: [],
         ocupaciones: [],
         secciones: [],
-        assets: []
+        assets: [],
+        recordatorios: []
     };
 
     function generateId() {
@@ -1211,13 +1301,14 @@
     const sidebarOverlay = document.getElementById('sidebar-overlay');
 
     const sectionTitles = {
-        overview:      'Panel General',
-        visitas:       'Gestión de Visitas',
-        inventario:    'Inventario FabLab',
-        ocupacion:     'Ocupación del Laboratorio',
-        secciones:     'Secciones y Alumnos',
-        usuarios:      'Gestión de Usuarios',
-        accesibilidad: 'Accesibilidad'
+        overview:       'Panel General',
+        visitas:        'Gestión de Visitas',
+        inventario:     'Inventario FabLab',
+        ocupacion:      'Ocupación del Laboratorio',
+        secciones:      'Secciones y Alumnos',
+        recordatorios:  'Recordatorios y Pedidos',
+        usuarios:       'Gestión de Usuarios',
+        accesibilidad:  'Accesibilidad'
     };
 
     function goToSection(name) {
@@ -1573,6 +1664,190 @@
     }
 
     // ===========================
+    //  RECORDATORIOS
+    // ===========================
+    let currentRecTab = 'pendientes';
+
+    function switchRecordatorioTab(tab, btn) {
+        currentRecTab = tab;
+        document.querySelectorAll('#section-recordatorios .tab-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        renderRecordatorios();
+    }
+
+    function openRecordatorioModal(id) {
+        document.getElementById('rec-id').value = id || '';
+        document.getElementById('modal-rec-title').textContent = id ? '✏️ Editar Recordatorio' : '📌 Nuevo Recordatorio';
+        if (id) {
+            const r = db.recordatorios.find(x => String(x.id) === String(id));
+            if (r) {
+                document.getElementById('rec-tipo').value = r.tipo || 'recordatorio';
+                document.getElementById('rec-titulo').value = r.titulo || '';
+                document.getElementById('rec-descripcion').value = r.descripcion || '';
+                document.getElementById('rec-fecha-limite').value = normFecha(r.fechaLimite) || '';
+                document.getElementById('rec-prioridad').value = r.prioridad || 'media';
+            }
+        } else {
+            document.getElementById('rec-tipo').value = 'recordatorio';
+            document.getElementById('rec-titulo').value = '';
+            document.getElementById('rec-descripcion').value = '';
+            document.getElementById('rec-fecha-limite').value = '';
+            document.getElementById('rec-prioridad').value = 'media';
+        }
+        openModal('modal-recordatorio');
+    }
+
+    async function saveRecordatorio() {
+        const titulo = document.getElementById('rec-titulo').value.trim();
+        if (!titulo) { showToast('El título es obligatorio', 'error'); return; }
+
+        const existingId = document.getElementById('rec-id').value;
+        const isEdit = !!existingId;
+        const id = existingId || generateId();
+        const existing = isEdit ? db.recordatorios.find(r => String(r.id) === id) : null;
+
+        const rec = {
+            id,
+            tipo:         document.getElementById('rec-tipo').value,
+            titulo,
+            descripcion:  document.getElementById('rec-descripcion').value.trim(),
+            fechaLimite:  document.getElementById('rec-fecha-limite').value || '',
+            prioridad:    document.getElementById('rec-prioridad').value,
+            estado:       existing ? existing.estado : 'pendiente',
+            fechaCreacion: existing ? existing.fechaCreacion : new Date().toISOString().slice(0, 10)
+        };
+
+        closeModal('modal-recordatorio');
+
+        if (isEdit) {
+            const idx = db.recordatorios.findIndex(r => String(r.id) === id);
+            if (idx >= 0) db.recordatorios[idx] = rec;
+        } else {
+            db.recordatorios.unshift(rec);
+        }
+        renderRecordatorios();
+        refreshOverviewRecordatorios();
+        updateRecordatoriosBadge();
+
+        await apiRequest(isEdit ? 'updateRecordatorio' : 'saveRecordatorio', rec);
+        showToast(isEdit ? 'Recordatorio actualizado' : 'Recordatorio guardado', 'success');
+        setTimeout(() => jsonpRequest('getRecordatorios').then(d => { if (Array.isArray(d)) { db.recordatorios = d; renderRecordatorios(); refreshOverviewRecordatorios(); updateRecordatoriosBadge(); } }), 2000);
+    }
+
+    async function deleteRecordatorio(id) {
+        if (!confirm('¿Eliminar este recordatorio?')) return;
+        db.recordatorios = db.recordatorios.filter(r => String(r.id) !== String(id));
+        renderRecordatorios();
+        refreshOverviewRecordatorios();
+        updateRecordatoriosBadge();
+        await apiRequest('deleteRecordatorio', { id });
+        showToast('Recordatorio eliminado', 'success');
+    }
+
+    async function toggleRecordatorio(id) {
+        const r = db.recordatorios.find(x => String(x.id) === String(id));
+        if (!r) return;
+        r.estado = r.estado === 'completado' ? 'pendiente' : 'completado';
+        renderRecordatorios();
+        refreshOverviewRecordatorios();
+        updateRecordatoriosBadge();
+        await apiRequest('updateRecordatorio', r);
+        showToast(r.estado === 'completado' ? '✅ Completado' : '🔔 Reabierto', 'success');
+    }
+
+    function updateRecordatoriosBadge() {
+        const pending = db.recordatorios.filter(r => r.estado !== 'completado').length;
+        const badge = document.getElementById('badge-recordatorios');
+        badge.textContent = pending;
+        badge.style.display = pending > 0 ? '' : 'none';
+    }
+
+    function renderRecordatorios() {
+        const list  = document.getElementById('recordatorios-list');
+        const empty = document.getElementById('recordatorios-empty');
+        if (!list) return;
+
+        let data = [...db.recordatorios];
+        if (currentRecTab === 'pendientes')  data = data.filter(r => r.estado !== 'completado');
+        if (currentRecTab === 'completados') data = data.filter(r => r.estado === 'completado');
+
+        const priOrder = { alta: 0, media: 1, baja: 2 };
+        const today = new Date().toISOString().slice(0, 10);
+        data.sort((a, b) => {
+            if (a.estado !== b.estado) return a.estado === 'completado' ? 1 : -1;
+            const pDiff = (priOrder[a.prioridad] ?? 1) - (priOrder[b.prioridad] ?? 1);
+            if (pDiff !== 0) return pDiff;
+            return (normFecha(a.fechaLimite) || '9999').localeCompare(normFecha(b.fechaLimite) || '9999');
+        });
+
+        if (data.length === 0) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+        empty.style.display = 'none';
+
+        const tipoIcons = { recordatorio: '📌', pedido: '🛒', mantenimiento: '🔧', tarea: '✅' };
+        const tipoLabels = { recordatorio: 'Recordatorio', pedido: 'Pedido', mantenimiento: 'Mantenimiento', tarea: 'Tarea' };
+        const priColors  = { alta: 'var(--red)', media: 'var(--amber, #f59e0b)', baja: 'var(--green)' };
+        const priLabels  = { alta: '🔴 Alta', media: '🟡 Media', baja: '🟢 Baja' };
+
+        list.innerHTML = data.map(r => {
+            const done    = r.estado === 'completado';
+            const fl      = normFecha(r.fechaLimite);
+            const vencido = fl && fl < today && !done;
+            const borde   = done ? 'var(--green)' : (priColors[r.prioridad] || 'var(--amber, #f59e0b)');
+            return `
+            <div class="info-card" style="border-left:4px solid ${borde};${done ? 'opacity:0.65;' : ''}">
+                <div class="info-card-header">
+                    <span class="info-card-title" style="${done ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">
+                        ${tipoIcons[r.tipo] || '📌'} ${escapeHTML(r.titulo)}
+                    </span>
+                    <span class="status-dot ${done ? 'active' : 'upcoming'}">${done ? 'Completado' : 'Pendiente'}</span>
+                </div>
+                <div class="info-card-meta">
+                    <div class="meta-row">
+                        <span class="meta-icon">🏷️</span>
+                        <span class="type-badge ${r.tipo === 'pedido' ? 'clase' : r.tipo === 'mantenimiento' ? 'capacitacion' : 'externo'}">${tipoLabels[r.tipo] || r.tipo}</span>
+                        &nbsp;
+                        <span class="type-badge ${r.prioridad === 'alta' ? 'clase' : r.prioridad === 'baja' ? 'externo' : 'capacitacion'}">${priLabels[r.prioridad] || r.prioridad}</span>
+                    </div>
+                    ${r.descripcion ? `<div class="meta-row" style="align-items:flex-start;"><span class="meta-icon">📝</span><span style="white-space:pre-wrap;line-height:1.5;">${escapeHTML(r.descripcion)}</span></div>` : ''}
+                    ${fl ? `<div class="meta-row" style="${vencido ? 'color:var(--red);font-weight:600;' : ''}"><span class="meta-icon">📅</span> Límite: ${formatDate(fl)}${vencido ? ' ⚠️ Vencido' : ''}</div>` : ''}
+                    ${r.fechaCreacion ? `<div class="meta-row"><span class="meta-icon">🗓️</span> Creado: ${formatDate(r.fechaCreacion)}</div>` : ''}
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                    <button class="btn ${done ? 'btn-secondary' : 'btn-primary'} btn-sm" onclick="toggleRecordatorio('${r.id}')">
+                        ${done ? '🔔 Reabrir' : '✅ Completar'}
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="openRecordatorioModal('${r.id}')">✏️ Editar</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteRecordatorio('${r.id}')">🗑️</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function refreshOverviewRecordatorios() {
+        const el = document.getElementById('ov-recordatorios');
+        if (!el) return;
+        const pending = db.recordatorios.filter(r => r.estado !== 'completado');
+        const priColors = { alta: 'var(--red)', media: 'var(--amber,#f59e0b)', baja: 'var(--green)' };
+        const tipoIcons = { recordatorio: '📌', pedido: '🛒', mantenimiento: '🔧', tarea: '✅' };
+        if (pending.length === 0) {
+            el.innerHTML = '<div class="empty-state" style="padding:20px;"><p class="empty-text">Sin recordatorios pendientes ✅</p></div>';
+            return;
+        }
+        const priOrder = { alta: 0, media: 1, baja: 2 };
+        const top = [...pending].sort((a,b) => (priOrder[a.prioridad]??1)-(priOrder[b.prioridad]??1)).slice(0, 4);
+        el.innerHTML = '<div class="activity-list">' + top.map(r => `
+            <div class="activity-item">
+                <div class="activity-icon" style="background:${r.prioridad === 'alta' ? 'var(--red-glow)' : 'var(--amber-glow,rgba(245,158,11,0.12))'}">
+                    ${tipoIcons[r.tipo] || '📌'}
+                </div>
+                <div class="activity-info" style="min-width:0;">
+                    <div class="activity-name" style="white-space:normal;line-height:1.3;">${escapeHTML(r.titulo)}</div>
+                    ${r.fechaLimite ? `<div class="activity-detail">📅 ${formatDate(normFecha(r.fechaLimite))}</div>` : ''}
+                </div>
+            </div>`).join('') + '</div>';
+    }
+
+    // ===========================
     //  INIT
     // ===========================
     async function initDashboard() {
@@ -1646,15 +1921,17 @@
             document.getElementById('visitas-table').style.display = 'none';
 
             // Ejecutamos las llamadas en paralelo para mayor rapidez
-            const [visitas, ocupaciones, secciones] = await Promise.all([
-                apiRequest('getAll'), // Visitas
+            const [visitas, ocupaciones, secciones, recordatorios] = await Promise.all([
+                apiRequest('getAll'),
                 apiRequest('getOcupaciones'),
-                apiRequest('getSecciones')
+                apiRequest('getSecciones'),
+                apiRequest('getRecordatorios')
             ]);
 
             db.visitas = Array.isArray(visitas) ? visitas : [];
             db.ocupaciones = Array.isArray(ocupaciones) ? ocupaciones : [];
             db.secciones = Array.isArray(secciones) ? secciones : [];
+            db.recordatorios = Array.isArray(recordatorios) ? recordatorios : [];
 
             document.getElementById('visitas-loading').style.display = 'none';
             document.getElementById('visitas-table').style.display = 'table';
@@ -1663,10 +1940,12 @@
             filterVisitas();
             renderOcupaciones(currentOcuTab);
             renderSecciones();
+            renderRecordatorios();
             refreshOverview();
 
             document.getElementById('badge-visitas').textContent = db.visitas.length;
             document.getElementById('badge-secciones').textContent = db.secciones.length;
+            updateRecordatoriosBadge();
             
             showToast('Datos sincronizados correctamente', 'success');
 
@@ -1680,20 +1959,24 @@
     // Si el dato no llegó, la UI se corrige automáticamente con lo real de Sheets.
     async function silentSync() {
         try {
-            const [visitas, ocupaciones, secciones] = await Promise.all([
+            const [visitas, ocupaciones, secciones, recordatorios] = await Promise.all([
                 jsonpRequest('getAll'),
                 jsonpRequest('getOcupaciones'),
-                jsonpRequest('getSecciones')
+                jsonpRequest('getSecciones'),
+                jsonpRequest('getRecordatorios')
             ]);
-            if (Array.isArray(visitas))    db.visitas     = visitas;
-            if (Array.isArray(ocupaciones)) db.ocupaciones = ocupaciones;
-            if (Array.isArray(secciones))  db.secciones   = secciones;
+            if (Array.isArray(visitas))       db.visitas       = visitas;
+            if (Array.isArray(ocupaciones))   db.ocupaciones   = ocupaciones;
+            if (Array.isArray(secciones))     db.secciones     = secciones;
+            if (Array.isArray(recordatorios)) db.recordatorios = recordatorios;
             filterVisitas();
             renderOcupaciones(currentOcuTab);
             renderSecciones();
+            renderRecordatorios();
             refreshOverview();
             document.getElementById('badge-visitas').textContent   = db.visitas.length;
             document.getElementById('badge-secciones').textContent = db.secciones.length;
+            updateRecordatoriosBadge();
         } catch (e) {
             console.warn('silentSync falló:', e.message);
         }
@@ -2543,6 +2826,8 @@
                 `;
             }).join('') + '</div>';
         }
+
+        refreshOverviewRecordatorios();
     }
 
     // ===========================

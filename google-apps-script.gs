@@ -191,6 +191,13 @@ function doGet(e) {
       return respond(secciones, cb);
     }
 
+    if (action === 'getRecordatorios') {
+      var sheet = getOrCreateSheet('Recordatorios', [
+        'id','tipo','titulo','descripcion','fechaLimite','prioridad','estado','fechaCreacion'
+      ]);
+      return respond(sheetToJSON(sheet), cb);
+    }
+
     // Lista todas las hojas con nombre y cantidad de filas
     if (action === 'listSheets') {
       var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -394,6 +401,47 @@ function doPost(e) {
       var data  = sheet.getDataRange().getValues();
       for (var i = data.length - 1; i >= 1; i--) {
         if (String(data[i][1]) === String(body.alumnoId)) { sheet.deleteRow(i + 1); break; }
+      }
+      return jsonResponse({ ok: true });
+    }
+
+    // ── Recordatorios ────────────────────────────────────
+
+    if (action === 'saveRecordatorio') {
+      var sheet = getOrCreateSheet('Recordatorios', [
+        'id','tipo','titulo','descripcion','fechaLimite','prioridad','estado','fechaCreacion'
+      ]);
+      sheet.appendRow([
+        body.id, body.tipo || 'recordatorio', body.titulo || '',
+        body.descripcion || '', body.fechaLimite || '',
+        body.prioridad || 'media', body.estado || 'pendiente',
+        body.fechaCreacion || Utilities.formatDate(new Date(), 'America/Santiago', 'yyyy-MM-dd')
+      ]);
+      return jsonResponse({ ok: true });
+    }
+
+    if (action === 'updateRecordatorio') {
+      var sheet = getOrCreateSheet('Recordatorios', []);
+      var data  = sheet.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(body.id)) {
+          sheet.getRange(i + 1, 1, 1, 8).setValues([[
+            body.id, body.tipo || '', body.titulo || '',
+            body.descripcion || '', body.fechaLimite || '',
+            body.prioridad || 'media', body.estado || 'pendiente',
+            body.fechaCreacion || ''
+          ]]);
+          break;
+        }
+      }
+      return jsonResponse({ ok: true });
+    }
+
+    if (action === 'deleteRecordatorio') {
+      var sheet = getOrCreateSheet('Recordatorios', []);
+      var data  = sheet.getDataRange().getValues();
+      for (var i = data.length - 1; i >= 1; i--) {
+        if (String(data[i][0]) === String(body.id)) { sheet.deleteRow(i + 1); break; }
       }
       return jsonResponse({ ok: true });
     }
