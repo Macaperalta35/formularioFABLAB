@@ -109,6 +109,20 @@ function mergeHoja1ToVisitas() {
 
 // ── Utilidades ──────────────────────────────────────
 
+// Ejecutar esta función desde el editor del script para verificar/autorizar Drive
+function testDriveAccess() {
+  try {
+    var folder = getOrCreateDriveFolder('FabLab - Impresiones 3D');
+    var msg = '✅ Drive OK. Carpeta: ' + folder.getName() + ' — URL: ' + folder.getUrl();
+    Logger.log(msg);
+    SpreadsheetApp.getUi().alert(msg);
+  } catch(e) {
+    var err = '❌ Error Drive: ' + e.toString();
+    Logger.log(err);
+    try { SpreadsheetApp.getUi().alert(err); } catch(e2) {}
+  }
+}
+
 function getOrCreateDriveFolder(name) {
   var folders = DriveApp.getFoldersByName(name);
   return folders.hasNext() ? folders.next() : DriveApp.createFolder(name);
