@@ -198,6 +198,14 @@ function doGet(e) {
       return respond(sheetToJSON(sheet), cb);
     }
 
+    if (action === 'getImpresiones') {
+      var sheet = getOrCreateSheet('Impresiones3D', [
+        'id','titulo','solicitante','rut','material','color','impresora',
+        'tiempoEstimado','prioridad','archivo','notas','estado','fechaSolicitud'
+      ]);
+      return respond(sheetToJSON(sheet), cb);
+    }
+
     // Lista todas las hojas con nombre y cantidad de filas
     if (action === 'listSheets') {
       var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -439,6 +447,50 @@ function doPost(e) {
 
     if (action === 'deleteRecordatorio') {
       var sheet = getOrCreateSheet('Recordatorios', []);
+      var data  = sheet.getDataRange().getValues();
+      for (var i = data.length - 1; i >= 1; i--) {
+        if (String(data[i][0]) === String(body.id)) { sheet.deleteRow(i + 1); break; }
+      }
+      return jsonResponse({ ok: true });
+    }
+
+    // ── Impresiones 3D ───────────────────────────────────
+
+    if (action === 'saveImpresion') {
+      var sheet = getOrCreateSheet('Impresiones3D', [
+        'id','titulo','solicitante','rut','material','color','impresora',
+        'tiempoEstimado','prioridad','archivo','notas','estado','fechaSolicitud'
+      ]);
+      sheet.appendRow([
+        body.id, body.titulo||'', body.solicitante||'', body.rut||'',
+        body.material||'PLA', body.color||'', body.impresora||'',
+        body.tiempoEstimado||'', body.prioridad||'media',
+        body.archivo||'', body.notas||'', body.estado||'pendiente',
+        body.fechaSolicitud || Utilities.formatDate(new Date(), 'America/Santiago', 'yyyy-MM-dd')
+      ]);
+      return jsonResponse({ ok: true });
+    }
+
+    if (action === 'updateImpresion') {
+      var sheet = getOrCreateSheet('Impresiones3D', []);
+      var data  = sheet.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(body.id)) {
+          sheet.getRange(i + 1, 1, 1, 13).setValues([[
+            body.id, body.titulo||'', body.solicitante||'', body.rut||'',
+            body.material||'PLA', body.color||'', body.impresora||'',
+            body.tiempoEstimado||'', body.prioridad||'media',
+            body.archivo||'', body.notas||'', body.estado||'pendiente',
+            body.fechaSolicitud||''
+          ]]);
+          break;
+        }
+      }
+      return jsonResponse({ ok: true });
+    }
+
+    if (action === 'deleteImpresion') {
+      var sheet = getOrCreateSheet('Impresiones3D', []);
       var data  = sheet.getDataRange().getValues();
       for (var i = data.length - 1; i >= 1; i--) {
         if (String(data[i][0]) === String(body.id)) { sheet.deleteRow(i + 1); break; }

@@ -225,6 +225,11 @@
                     Recordatorios
                     <span class="nav-badge" id="badge-recordatorios" style="display:none;">0</span>
                 </button>
+                <button class="nav-item" data-section="impresion3d" id="nav-impresion3d">
+                    <span class="nav-icon">🖨️</span>
+                    Cola Impresión 3D
+                    <span class="nav-badge" id="badge-impresion3d" style="display:none;">0</span>
+                </button>
 
                 <div class="nav-label" style="margin-top: 8px;">Sistema</div>
                 <button class="nav-item superadmin-only" data-section="usuarios" id="nav-usuarios">
@@ -671,6 +676,29 @@
                     </div>
                 </div>
 
+                <!-- ==================== SECTION: IMPRESIÓN 3D ==================== -->
+                <div class="page-section" id="section-impresion3d">
+                    <div class="section-header">
+                        <h3 class="section-title">🖨️ Cola de Impresión 3D</h3>
+                        <button class="btn btn-primary btn-sm" onclick="openImpresionModal()">➕ Nuevo Trabajo</button>
+                    </div>
+
+                    <div class="tab-bar" style="margin-bottom:1rem;">
+                        <button class="tab-btn active" id="imp-tab-cola"     onclick="switchImpresionTab('cola', this)">⏳ En Cola</button>
+                        <button class="tab-btn"         id="imp-tab-imprimiendo" onclick="switchImpresionTab('imprimiendo', this)">🔄 Imprimiendo</button>
+                        <button class="tab-btn"         id="imp-tab-completado"  onclick="switchImpresionTab('completado', this)">✅ Completados</button>
+                        <button class="tab-btn"         id="imp-tab-todos"       onclick="switchImpresionTab('todos', this)">📋 Todos</button>
+                    </div>
+
+                    <div id="impresion-list" class="cards-grid"></div>
+                    <div id="impresion-empty" class="empty-state" style="display:none;">
+                        <div class="empty-icon">🖨️</div>
+                        <p class="empty-title">Cola vacía</p>
+                        <p class="empty-text">No hay trabajos de impresión 3D registrados.</p>
+                        <button class="btn btn-primary btn-sm" onclick="openImpresionModal()">➕ Agregar trabajo</button>
+                    </div>
+                </div>
+
                 <!-- ==================== SECTION: USUARIOS ==================== -->
                 <div class="page-section" id="section-usuarios">
                     <div class="section-header">
@@ -743,6 +771,83 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: IMPRESIÓN 3D ==================== -->
+    <div class="modal-overlay" id="modal-impresion">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-imp-title">🖨️ Nuevo Trabajo de Impresión</h3>
+                <button class="modal-close" onclick="closeModal('modal-impresion')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="imp-id">
+                <div class="form-group">
+                    <label class="form-label">Nombre / Descripción del trabajo *</label>
+                    <input type="text" class="form-input" id="imp-titulo" placeholder="Ej: Engranaje pieza prototipo">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Solicitante *</label>
+                        <input type="text" class="form-input" id="imp-solicitante" placeholder="Nombre completo">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">RUT</label>
+                        <input type="text" class="form-input" id="imp-rut" placeholder="12.345.678-9">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Material *</label>
+                        <select class="form-select" id="imp-material">
+                            <option value="PLA">PLA</option>
+                            <option value="PLA+">PLA+</option>
+                            <option value="ABS">ABS</option>
+                            <option value="PETG">PETG</option>
+                            <option value="TPU">TPU (Flexible)</option>
+                            <option value="Resina">Resina</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Color</label>
+                        <input type="text" class="form-input" id="imp-color" placeholder="Ej: Blanco, Negro, Gris">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Impresora</label>
+                        <input type="text" class="form-input" id="imp-impresora" placeholder="Ej: Ender 3 #1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tiempo estimado (hrs)</label>
+                        <input type="number" class="form-input" id="imp-tiempo" placeholder="Ej: 4.5" min="0" step="0.5">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Prioridad</label>
+                        <select class="form-select" id="imp-prioridad">
+                            <option value="media">🟡 Media</option>
+                            <option value="alta">🔴 Alta</option>
+                            <option value="baja">🟢 Baja</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Archivo</label>
+                        <input type="text" class="form-input" id="imp-archivo" placeholder="Ej: pieza_v2.stl">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notas</label>
+                    <textarea class="form-input" id="imp-notas" rows="2" placeholder="Instrucciones especiales, porcentaje relleno, etc." style="resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-impresion')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveImpresion()">💾 Guardar</button>
             </div>
         </div>
     </div>
@@ -1284,7 +1389,8 @@
         ocupaciones: [],
         secciones: [],
         assets: [],
-        recordatorios: []
+        recordatorios: [],
+        impresiones: []
     };
 
     function generateId() {
@@ -1307,6 +1413,7 @@
         ocupacion:      'Ocupación del Laboratorio',
         secciones:      'Secciones y Alumnos',
         recordatorios:  'Recordatorios y Pedidos',
+        impresion3d:    'Cola de Impresión 3D',
         usuarios:       'Gestión de Usuarios',
         accesibilidad:  'Accesibilidad'
     };
@@ -1664,6 +1771,184 @@
     }
 
     // ===========================
+    //  IMPRESIÓN 3D
+    // ===========================
+    let currentImpTab = 'cola';
+
+    const IMP_ESTADOS = {
+        pendiente:   { label: 'En Cola',      icon: '⏳', css: 'upcoming' },
+        imprimiendo: { label: 'Imprimiendo',  icon: '🔄', css: 'active'   },
+        completado:  { label: 'Completado',   icon: '✅', css: 'active'   },
+        fallido:     { label: 'Fallido',      icon: '❌', css: 'ended'    },
+        cancelado:   { label: 'Cancelado',    icon: '🚫', css: 'ended'    }
+    };
+
+    function switchImpresionTab(tab, btn) {
+        currentImpTab = tab;
+        document.querySelectorAll('#section-impresion3d .tab-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        renderImpresiones();
+    }
+
+    function openImpresionModal(id) {
+        document.getElementById('imp-id').value = id || '';
+        document.getElementById('modal-imp-title').textContent = id ? '✏️ Editar Trabajo' : '🖨️ Nuevo Trabajo de Impresión';
+        if (id) {
+            const j = db.impresiones.find(x => String(x.id) === String(id));
+            if (j) {
+                document.getElementById('imp-titulo').value      = j.titulo      || '';
+                document.getElementById('imp-solicitante').value = j.solicitante || '';
+                document.getElementById('imp-rut').value         = j.rut         || '';
+                document.getElementById('imp-material').value    = j.material    || 'PLA';
+                document.getElementById('imp-color').value       = j.color       || '';
+                document.getElementById('imp-impresora').value   = j.impresora   || '';
+                document.getElementById('imp-tiempo').value      = j.tiempoEstimado || '';
+                document.getElementById('imp-prioridad').value   = j.prioridad   || 'media';
+                document.getElementById('imp-archivo').value     = j.archivo     || '';
+                document.getElementById('imp-notas').value       = j.notas       || '';
+            }
+        } else {
+            ['imp-titulo','imp-solicitante','imp-rut','imp-color','imp-impresora','imp-tiempo','imp-archivo','imp-notas'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('imp-material').value  = 'PLA';
+            document.getElementById('imp-prioridad').value = 'media';
+        }
+        openModal('modal-impresion');
+    }
+
+    async function saveImpresion() {
+        const titulo      = document.getElementById('imp-titulo').value.trim();
+        const solicitante = document.getElementById('imp-solicitante').value.trim();
+        if (!titulo || !solicitante) { showToast('Nombre y solicitante son obligatorios', 'error'); return; }
+
+        const existingId = document.getElementById('imp-id').value;
+        const isEdit = !!existingId;
+        const id = existingId || generateId();
+        const existing = isEdit ? db.impresiones.find(j => String(j.id) === id) : null;
+
+        const job = {
+            id,
+            titulo,
+            solicitante,
+            rut:            document.getElementById('imp-rut').value.trim(),
+            material:       document.getElementById('imp-material').value,
+            color:          document.getElementById('imp-color').value.trim(),
+            impresora:      document.getElementById('imp-impresora').value.trim(),
+            tiempoEstimado: document.getElementById('imp-tiempo').value || '',
+            prioridad:      document.getElementById('imp-prioridad').value,
+            archivo:        document.getElementById('imp-archivo').value.trim(),
+            notas:          document.getElementById('imp-notas').value.trim(),
+            estado:         existing ? existing.estado : 'pendiente',
+            fechaSolicitud: existing ? existing.fechaSolicitud : new Date().toISOString().slice(0, 10)
+        };
+
+        closeModal('modal-impresion');
+        if (isEdit) {
+            const idx = db.impresiones.findIndex(j => String(j.id) === id);
+            if (idx >= 0) db.impresiones[idx] = job;
+        } else {
+            db.impresiones.unshift(job);
+        }
+        renderImpresiones();
+        updateImpresionBadge();
+
+        await apiRequest(isEdit ? 'updateImpresion' : 'saveImpresion', job);
+        showToast(isEdit ? 'Trabajo actualizado' : 'Trabajo agregado a la cola', 'success');
+        setTimeout(() => jsonpRequest('getImpresiones').then(d => { if (Array.isArray(d)) { db.impresiones = d; renderImpresiones(); updateImpresionBadge(); } }), 2000);
+    }
+
+    async function setImpresionEstado(id, estado) {
+        const j = db.impresiones.find(x => String(x.id) === String(id));
+        if (!j) return;
+        j.estado = estado;
+        renderImpresiones();
+        updateImpresionBadge();
+        await apiRequest('updateImpresion', j);
+        const e = IMP_ESTADOS[estado] || {};
+        showToast(e.icon + ' ' + (e.label || estado), 'success');
+    }
+
+    async function deleteImpresion(id) {
+        if (!confirm('¿Eliminar este trabajo de impresión?')) return;
+        db.impresiones = db.impresiones.filter(j => String(j.id) !== String(id));
+        renderImpresiones();
+        updateImpresionBadge();
+        await apiRequest('deleteImpresion', { id });
+        showToast('Trabajo eliminado', 'success');
+    }
+
+    function updateImpresionBadge() {
+        const active = db.impresiones.filter(j => j.estado === 'pendiente' || j.estado === 'imprimiendo').length;
+        const badge = document.getElementById('badge-impresion3d');
+        badge.textContent = active;
+        badge.style.display = active > 0 ? '' : 'none';
+    }
+
+    function renderImpresiones() {
+        const list  = document.getElementById('impresion-list');
+        const empty = document.getElementById('impresion-empty');
+        if (!list) return;
+
+        let data = [...db.impresiones];
+        if (currentImpTab === 'cola')        data = data.filter(j => j.estado === 'pendiente');
+        if (currentImpTab === 'imprimiendo') data = data.filter(j => j.estado === 'imprimiendo');
+        if (currentImpTab === 'completado')  data = data.filter(j => j.estado === 'completado' || j.estado === 'fallido' || j.estado === 'cancelado');
+
+        const priOrder = { alta: 0, media: 1, baja: 2 };
+        const estadoOrder = { imprimiendo: 0, pendiente: 1, completado: 2, fallido: 3, cancelado: 4 };
+        data.sort((a, b) => {
+            const eDiff = (estadoOrder[a.estado] ?? 5) - (estadoOrder[b.estado] ?? 5);
+            if (eDiff !== 0) return eDiff;
+            return (priOrder[a.prioridad] ?? 1) - (priOrder[b.prioridad] ?? 1);
+        });
+
+        if (data.length === 0) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+        empty.style.display = 'none';
+
+        const priColors = { alta: 'var(--red)', media: 'var(--amber,#f59e0b)', baja: 'var(--green)' };
+        const matColors = { PLA:'#3b82f6','PLA+':'#6366f1', ABS:'#ef4444', PETG:'#10b981', TPU:'#f59e0b', Resina:'#8b5cf6', Otro:'#6b7280' };
+
+        list.innerHTML = data.map(j => {
+            const est   = IMP_ESTADOS[j.estado] || { label: j.estado, icon: '❓', css: 'upcoming' };
+            const isDone = j.estado === 'completado' || j.estado === 'fallido' || j.estado === 'cancelado';
+            const borde  = isDone ? (j.estado === 'completado' ? 'var(--green)' : '#9ca3af') : priColors[j.prioridad] || 'var(--amber,#f59e0b)';
+            const matColor = matColors[j.material] || '#6b7280';
+            return `
+            <div class="info-card" style="border-left:4px solid ${borde};${isDone ? 'opacity:0.72;' : ''}">
+                <div class="info-card-header">
+                    <span class="info-card-title" style="${isDone ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">
+                        🖨️ ${escapeHTML(j.titulo)}
+                    </span>
+                    <span class="status-dot ${est.css}">${est.icon} ${est.label}</span>
+                </div>
+                <div class="info-card-meta">
+                    <div class="meta-row"><span class="meta-icon">👤</span> ${escapeHTML(j.solicitante)}${j.rut ? ' · ' + escapeHTML(j.rut) : ''}</div>
+                    <div class="meta-row">
+                        <span class="meta-icon">🧵</span>
+                        <span style="background:${matColor}22;color:${matColor};font-weight:700;padding:2px 8px;border-radius:6px;font-size:0.78rem;">${escapeHTML(j.material)}</span>
+                        ${j.color ? `<span style="margin-left:4px;">· ${escapeHTML(j.color)}</span>` : ''}
+                    </div>
+                    ${j.impresora ? `<div class="meta-row"><span class="meta-icon">🖨️</span> ${escapeHTML(j.impresora)}</div>` : ''}
+                    ${j.tiempoEstimado ? `<div class="meta-row"><span class="meta-icon">⏱️</span> ${escapeHTML(String(j.tiempoEstimado))} hrs estimado</div>` : ''}
+                    ${j.archivo ? `<div class="meta-row"><span class="meta-icon">📄</span> ${escapeHTML(j.archivo)}</div>` : ''}
+                    ${j.notas ? `<div class="meta-row" style="align-items:flex-start;"><span class="meta-icon">📝</span><span style="white-space:pre-wrap;">${escapeHTML(j.notas)}</span></div>` : ''}
+                    <div class="meta-row"><span class="meta-icon">📅</span> Solicitado: ${formatDate(j.fechaSolicitud)}</div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+                    ${j.estado === 'pendiente'   ? `<button class="btn btn-primary btn-sm"    onclick="setImpresionEstado('${j.id}','imprimiendo')">🔄 Iniciar</button>` : ''}
+                    ${j.estado === 'imprimiendo' ? `<button class="btn btn-primary btn-sm"    onclick="setImpresionEstado('${j.id}','completado')">✅ Completar</button>` : ''}
+                    ${j.estado === 'imprimiendo' ? `<button class="btn btn-secondary btn-sm"  onclick="setImpresionEstado('${j.id}','fallido')">❌ Fallido</button>` : ''}
+                    ${!isDone                    ? `<button class="btn btn-secondary btn-sm"  onclick="setImpresionEstado('${j.id}','cancelado')">🚫 Cancelar</button>` : ''}
+                    ${isDone                     ? `<button class="btn btn-secondary btn-sm"  onclick="setImpresionEstado('${j.id}','pendiente')">🔁 Reintentar</button>` : ''}
+                    <button class="btn btn-secondary btn-sm" onclick="openImpresionModal('${j.id}')">✏️</button>
+                    <button class="btn btn-danger btn-sm"   onclick="deleteImpresion('${j.id}')">🗑️</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ===========================
     //  RECORDATORIOS
     // ===========================
     let currentRecTab = 'pendientes';
@@ -1921,17 +2206,19 @@
             document.getElementById('visitas-table').style.display = 'none';
 
             // Ejecutamos las llamadas en paralelo para mayor rapidez
-            const [visitas, ocupaciones, secciones, recordatorios] = await Promise.all([
+            const [visitas, ocupaciones, secciones, recordatorios, impresiones] = await Promise.all([
                 apiRequest('getAll'),
                 apiRequest('getOcupaciones'),
                 apiRequest('getSecciones'),
-                apiRequest('getRecordatorios')
+                apiRequest('getRecordatorios'),
+                apiRequest('getImpresiones')
             ]);
 
             db.visitas = Array.isArray(visitas) ? visitas : [];
             db.ocupaciones = Array.isArray(ocupaciones) ? ocupaciones : [];
             db.secciones = Array.isArray(secciones) ? secciones : [];
             db.recordatorios = Array.isArray(recordatorios) ? recordatorios : [];
+            db.impresiones = Array.isArray(impresiones) ? impresiones : [];
 
             document.getElementById('visitas-loading').style.display = 'none';
             document.getElementById('visitas-table').style.display = 'table';
@@ -1941,11 +2228,13 @@
             renderOcupaciones(currentOcuTab);
             renderSecciones();
             renderRecordatorios();
+            renderImpresiones();
             refreshOverview();
 
             document.getElementById('badge-visitas').textContent = db.visitas.length;
             document.getElementById('badge-secciones').textContent = db.secciones.length;
             updateRecordatoriosBadge();
+            updateImpresionBadge();
             
             showToast('Datos sincronizados correctamente', 'success');
 
@@ -1959,24 +2248,28 @@
     // Si el dato no llegó, la UI se corrige automáticamente con lo real de Sheets.
     async function silentSync() {
         try {
-            const [visitas, ocupaciones, secciones, recordatorios] = await Promise.all([
+            const [visitas, ocupaciones, secciones, recordatorios, impresiones] = await Promise.all([
                 jsonpRequest('getAll'),
                 jsonpRequest('getOcupaciones'),
                 jsonpRequest('getSecciones'),
-                jsonpRequest('getRecordatorios')
+                jsonpRequest('getRecordatorios'),
+                jsonpRequest('getImpresiones')
             ]);
             if (Array.isArray(visitas))       db.visitas       = visitas;
             if (Array.isArray(ocupaciones))   db.ocupaciones   = ocupaciones;
             if (Array.isArray(secciones))     db.secciones     = secciones;
             if (Array.isArray(recordatorios)) db.recordatorios = recordatorios;
+            if (Array.isArray(impresiones))   db.impresiones   = impresiones;
             filterVisitas();
             renderOcupaciones(currentOcuTab);
             renderSecciones();
             renderRecordatorios();
+            renderImpresiones();
             refreshOverview();
             document.getElementById('badge-visitas').textContent   = db.visitas.length;
             document.getElementById('badge-secciones').textContent = db.secciones.length;
             updateRecordatoriosBadge();
+            updateImpresionBadge();
         } catch (e) {
             console.warn('silentSync falló:', e.message);
         }
