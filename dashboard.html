@@ -2007,7 +2007,12 @@
                     ${j.impresora ? `<div class="meta-row"><span class="meta-icon">🖨️</span> ${escapeHTML(j.impresora)}</div>` : ''}
                     ${j.tiempoEstimado ? `<div class="meta-row"><span class="meta-icon">⏱️</span> ${escapeHTML(String(j.tiempoEstimado))} hrs estimado</div>` : ''}
                     ${j.archivoUrl
-                        ? `<div class="meta-row"><span class="meta-icon">📎</span> <a href="${escapeHTML(j.archivoUrl)}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;">📥 ${escapeHTML(j.archivo || 'Descargar archivo')}</a></div>`
+                        ? `<div class="meta-row" style="flex-wrap:wrap;gap:6px;">
+                            <span class="meta-icon">📎</span>
+                            <span style="font-size:0.82rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHTML(j.archivo || 'Archivo')}">${escapeHTML(j.archivo || 'Archivo')}</span>
+                            <a href="${escapeHTML(j.archivoUrl)}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none;">👁️ Ver</a>
+                            <a href="${escapeHTML(driveDownloadUrl(j.archivoUrl))}" target="_blank" download class="btn btn-primary btn-sm" style="text-decoration:none;">📥 Descargar</a>
+                           </div>`
                         : j.archivo ? `<div class="meta-row"><span class="meta-icon">📄</span> ${escapeHTML(j.archivo)}</div>` : ''}
                     ${j.notas ? `<div class="meta-row" style="align-items:flex-start;"><span class="meta-icon">📝</span><span style="white-space:pre-wrap;">${escapeHTML(j.notas)}</span></div>` : ''}
                     <div class="meta-row"><span class="meta-icon">📅</span> Solicitado: ${formatDate(j.fechaSolicitud)}</div>
@@ -2613,6 +2618,12 @@
     function escapeHTML(str) {
         if (!str) return '';
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function driveDownloadUrl(viewUrl) {
+        if (!viewUrl) return '#';
+        const m = viewUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        return m ? 'https://drive.google.com/uc?export=download&id=' + m[1] : viewUrl;
     }
 
     // ===========================
