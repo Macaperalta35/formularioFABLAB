@@ -109,6 +109,31 @@ function mergeHoja1ToVisitas() {
 
 // ── Utilidades ──────────────────────────────────────
 
+function getOrCreateDriveFolder(name) {
+  var folders = DriveApp.getFoldersByName(name);
+  return folders.hasNext() ? folders.next() : DriveApp.createFolder(name);
+}
+
+function ensureColumn(sheet, colName) {
+  var lastCol = sheet.getLastColumn();
+  if (lastCol === 0) return;
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  if (headers.indexOf(colName) === -1) {
+    var newCol = lastCol + 1;
+    sheet.getRange(1, newCol).setValue(colName)
+         .setFontWeight('bold').setBackground('#ED1C24').setFontColor('#FFFFFF');
+  }
+}
+
+function uploadToDrive(fileBase64, fileName) {
+  var folder  = getOrCreateDriveFolder('FabLab - Impresiones 3D');
+  var decoded = Utilities.base64Decode(fileBase64);
+  var blob    = Utilities.newBlob(decoded, 'application/octet-stream', fileName);
+  var file    = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return file.getUrl();
+}
+
 function getOrCreateSheet(name, headers) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(name);
@@ -201,8 +226,9 @@ function doGet(e) {
     if (action === 'getImpresiones') {
       var sheet = getOrCreateSheet('Impresiones3D', [
         'id','titulo','solicitante','rut','material','color','impresora',
-        'tiempoEstimado','prioridad','archivo','notas','estado','fechaSolicitud'
+        'tiempoEstimado','prioridad','archivo','notas','estado','fechaSolicitud','archivoUrl'
       ]);
+      ensureColumn(sheet, 'archivoUrl');
       return respond(sheetToJSON(sheet), cb);
     }
 
@@ -459,29 +485,40 @@ function doPost(e) {
     if (action === 'saveImpresion') {
       var sheet = getOrCreateSheet('Impresiones3D', [
         'id','titulo','solicitante','rut','material','color','impresora',
-        'tiempoEstimado','prioridad','archivo','notas','estado','fechaSolicitud'
+        'tiempoEstimado','prioridad','archivo','notas','estado','fechaSolicitud','archivoUrl'
       ]);
+      ensureColumn(sheet, 'archivoUrl');
+      var archivoUrl = body.archivoUrl || '';
+      if (body.fileBase64 && body.fileName) {
+        try { archivoUrl = uploadToDrive(body.fileBase64, body.fileName); } catch(e) { Logger.log('Drive upload error: ' + e); }
+      }
       sheet.appendRow([
         body.id, body.titulo||'', body.solicitante||'', body.rut||'',
         body.material||'PLA', body.color||'', body.impresora||'',
         body.tiempoEstimado||'', body.prioridad||'media',
-        body.archivo||'', body.notas||'', body.estado||'pendiente',
-        body.fechaSolicitud || Utilities.formatDate(new Date(), 'America/Santiago', 'yyyy-MM-dd')
+        body.archivo||body.fileName||'', body.notas||'', body.estado||'pendiente',
+        body.fechaSolicitud || Utilities.formatDate(new Date(), 'America/Santiago', 'yyyy-MM-dd'),
+        archivoUrl
       ]);
       return jsonResponse({ ok: true });
     }
 
     if (action === 'updateImpresion') {
       var sheet = getOrCreateSheet('Impresiones3D', []);
-      var data  = sheet.getDataRange().getValues();
+      ensureColumn(sheet, 'archivoUrl');
+      var archivoUrl = body.archivoUrl || '';
+      if (body.fileBase64 && body.fileName) {
+        try { archivoUrl = uploadToDrive(body.fileBase64, body.fileName); } catch(e) { Logger.log('Drive upload error: ' + e); }
+      }
+      var data = sheet.getDataRange().getValues();
       for (var i = 1; i < data.length; i++) {
         if (String(data[i][0]) === String(body.id)) {
-          sheet.getRange(i + 1, 1, 1, 13).setValues([[
+          sheet.getRange(i + 1, 1, 1, 14).setValues([[
             body.id, body.titulo||'', body.solicitante||'', body.rut||'',
             body.material||'PLA', body.color||'', body.impresora||'',
             body.tiempoEstimado||'', body.prioridad||'media',
-            body.archivo||'', body.notas||'', body.estado||'pendiente',
-            body.fechaSolicitud||''
+            body.archivo||body.fileName||'', body.notas||'', body.estado||'pendiente',
+            body.fechaSolicitud||'', archivoUrl
           ]]);
           break;
         }
