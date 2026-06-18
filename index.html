@@ -176,7 +176,7 @@
         // ========== CONFIG ==========
         // URL de tu Google Apps Script (Web App)
         // INSTRUCCIONES: Reemplaza esta URL con la de tu Google Apps Script desplegado
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxImK4BqqByNGYLCgtARkXKAv4TeA3npnSACgvAw8aaSRl_FaO-IN6A5d6PNTVo5_NmaQ/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKACMfyTlRQlkF40osDD2xQEXq4xyovQLH_VXv6O5C8LA0wHZ47nNj0AbdpfuAPeIGVA/exec';
 
         // ========== DOM ==========
         const form = document.getElementById('registro-form');
@@ -188,10 +188,6 @@
         const visitCountSpan = document.getElementById('visit-count');
         const currentTimeSpan = document.getElementById('current-time');
 
-        // Tags DOM
-        const tagsContainer = document.getElementById('tags-container');
-        const selectedTagsDiv = document.getElementById('selected-tags');
-        const etiquetasData = document.getElementById('etiquetas-data');
         const tagButtons = document.querySelectorAll('.tag-btn');
 
         let visitCount = parseInt(localStorage.getItem('fablab_visit_count') || '0');

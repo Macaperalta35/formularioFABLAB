@@ -1204,11 +1204,11 @@
                         <input type="email" class="form-input" id="du-email" placeholder="usuario@inacap.cl">
                     </div>
                 </div>
+                <div class="form-group" id="du-pass-row">
+                    <label class="form-label">Contraseña <span id="du-pass-hint" style="color:var(--text-muted);font-size:0.8rem;">(requerida)</span></label>
+                    <input type="password" class="form-input" id="du-password" placeholder="••••••••" autocomplete="new-password">
+                </div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Contraseña <span id="du-pass-hint" style="color:var(--text-muted);font-size:0.8rem;">(requerida)</span></label>
-                        <input type="password" class="form-input" id="du-password" placeholder="••••••••">
-                    </div>
                     <div class="form-group">
                         <label class="form-label">Rol *</label>
                         <select class="form-select" id="du-role">
@@ -1384,7 +1384,7 @@
     //  CONFIGURACIÓN BACKEND
     // ===========================
     // INSTRUCCIÓN: Actualiza este enlace con la nueva URL de tu Apps Script implementado
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxImK4BqqByNGYLCgtARkXKAv4TeA3npnSACgvAw8aaSRl_FaO-IN6A5d6PNTVo5_NmaQ/exec';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKACMfyTlRQlkF40osDD2xQEXq4xyovQLH_VXv6O5C8LA0wHZ47nNj0AbdpfuAPeIGVA/exec';
     const ADMIN_TOKEN = 'fablab2024';
 
     // ── Supabase (Inventario) ──────────────────────────────────
@@ -1481,14 +1481,20 @@
 
     let currentUser = null;
 
-    function checkSession() {
-        const saved = localStorage.getItem('fablab_session');
-        if (saved) {
-            try {
-                currentUser = JSON.parse(saved);
-                showDashboard();
-            } catch { showLogin(); }
+    async function checkSession() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) { showLogin(); return; }
+        const { data: rows } = await supabaseClient
+            .from('users')
+            .select('id, name, email, role, active')
+            .eq('email', session.user.email)
+            .limit(1);
+        const profile = rows?.[0];
+        if (profile && profile.active) {
+            currentUser = { id: profile.id, name: profile.name, email: profile.email, role: profile.role };
+            showDashboard();
         } else {
+            await supabaseClient.auth.signOut();
             showLogin();
         }
     }
@@ -1539,28 +1545,35 @@
         btn.textContent = 'Verificando...';
         errEl.style.display = 'none';
 
-        const { data, error } = await supabaseClient
-            .from('users')
-            .select('*')
-            .eq('email', email)
-            .eq('active', true);
+        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password });
 
         btn.disabled = false;
         btn.textContent = 'Iniciar Sesión';
 
-        const user = data?.find(u => u.password === password);
-        if (!error && user) {
-            currentUser = { id: user.id, name: user.name, email: user.email, role: user.role };
-            localStorage.setItem('fablab_session', JSON.stringify(currentUser));
-            showDashboard();
-        } else {
+        if (authError || !authData?.user) { errEl.style.display = 'block'; return; }
+
+        const { data: rows } = await supabaseClient
+            .from('users')
+            .select('id, name, email, role, active')
+            .eq('email', email)
+            .limit(1);
+        const profile = rows?.[0];
+
+        if (!profile || !profile.active) {
+            await supabaseClient.auth.signOut();
+            errEl.textContent = 'Usuario inactivo o sin perfil configurado.';
             errEl.style.display = 'block';
+            return;
         }
+
+        currentUser = { id: profile.id, name: profile.name, email: profile.email, role: profile.role };
+        showDashboard();
     });
 
-    function doLogout() {
+    async function doLogout() {
         currentUser = null;
         localStorage.removeItem('fablab_session');
+        await supabaseClient.auth.signOut();
         location.reload();
     }
 
@@ -1610,22 +1623,22 @@
         const title = document.getElementById('dash-user-modal-title');
         const hint  = document.getElementById('du-pass-hint');
 
+        document.getElementById('du-password').value = '';
+
         if (userId) {
             const { data } = await supabaseClient.from('users').select('*').eq('id', userId).single();
             if (!data) return;
             title.textContent = '✏️ Editar Usuario';
-            hint.textContent  = '(dejar vacío para no cambiar)';
-            document.getElementById('du-name').value     = data.name;
-            document.getElementById('du-email').value    = data.email;
-            document.getElementById('du-password').value = '';
-            document.getElementById('du-role').value     = data.role;
+            hint.textContent  = '(opcional — dejar vacío para no cambiar)';
+            document.getElementById('du-name').value  = data.name;
+            document.getElementById('du-email').value = data.email;
+            document.getElementById('du-role').value  = data.role;
         } else {
             title.textContent = '➕ Nuevo Usuario';
             hint.textContent  = '(requerida)';
-            document.getElementById('du-name').value     = '';
-            document.getElementById('du-email').value    = '';
-            document.getElementById('du-password').value = '';
-            document.getElementById('du-role').value     = 'operador';
+            document.getElementById('du-name').value  = '';
+            document.getElementById('du-email').value = '';
+            document.getElementById('du-role').value  = 'operador';
         }
         updateRolePreview();
         openModal('modal-dash-user');
@@ -1646,25 +1659,46 @@
 
         if (!name || !email) { showToast('Nombre y correo son obligatorios.', 'error'); return; }
 
-        if (dashUserEditingId) {
-            const update = { name, email, role };
-            if (password) update.password = password;
-            const { error } = await supabaseClient.from('users').update(update).eq('id', dashUserEditingId);
-            if (error) { showToast('Error al actualizar: ' + error.message, 'error'); return; }
-            showToast('Usuario actualizado.', 'success');
-        } else {
-            if (!password) { showToast('La contraseña es obligatoria para nuevos usuarios.', 'error'); return; }
-            const { data: existing } = await supabaseClient.from('users').select('id').eq('email', email);
-            if (existing?.length) { showToast('Ya existe un usuario con ese correo.', 'error'); return; }
-            const { data: all } = await supabaseClient.from('users').select('id').order('id', { ascending: false }).limit(1);
-            const newId = (all?.[0]?.id || 0) + 1;
-            const { error } = await supabaseClient.from('users').insert({ id: newId, name, email, password, role, active: true });
-            if (error) { showToast('Error al crear usuario: ' + error.message, 'error'); return; }
-            showToast('Usuario creado correctamente.', 'success');
-        }
+        const btn = document.querySelector('#modal-dash-user .btn-primary');
+        btn.disabled = true; btn.textContent = 'Guardando...';
 
-        closeModal('modal-dash-user');
-        loadDashUsers();
+        try {
+            if (dashUserEditingId) {
+                // Actualizar nombre, email y rol en la tabla users
+                const { error } = await supabaseClient.from('users').update({ name, email, role }).eq('id', dashUserEditingId);
+                if (error) { showToast('Error al actualizar: ' + error.message, 'error'); return; }
+
+                // Si ingresó nueva contraseña, actualizarla vía Netlify Function
+                if (password) {
+                    const res = await fetch('/.netlify/functions/fablab-update-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, adminToken: ADMIN_TOKEN })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) { showToast('Usuario actualizado pero error al cambiar contraseña: ' + data.error, 'error'); return; }
+                }
+                showToast('✅ Usuario actualizado.', 'success');
+
+            } else {
+                // Crear usuario — requiere contraseña
+                if (!password) { showToast('La contraseña es obligatoria.', 'error'); return; }
+
+                const res = await fetch('/.netlify/functions/fablab-create-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role, adminToken: ADMIN_TOKEN })
+                });
+                const data = await res.json();
+                if (!res.ok) { showToast('Error al crear usuario: ' + data.error, 'error'); return; }
+                showToast('✅ Usuario creado correctamente.', 'success');
+            }
+
+            closeModal('modal-dash-user');
+            loadDashUsers();
+        } finally {
+            btn.disabled = false; btn.textContent = '💾 Guardar';
+        }
     }
 
     async function toggleDashUserActive(userId, currentActive) {
@@ -2289,15 +2323,15 @@
     }
 
     async function apiRequest(action, payload = {}) {
+        // Lecturas via JSONP — no activan el global loader para evitar
+        // race condition cuando se hacen llamadas paralelas (Promise.all)
+        if (action.startsWith('get')) {
+            return await jsonpRequest(action);
+        }
+
+        // Escrituras via POST no-cors
         setGlobalLoading(true);
         try {
-            // Lecturas via JSONP (evita CORS por completo — funciona siempre)
-            if (action.startsWith('get')) {
-                return await jsonpRequest(action);
-            }
-
-            // Escrituras via POST no-cors (no leemos la respuesta; el estado
-            // local se actualiza optimistamente en cada handler de UI).
             const token = ADMIN_TOKEN;
             const body = { action, token, ...payload };
             await fetch(GOOGLE_SCRIPT_URL, {
