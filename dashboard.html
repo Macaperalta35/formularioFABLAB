@@ -205,6 +205,9 @@
                     Inventario FabLab
                     <span class="nav-badge" id="badge-inventario">0</span>
                 </button>
+                <button class="nav-item admin-only" data-section="pedido" id="nav-pedido">
+                    Pedido Mensual
+                </button>
 
                 <div class="nav-label admin-only" style="margin-top: 8px;">Laboratorio</div>
                 <button class="nav-item admin-only" data-section="ocupacion" id="nav-ocupacion">
@@ -712,6 +715,58 @@
                 </div>
 
                 <!-- ==================== SECTION: ACCESIBILIDAD ==================== -->
+                <!-- ========== PEDIDO MENSUAL ========== -->
+                <div class="page-section" id="section-pedido">
+                    <div class="section-header">
+                        <h3 class="section-title">Pedido Mensual</h3>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="btn btn-secondary btn-sm" onclick="clearPedido()">🗑️ Limpiar todo</button>
+                            <button class="btn btn-secondary btn-sm" onclick="exportarPedidoExcel()">📊 Excel</button>
+                            <button class="btn btn-primary" onclick="generarSolicitudPedido()">📄 Generar Solicitud PDF</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom:1rem;">
+                        <div style="font-weight:600;margin-bottom:1rem;font-size:0.95rem;">Datos de la Solicitud</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Razón Social</label>
+                                <input type="text" class="form-input" id="ped-razon" value="INACAP">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">RUT</label>
+                                <input type="text" class="form-input" id="ped-rut" placeholder="70.xxx.xxx-x">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Fecha de Entrega</label>
+                                <input type="date" class="form-input" id="ped-fecha">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Área Solicitante</label>
+                                <input type="text" class="form-input" id="ped-area" value="FAB LAB">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Usuario Solicitante</label>
+                            <input type="text" class="form-input" id="ped-usuario" placeholder="Nombre del solicitante">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                            <span style="font-weight:600;">Artículos a solicitar</span>
+                            <button class="btn btn-primary btn-sm" onclick="openPedidoItemModal()">+ Agregar artículo</button>
+                        </div>
+                        <div id="pedido-items-list"></div>
+                        <div id="pedido-empty" class="empty-state" style="padding:2rem;">
+                            <div class="empty-icon">🛒</div>
+                            <p class="empty-text">Sin artículos. Haz clic en "+ Agregar artículo".</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="page-section" id="section-accesibilidad">
                     <div class="section-header">
                         <h3 class="section-title">♿ Accesibilidad</h3>
@@ -844,6 +899,41 @@
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('modal-impresion')">Cancelar</button>
                 <button class="btn btn-primary" onclick="saveImpresion()">💾 Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: PEDIDO ITEM ==================== -->
+    <div class="modal-overlay" id="modal-pedido-item">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-pedido-item-title">➕ Agregar Artículo</h3>
+                <button class="modal-close" onclick="closeModal('modal-pedido-item')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="ped-item-idx">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Artículo *</label>
+                        <input type="text" class="form-input" id="ped-item-nombre" placeholder="Ej: Cable HDMI">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cantidad *</label>
+                        <input type="number" class="form-input" id="ped-item-cantidad" min="1" value="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" class="form-input" id="ped-item-descripcion" placeholder="Ej: Cable para audio/video digital">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Características Técnicas</label>
+                    <textarea class="form-input" id="ped-item-caracteristicas" rows="3" placeholder="Ej: HDMI 2.1, 48Gbps, 4K@120Hz/8K@60Hz" style="resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-pedido-item')">Cancelar</button>
+                <button class="btn btn-primary" onclick="savePedidoItem()">💾 Guardar</button>
             </div>
         </div>
     </div>
@@ -1410,6 +1500,7 @@
         secciones:      'Secciones y Alumnos',
         recordatorios:  'Recordatorios y Pedidos',
         impresion3d:    'Cola de Impresión 3D',
+        pedido:         'Pedido Mensual',
         usuarios:       'Gestión de Usuarios',
         accesibilidad:  'Accesibilidad'
     };
@@ -3730,6 +3821,222 @@
     });
 
     document.addEventListener('click', () => closeExportMenu());
+
+    // ===========================
+    //  PEDIDO MENSUAL
+    // ===========================
+    let pedidoItems = JSON.parse(localStorage.getItem('fablab_pedido_items') || '[]');
+
+    function savePedidoToStorage() {
+        localStorage.setItem('fablab_pedido_items', JSON.stringify(pedidoItems));
+    }
+
+    function openPedidoItemModal(idx = null) {
+        const title = document.getElementById('modal-pedido-item-title');
+        document.getElementById('ped-item-idx').value = idx !== null ? idx : '';
+        if (idx !== null) {
+            const item = pedidoItems[idx];
+            title.textContent = '✏️ Editar Artículo';
+            document.getElementById('ped-item-nombre').value         = item.nombre || '';
+            document.getElementById('ped-item-cantidad').value       = item.cantidad || 1;
+            document.getElementById('ped-item-descripcion').value    = item.descripcion || '';
+            document.getElementById('ped-item-caracteristicas').value = item.caracteristicas || '';
+        } else {
+            title.textContent = '➕ Agregar Artículo';
+            document.getElementById('ped-item-nombre').value         = '';
+            document.getElementById('ped-item-cantidad').value       = 1;
+            document.getElementById('ped-item-descripcion').value    = '';
+            document.getElementById('ped-item-caracteristicas').value = '';
+        }
+        openModal('modal-pedido-item');
+    }
+
+    function savePedidoItem() {
+        const nombre   = document.getElementById('ped-item-nombre').value.trim();
+        const cantidad = parseInt(document.getElementById('ped-item-cantidad').value) || 1;
+        if (!nombre) { showToast('El nombre del artículo es obligatorio', 'error'); return; }
+
+        const item = {
+            nombre,
+            cantidad,
+            descripcion:     document.getElementById('ped-item-descripcion').value.trim(),
+            caracteristicas: document.getElementById('ped-item-caracteristicas').value.trim()
+        };
+
+        const idxVal = document.getElementById('ped-item-idx').value;
+        if (idxVal !== '') {
+            pedidoItems[parseInt(idxVal)] = item;
+        } else {
+            pedidoItems.push(item);
+        }
+        savePedidoToStorage();
+        renderPedidoItems();
+        closeModal('modal-pedido-item');
+        showToast(idxVal !== '' ? 'Artículo actualizado' : 'Artículo agregado', 'success');
+    }
+
+    function deletePedidoItem(idx) {
+        if (!confirm('¿Eliminar este artículo?')) return;
+        pedidoItems.splice(idx, 1);
+        savePedidoToStorage();
+        renderPedidoItems();
+    }
+
+    function clearPedido() {
+        if (!confirm('¿Limpiar todos los artículos del pedido?')) return;
+        pedidoItems = [];
+        savePedidoToStorage();
+        renderPedidoItems();
+    }
+
+    function renderPedidoItems() {
+        const list  = document.getElementById('pedido-items-list');
+        const empty = document.getElementById('pedido-empty');
+        if (!list) return;
+        if (pedidoItems.length === 0) {
+            list.innerHTML = '';
+            if (empty) empty.style.display = 'block';
+            return;
+        }
+        if (empty) empty.style.display = 'none';
+        list.innerHTML = `
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+            <thead>
+                <tr style="background:#ED1C24;color:#fff;">
+                    <th style="padding:8px 12px;text-align:left;width:70px;">ITEM</th>
+                    <th style="padding:8px 12px;text-align:center;width:80px;">CANTIDAD</th>
+                    <th style="padding:8px 12px;text-align:left;min-width:120px;">ARTÍCULO</th>
+                    <th style="padding:8px 12px;text-align:left;">DESCRIPCIÓN</th>
+                    <th style="padding:8px 12px;text-align:left;">CARACTERÍSTICAS</th>
+                    <th style="padding:8px 12px;width:70px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                ${pedidoItems.map((item, i) => `
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:8px 12px;font-weight:700;">ITEM ${i+1}</td>
+                    <td style="padding:8px 12px;text-align:center;">${item.cantidad}</td>
+                    <td style="padding:8px 12px;font-weight:600;">${escapeHTML(item.nombre)}</td>
+                    <td style="padding:8px 12px;color:var(--text-muted);font-size:0.82rem;">${escapeHTML(item.descripcion || '—')}</td>
+                    <td style="padding:8px 12px;font-size:0.82rem;">${escapeHTML(item.caracteristicas || '—')}</td>
+                    <td style="padding:8px 12px;white-space:nowrap;">
+                        <button class="btn btn-ghost btn-sm" onclick="openPedidoItemModal(${i})" title="Editar">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deletePedidoItem(${i})" title="Eliminar">🗑️</button>
+                    </td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
+        </div>`;
+    }
+
+    function generarSolicitudPedido() {
+        if (pedidoItems.length === 0) { showToast('Agrega al menos un artículo antes de generar', 'error'); return; }
+
+        const razon   = document.getElementById('ped-razon').value.trim()   || 'INACAP';
+        const rut     = document.getElementById('ped-rut').value.trim()     || '';
+        const fecha   = document.getElementById('ped-fecha').value          || '';
+        const area    = document.getElementById('ped-area').value.trim()    || 'FAB LAB';
+        const usuario = document.getElementById('ped-usuario').value.trim() || '';
+        const fechaFmt = fecha ? new Date(fecha + 'T12:00:00').toLocaleDateString('es-CL') : '';
+
+        function eh(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+        const itemRows = pedidoItems.map((item, i) => `
+            <tr>
+                <td style="padding:10px;font-weight:bold;border:1px solid #ccc;">ITEM ${i+1}</td>
+                <td style="padding:10px;text-align:center;border:1px solid #ccc;">${item.cantidad}</td>
+                <td style="padding:10px;font-weight:600;border:1px solid #ccc;">${eh(item.nombre)}</td>
+                <td style="padding:10px;border:1px solid #ccc;">${eh(item.descripcion)}</td>
+                <td style="padding:10px;border:1px solid #ccc;">${eh(item.caracteristicas)}</td>
+                <td style="padding:10px;border:1px solid #ccc;min-width:120px;min-height:80px;"></td>
+            </tr>`).join('');
+
+        const html = `<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<title>Solicitud de Pedido — ${eh(area)}</title>
+<style>
+  * { margin:0;padding:0;box-sizing:border-box; }
+  body { font-family:Arial,sans-serif;font-size:11pt;padding:20mm; }
+  .intro { font-style:italic;margin-bottom:14px; }
+  .header-table { width:100%;border-collapse:collapse;margin-bottom:22px; }
+  .header-table td { border:1px solid #ccc;padding:6px 10px; }
+  .header-table .lbl { background:#ED1C24;color:#fff;font-weight:bold;width:160px; }
+  .items-table { width:100%;border-collapse:collapse; }
+  .items-table th { background:#ED1C24;color:#fff;font-weight:bold;padding:8px 10px;border:1px solid #ccc;text-align:left; }
+  .items-table td { vertical-align:top; }
+  @media print { body { padding:15mm; } button { display:none; } }
+</style>
+</head><body>
+<p class="intro">Favor Cotizar a:</p>
+<table class="header-table">
+  <tr><td class="lbl">Razón social</td><td>${eh(razon)}</td></tr>
+  <tr><td class="lbl">Rut</td><td>${eh(rut)}</td></tr>
+  <tr><td class="lbl">Fecha de entrega</td><td>${fechaFmt}</td></tr>
+  <tr><td class="lbl">Área solicitante</td><td>${eh(area)}</td></tr>
+  <tr><td class="lbl">Usuario Solicitante</td><td>${eh(usuario)}</td></tr>
+</table>
+<table class="items-table">
+  <thead><tr>
+    <th style="width:70px;">ITEM</th>
+    <th style="width:80px;">CANTIDAD</th>
+    <th style="width:130px;">ARTÍCULO</th>
+    <th>DESCRIPCIÓN</th>
+    <th>CARACTERÍSTICAS TÉCNICAS</th>
+    <th style="width:130px;">FOTO DE REFERENCIA</th>
+  </tr></thead>
+  <tbody>${itemRows}</tbody>
+</table>
+<script>window.onload=()=>window.print();<\/script>
+</body></html>`;
+
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url  = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+
+    function exportarPedidoExcel() {
+        if (pedidoItems.length === 0) { showToast('No hay artículos para exportar', 'error'); return; }
+        if (typeof XLSX === 'undefined') { showToast('Librería Excel no disponible', 'error'); return; }
+
+        const razon   = document.getElementById('ped-razon').value.trim()   || 'INACAP';
+        const rut     = document.getElementById('ped-rut').value.trim()     || '';
+        const fecha   = document.getElementById('ped-fecha').value          || '';
+        const area    = document.getElementById('ped-area').value.trim()    || 'FAB LAB';
+        const usuario = document.getElementById('ped-usuario').value.trim() || '';
+
+        const rows = [
+            ['Favor Cotizar a:'],
+            ['Razón social', razon],
+            ['RUT', rut],
+            ['Fecha de entrega', fecha],
+            ['Área solicitante', area],
+            ['Usuario Solicitante', usuario],
+            [],
+            ['ITEM', 'CANTIDAD', 'ARTÍCULO', 'DESCRIPCIÓN', 'CARACTERÍSTICAS TÉCNICAS'],
+            ...pedidoItems.map((item, i) => [
+                `ITEM ${i+1}`, item.cantidad, item.nombre, item.descripcion || '', item.caracteristicas || ''
+            ])
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{ wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 30 }, { wch: 40 }];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Pedido');
+        XLSX.writeFile(wb, `Pedido_Mensual_${area.replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // Renderizar pedido al navegar a la sección
+    document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.dataset.section === 'pedido') {
+                renderPedidoItems();
+                const u = document.getElementById('ped-usuario');
+                if (u && !u.value && currentUser) u.value = currentUser.name || '';
+            }
+        });
+    });
 
     checkSession();
 
