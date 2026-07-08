@@ -1604,9 +1604,10 @@
                     <textarea class="form-input" id="inv-return-notes" rows="3" placeholder="Detalle el estado o problemas encontrados..." style="resize:vertical;"></textarea>
                 </div>
             </div>
+            <div id="inv-return-error" style="display:none;margin:0 0 0.5rem;padding:0.6rem 0.9rem;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);border-radius:6px;font-size:0.82rem;color:#dc2626;"></div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('modal-inv-return')">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveInvReturn()">✅ Confirmar Recepción</button>
+                <button class="btn btn-primary" id="inv-return-btn" onclick="saveInvReturn()">✅ Confirmar Recepción</button>
             </div>
         </div>
     </div>
@@ -3877,35 +3878,64 @@
         if (!asset) return;
         document.getElementById('inv-return-asset-id').value   = id;
         document.getElementById('inv-return-qty').value        = 1;
-        document.getElementById('inv-return-qty').max          = asset.borrowed;
+        document.getElementById('inv-return-qty').max          = asset.borrowed || 1;
         document.getElementById('inv-return-condition').value  = 'good';
         document.getElementById('inv-return-notes').value      = '';
+        document.getElementById('inv-return-error').style.display = 'none';
         openModal('modal-inv-return');
     };
 
     async function saveInvReturn() {
         const id        = document.getElementById('inv-return-asset-id').value;
-        const qty       = parseInt(document.getElementById('inv-return-qty').value);
+        const qty       = parseInt(document.getElementById('inv-return-qty').value) || 1;
         const condition = document.getElementById('inv-return-condition').value;
         const notes     = document.getElementById('inv-return-notes').value.trim();
+        const errEl     = document.getElementById('inv-return-error');
+        const btn       = document.getElementById('inv-return-btn');
+
+        const showErr = msg => { errEl.textContent = msg; errEl.style.display = 'block'; };
+        errEl.style.display = 'none';
 
         const asset = db.assets.find(a => a.id === id);
-        if (!asset || asset.borrowed < qty) { showToast('Cantidad a devolver no válida.', 'error'); return; }
+        if (!asset) { showErr('No se encontró el activo.'); return; }
 
-        const newBorrowed = asset.borrowed - qty;
-        const newAvail    = asset.available + qty;
-        const newStatus   = (condition === 'damaged' || condition === 'incomplete') ? 'maintenance' : asset.status;
+        const borrowed = asset.borrowed ?? 0;
+        if (qty < 1 || qty > borrowed) { showErr(`Cantidad inválida. Prestados: ${borrowed}.`); return; }
 
-        const { error } = await supabaseClient.from('assets').update({ available: newAvail, borrowed: newBorrowed, status: newStatus }).eq('id', id);
-        if (error) { showToast('Error al registrar devolución: ' + error.message, 'error'); return; }
+        btn.disabled = true;
+        btn.textContent = '⏳ Guardando…';
 
-        await supabaseClient.from('loans').insert({ asset_id: id, asset_name: asset.name, user_name: 'Admin', borrower_rut: null, action: 'return', qty, condition, notes });
+        const newBorrowed = borrowed - qty;
+        const newAvail    = (asset.available ?? 0) + qty;
+        const newStatus   = (condition === 'damaged' || condition === 'incomplete') ? 'maintenance' : (asset.status || 'active');
+
+        const { error } = await supabaseClient
+            .from('assets')
+            .update({ available: newAvail, borrowed: newBorrowed, status: newStatus })
+            .eq('id', id);
+
+        if (error) {
+            btn.disabled = false;
+            btn.textContent = '✅ Confirmar Recepción';
+            showErr('Error al guardar: ' + error.message);
+            console.error('saveInvReturn error:', error);
+            return;
+        }
+
+        // Registrar en historial (no bloquea si falla)
+        supabaseClient.from('loans').insert({
+            asset_id: id, asset_name: asset.name,
+            user_name: currentUser?.name || 'Admin',
+            borrower_rut: null, action: 'return', qty, condition, notes
+        }).then(({ error: le }) => { if (le) console.warn('Historial loan error:', le.message); });
 
         asset.borrowed  = newBorrowed;
         asset.available = newAvail;
         asset.status    = newStatus;
         renderInventario();
         updateInventarioStats();
+        btn.disabled = false;
+        btn.textContent = '✅ Confirmar Recepción';
         closeModal('modal-inv-return');
         showToast(`Devolución registrada: ${qty}× ${asset.name}.`, 'success');
     }
