@@ -1393,6 +1393,41 @@
         </div>
     </div>
 
+    <!-- Modal: Configurar NFC del Activo -->
+    <div class="modal-overlay" id="modal-inv-nfc-config">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">📡 Configurar NFC del Activo</h3>
+                <button class="modal-close" onclick="closeModal('modal-inv-nfc-config')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="inv-nfc-config-asset-id">
+                <div style="background:var(--bg-secondary);border-radius:8px;padding:0.9rem 1rem;margin-bottom:1rem;">
+                    <div style="font-weight:700;" id="inv-nfc-config-asset-name">—</div>
+                    <div style="font-size:0.82rem;color:var(--text-muted);">Código: <code id="inv-nfc-config-asset-code">—</code></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Datos a escribir en el tag</label>
+                    <select class="form-select" id="inv-nfc-config-format" onchange="invUpdateNFCPreview()">
+                        <option value="code">Solo código del activo</option>
+                        <option value="full">Código + datos completos (JSON)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vista previa de los datos</label>
+                    <textarea class="form-input" id="inv-nfc-config-preview" rows="3" readonly style="font-family:monospace;font-size:0.8rem;"></textarea>
+                </div>
+                <div id="inv-nfc-config-status" style="margin-top:0.5rem;padding:0.85rem;background:var(--bg-secondary);border-radius:8px;min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:0.85rem;">
+                    Acerque un tag NFC en blanco y presione "Escribir en Tag".
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-inv-nfc-config')">Cerrar</button>
+                <button class="btn btn-primary" onclick="invWriteNFCTag()">📡 Escribir en Tag</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Prestar Activo -->
     <div class="modal-overlay" id="modal-inv-loan">
         <div class="modal">
@@ -3453,7 +3488,7 @@
             html += `<tr><td colspan="11" style="background:var(--bg-secondary);font-weight:700;padding:0.6rem 1rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">📁 ${escapeHTML(cat)}</td></tr>`;
             html += items.map(a => `
                 <tr>
-                    <td><code style="font-size:0.78rem;">${escapeHTML(a.id)}</code></td>
+                    <td><code style="font-size:0.78rem;">${escapeHTML(a.id)}</code>${a.nfc_configured ? ` <span title="NFC configurado" style="font-size:0.75rem;">📡</span>` : ''}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:0.5rem;">
                             ${a.image ? `<img src="${a.image}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" title="${escapeHTML(a.name)}">` : ''}
@@ -3471,6 +3506,7 @@
                     <td style="white-space:nowrap;">
                         ${a.available > 0 ? `<button class="btn btn-ghost btn-sm" onclick="invOpenLoanModal('${escapeHTML(a.id)}')" style="color:#2563eb;">🤝 Prestar</button>` : ''}
                         ${a.borrowed > 0  ? `<button class="btn btn-ghost btn-sm" onclick="invOpenReturnModal('${escapeHTML(a.id)}')" style="color:#16a34a;">↩️ Devolver</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenNFCModal('${escapeHTML(a.id)}')" title="Configurar NFC" style="color:#7c3aed;">📡</button>` : ''}
                         ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invEditAsset('${escapeHTML(a.id)}')" title="Editar">✏️</button>` : ''}
                         ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invDeleteAsset('${escapeHTML(a.id)}')" title="Eliminar" style="color:#dc2626;">🗑️</button>` : ''}
                     </td>
@@ -3633,7 +3669,7 @@
         if (invEditingId) {
             const { error } = await supabaseClient.from('assets').update(asset).eq('id', invEditingId);
             if (error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
-            db.assets = db.assets.map(a => a.id === invEditingId ? asset : a);
+            db.assets = db.assets.map(a => a.id === invEditingId ? { ...a, ...asset } : a);
             showToast('Activo actualizado correctamente.', 'success');
         } else {
             const { data, error } = await supabaseClient.from('assets').insert(asset).select().single();
@@ -3769,10 +3805,30 @@
             const ndef = new NDEFReader();
             await ndef.scan();
             status.innerHTML = '⏳ Escaneando… acerque el tag NFC.';
-            ndef.addEventListener('reading', ({ serialNumber }) => handleInvScan(serialNumber));
+            ndef.addEventListener('reading', ({ serialNumber, message }) => {
+                handleInvScan(readNFCAssetCode(message) || serialNumber);
+            });
         } catch (err) {
             status.innerHTML = `❌ Error: ${err.message}`;
         }
+    }
+
+    // Extrae el código de activo grabado en el tag (registro NDEF de texto),
+    // ya sea como texto plano o como JSON con campo "id".
+    function readNFCAssetCode(message) {
+        if (!message || !message.records) return null;
+        for (const record of message.records) {
+            if (record.recordType !== 'text') continue;
+            try {
+                const text = new TextDecoder(record.encoding || 'utf-8').decode(record.data);
+                try {
+                    const parsed = JSON.parse(text);
+                    if (parsed && parsed.id) return parsed.id;
+                } catch { /* no era JSON, se usa el texto tal cual */ }
+                return text;
+            } catch { /* registro ilegible, seguir con el siguiente */ }
+        }
+        return null;
     }
 
     function simulateInvScan() {
@@ -3795,12 +3851,72 @@
                         <button class="btn btn-primary btn-sm" onclick="invEditAsset('${escapeHTML(asset.id)}')">✏️ Editar</button>
                         ${asset.available > 0 ? `<button class="btn btn-secondary btn-sm" onclick="invOpenLoanModal('${escapeHTML(asset.id)}')">🤝 Prestar</button>` : ''}
                         ${asset.borrowed > 0  ? `<button class="btn btn-secondary btn-sm" onclick="invOpenReturnModal('${escapeHTML(asset.id)}')">↩️ Devolver</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-secondary btn-sm" onclick="invOpenNFCModal('${escapeHTML(asset.id)}')">📡 Configurar NFC</button>` : ''}
                     </div>
                 </div>`;
         } else {
             status.innerHTML = `⚠️ Tag no encontrado en el inventario: <code>${escapeHTML(serialNumber)}</code>`;
         }
     }
+
+    // ── Configurar / Grabar NFC de un Activo ──────────────────────
+
+    window.invOpenNFCModal = id => {
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset) return;
+        document.getElementById('inv-nfc-config-asset-id').value   = id;
+        document.getElementById('inv-nfc-config-asset-name').textContent = asset.name;
+        document.getElementById('inv-nfc-config-asset-code').textContent = asset.id;
+        document.getElementById('inv-nfc-config-format').value = 'code';
+        document.getElementById('inv-nfc-config-status').textContent = 'Acerque un tag NFC en blanco y presione "Escribir en Tag".';
+        invUpdateNFCPreview();
+        openModal('modal-inv-nfc-config');
+    };
+
+    function invBuildNFCPayload(asset, format) {
+        if (format === 'full') {
+            return JSON.stringify({ id: asset.id, name: asset.name, category: asset.category, location: asset.location || '' });
+        }
+        return asset.id;
+    }
+
+    window.invUpdateNFCPreview = () => {
+        const id = document.getElementById('inv-nfc-config-asset-id').value;
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset) return;
+        const format = document.getElementById('inv-nfc-config-format').value;
+        document.getElementById('inv-nfc-config-preview').value = invBuildNFCPayload(asset, format);
+    };
+
+    window.invWriteNFCTag = async () => {
+        const id = document.getElementById('inv-nfc-config-asset-id').value;
+        const asset = db.assets.find(a => a.id === id);
+        const status = document.getElementById('inv-nfc-config-status');
+        if (!asset) return;
+        if (!('NDEFReader' in window)) {
+            status.innerHTML = '⚠️ Web NFC no compatible con este dispositivo/navegador.<br><small>Use Chrome en Android con NFC habilitado.</small>';
+            return;
+        }
+        const format  = document.getElementById('inv-nfc-config-format').value;
+        const payload = invBuildNFCPayload(asset, format);
+        try {
+            status.innerHTML = '⏳ Acerque el tag NFC para escribir…';
+            const ndef = new NDEFReader();
+            await ndef.write({ records: [{ recordType: 'text', data: payload }] });
+            status.innerHTML = `✅ Tag configurado correctamente con el código <code>${escapeHTML(asset.id)}</code>.`;
+            showToast('NFC configurado correctamente.', 'success');
+
+            asset.nfc_configured = true;
+            renderInventario();
+            const { error: markError } = await supabaseClient.from('assets').update({ nfc_configured: true }).eq('id', asset.id);
+            if (markError) {
+                console.warn('No se pudo guardar el estado "NFC configurado" en Supabase (¿falta la columna nfc_configured?):', markError.message);
+            }
+        } catch (err) {
+            status.innerHTML = `❌ Error al escribir: ${escapeHTML(err.message)}`;
+            showToast('Error al configurar el NFC: ' + err.message, 'error');
+        }
+    };
 
     // Cargar inventario cuando se navega a esa sección
     document.querySelectorAll('.nav-item[data-section]').forEach(item => {

@@ -57,7 +57,8 @@ CREATE TABLE assets (
   available   INTEGER DEFAULT 1,
   borrowed    INTEGER DEFAULT 0,
   location    TEXT,
-  image       TEXT                -- base64 de la foto
+  image       TEXT,               -- base64 de la foto
+  nfc_configured BOOLEAN DEFAULT FALSE  -- true tras grabar el tag NFC físico
 );
 
 -- loans: historial de movimientos
@@ -83,6 +84,11 @@ CREATE TABLE users (
   role     TEXT DEFAULT 'operator',  -- admin | operator
   active   BOOLEAN DEFAULT TRUE
 );
+```
+
+**Migración para bases `assets` creadas antes de la columna `nfc_configured`:**
+```sql
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS nfc_configured BOOLEAN DEFAULT FALSE;
 ```
 
 **Políticas RLS (Row Level Security):**
