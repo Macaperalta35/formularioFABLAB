@@ -1453,6 +1453,29 @@
                     <input type="hidden" id="inv-asset-image">
                     <div id="inv-image-preview" style="margin-top:0.75rem;text-align:center;"></div>
                 </div>
+
+                <!-- Sección NFC opcional -->
+                <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-top:0.5rem;">
+                    <button type="button" onclick="toggleInvModalNFC()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:var(--bg-secondary);border:none;cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--text-primary);">
+                        <span>📡 Asociar Tag NFC <span id="inv-modal-nfc-badge" style="display:none;font-size:0.72rem;font-weight:700;background:#7c3aed;color:#fff;padding:2px 8px;border-radius:50px;margin-left:6px;">Capturado</span></span>
+                        <span id="inv-modal-nfc-chevron">▼</span>
+                    </button>
+                    <div id="inv-modal-nfc-panel" style="display:none;padding:0.9rem 1rem;">
+                        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Opcional — escanee un tag para vincularlo al activo al momento de crearlo.</p>
+                        <div id="inv-modal-nfc-status" style="padding:0.75rem;background:var(--bg-secondary);border-radius:6px;text-align:center;font-size:0.83rem;min-height:44px;display:flex;align-items:center;justify-content:center;margin-bottom:0.75rem;">
+                            Presione "Escanear" y acerque el tag NFC.
+                        </div>
+                        <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="startInvModalNFCScan()">📡 Escanear</button>
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="clearInvModalNFC()">✕ Limpiar</button>
+                        </div>
+                        <input type="hidden" id="inv-modal-nfc-uid">
+                        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;cursor:pointer;">
+                            <input type="checkbox" id="inv-modal-nfc-write" checked>
+                            Grabar código del activo en el tag al guardar
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('modal-inv-asset')">Cancelar</button>
@@ -3767,6 +3790,15 @@
         document.getElementById('inv-asset-image-file').value = '';
         const preview = document.getElementById('inv-image-preview');
         preview.innerHTML = asset?.image ? `<img src="${asset.image}" style="max-height:100px;border-radius:6px;">` : '';
+        // Resetear panel NFC
+        document.getElementById('inv-modal-nfc-uid').value = asset?.nfc_uid || '';
+        document.getElementById('inv-modal-nfc-panel').style.display = 'none';
+        document.getElementById('inv-modal-nfc-chevron').textContent = '▼';
+        document.getElementById('inv-modal-nfc-write').checked = true;
+        document.getElementById('inv-modal-nfc-status').textContent = asset?.nfc_uid
+            ? `📡 UID registrado: ${asset.nfc_uid}`
+            : 'Presione "Escanear" y acerque el tag NFC.';
+        document.getElementById('inv-modal-nfc-badge').style.display = asset?.nfc_uid ? 'inline' : 'none';
         openModal('modal-inv-asset');
     }
 
@@ -3774,6 +3806,9 @@
         const nfc  = document.getElementById('inv-asset-nfc').value.trim();
         const name = document.getElementById('inv-asset-name').value.trim();
         if (!nfc || !name) { showToast('El código y el nombre son obligatorios.', 'error'); return; }
+
+        const nfcUid   = document.getElementById('inv-modal-nfc-uid').value || null;
+        const writeTag = document.getElementById('inv-modal-nfc-write').checked;
 
         const asset = {
             id:          nfc,
@@ -3787,6 +3822,7 @@
             available:   parseInt(document.getElementById('inv-asset-avail').value)    || 0,
             borrowed:    parseInt(document.getElementById('inv-asset-borrowed').value) || 0,
             image:       document.getElementById('inv-asset-image').value || null,
+            ...(nfcUid ? { nfc_uid: nfcUid, nfc_configured: true } : {})
         };
 
         if (invEditingId) {
@@ -3799,6 +3835,17 @@
             if (error) { showToast('Error al crear activo: ' + error.message, 'error'); return; }
             db.assets.push(data);
             showToast('Activo creado correctamente.', 'success');
+        }
+
+        // Grabar código en el tag físico si se solicitó
+        if (nfcUid && writeTag && 'NDEFReader' in window) {
+            try {
+                const ndef = new NDEFReader();
+                await ndef.write({ records: [{ recordType: 'text', data: nfc }] });
+                showToast(`Tag NFC grabado con código ${nfc}.`, 'success');
+            } catch (e) {
+                console.warn('No se pudo grabar en el tag:', e.message);
+            }
         }
 
         renderInventario();
@@ -4070,6 +4117,47 @@
             status.innerHTML = `❌ Error al escribir: ${escapeHTML(err.message)}`;
             showToast('Error al configurar el NFC: ' + err.message, 'error');
         }
+    };
+
+    // ── NFC en modal Nuevo/Editar Activo ──────────────────────────
+
+    let _invModalNFCAbort = null;
+
+    window.toggleInvModalNFC = () => {
+        const panel   = document.getElementById('inv-modal-nfc-panel');
+        const chevron = document.getElementById('inv-modal-nfc-chevron');
+        const open    = panel.style.display === 'none';
+        panel.style.display   = open ? 'block' : 'none';
+        chevron.textContent   = open ? '▲' : '▼';
+    };
+
+    window.startInvModalNFCScan = async () => {
+        const status = document.getElementById('inv-modal-nfc-status');
+        if (!('NDEFReader' in window)) {
+            status.innerHTML = '⚠️ Web NFC no disponible.<br><small>Requiere Chrome en Android con NFC activado.</small>';
+            return;
+        }
+        try {
+            _invModalNFCAbort = new AbortController();
+            const ndef = new NDEFReader();
+            await ndef.scan({ signal: _invModalNFCAbort.signal });
+            status.textContent = '⏳ Acerque el tag NFC…';
+            ndef.addEventListener('reading', ({ serialNumber }) => {
+                _invModalNFCAbort?.abort();
+                document.getElementById('inv-modal-nfc-uid').value = serialNumber;
+                status.innerHTML = `✅ Tag capturado: <code>${escapeHTML(serialNumber)}</code>`;
+                document.getElementById('inv-modal-nfc-badge').style.display = 'inline';
+            });
+        } catch (err) {
+            if (err.name !== 'AbortError') status.textContent = `❌ Error: ${err.message}`;
+        }
+    };
+
+    window.clearInvModalNFC = () => {
+        _invModalNFCAbort?.abort();
+        document.getElementById('inv-modal-nfc-uid').value = '';
+        document.getElementById('inv-modal-nfc-badge').style.display = 'none';
+        document.getElementById('inv-modal-nfc-status').textContent = 'Presione "Escanear" y acerque el tag NFC.';
     };
 
     // ── Gestión NFC ───────────────────────────────────────────────
