@@ -213,6 +213,10 @@
                 </button>
 
                 <div class="nav-label admin-only" style="margin-top: 8px;">Laboratorio</div>
+                <button class="nav-item admin-only" data-section="ayudantes" id="nav-ayudantes">
+                    Ayudantes del Lab
+                    <span class="nav-badge" id="badge-ayudantes" style="display:none;">0</span>
+                </button>
                 <button class="nav-item admin-only" data-section="ocupacion" id="nav-ocupacion">
                     Ocupación del Lab
                 </button>
@@ -832,6 +836,50 @@
                             <p class="empty-title">Sin resultados</p>
                             <p class="empty-text">No hay activos que coincidan con el filtro.</p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- ==================== SECTION: AYUDANTES ==================== -->
+                <div class="page-section" id="section-ayudantes">
+                    <div class="section-header">
+                        <h3 class="section-title">🧑‍🔬 Ayudantes del Lab</h3>
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            <button class="btn btn-secondary btn-sm" onclick="loadAyudantes()">🔄 Recargar</button>
+                            <button class="btn btn-primary btn-sm" onclick="openAyudanteModal(null)">➕ Nuevo Ayudante</button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:1.5rem;">
+                        <div class="stat-card blue">
+                            <div class="stat-header"><div class="stat-icon blue">👥</div><span class="stat-label">Total</span></div>
+                            <div class="stat-value" id="ay-stat-total">—</div>
+                        </div>
+                        <div class="stat-card green">
+                            <div class="stat-header"><div class="stat-icon green">✅</div><span class="stat-label">Activos</span></div>
+                            <div class="stat-value" id="ay-stat-activos">—</div>
+                        </div>
+                        <div class="stat-card purple">
+                            <div class="stat-header"><div class="stat-icon purple">🎓</div><span class="stat-label">Carreras</span></div>
+                            <div class="stat-value" id="ay-stat-carreras">—</div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding:0.75rem 1rem;margin-bottom:1rem;">
+                        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+                            <input type="text" class="form-input" id="ay-search" placeholder="Buscar por nombre o carrera…" oninput="renderAyudantes()" style="max-width:300px;flex:1;">
+                            <select class="form-select" id="ay-filter" onchange="renderAyudantes()" style="max-width:180px;">
+                                <option value="all">Todos</option>
+                                <option value="activo">Solo activos</option>
+                                <option value="inactivo">Solo inactivos</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="ay-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;"></div>
+                    <div id="ay-empty" class="empty-state" style="display:none;padding:3rem;">
+                        <div class="empty-icon">🧑‍🔬</div>
+                        <p class="empty-title">Sin ayudantes registrados</p>
+                        <p class="empty-text">Agrega el primer ayudante con el botón "Nuevo Ayudante".</p>
                     </div>
                 </div>
 
@@ -1572,6 +1620,110 @@
         </div>
     </div>
 
+    <!-- ========== MODALES AYUDANTES ========== -->
+
+    <!-- Modal: Crear / Editar Ayudante -->
+    <div class="modal-overlay" id="modal-ayudante">
+        <div class="modal" style="max-width:680px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="ay-modal-title">➕ Nuevo Ayudante</h3>
+                <button class="modal-close" onclick="closeModal('modal-ayudante')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="ay-id">
+
+                <!-- Foto + datos personales -->
+                <div style="display:flex;gap:1rem;align-items:flex-start;margin-bottom:1rem;">
+                    <div style="flex-shrink:0;text-align:center;">
+                        <div id="ay-foto-preview" style="width:90px;height:90px;border-radius:50%;background:var(--bg-secondary);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:2.2rem;overflow:hidden;margin-bottom:0.4rem;">🧑‍🔬</div>
+                        <label style="font-size:0.72rem;color:var(--text-muted);cursor:pointer;text-decoration:underline;">
+                            Cambiar foto
+                            <input type="file" id="ay-foto-file" accept="image/*" style="display:none;" onchange="previewAyFoto(this)">
+                        </label>
+                        <input type="hidden" id="ay-foto">
+                    </div>
+                    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label">Nombre completo *</label>
+                            <input type="text" class="form-input" id="ay-nombre" placeholder="Ej: María González">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label">RUT</label>
+                            <input type="text" class="form-input" id="ay-rut" placeholder="12.345.678-9">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label">Correo</label>
+                            <input type="email" class="form-input" id="ay-email" placeholder="correo@inacap.cl">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" class="form-input" id="ay-telefono" placeholder="+56 9 XXXX XXXX">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formación -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Carrera / Programa *</label>
+                        <input type="text" class="form-input" id="ay-carrera" placeholder="Ej: Técnico en Electrónica">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Año / Nivel</label>
+                        <input type="text" class="form-input" id="ay-anio" placeholder="Ej: 2° año">
+                    </div>
+                </div>
+
+                <!-- Descripción / Currículum -->
+                <div class="form-group">
+                    <label class="form-label">Descripción / Currículum</label>
+                    <textarea class="form-input" id="ay-descripcion" rows="3" placeholder="Breve reseña, experiencia, logros…" style="resize:vertical;"></textarea>
+                </div>
+
+                <!-- Habilidades -->
+                <div class="form-group">
+                    <label class="form-label">Habilidades y equipos que maneja</label>
+                    <input type="text" class="form-input" id="ay-habilidades" placeholder="Ej: Impresión 3D, Corte láser, Arduino, Soldadura…">
+                </div>
+
+                <!-- Horario -->
+                <div class="form-group">
+                    <label class="form-label" style="margin-bottom:0.6rem;">Horario disponible</label>
+                    <div id="ay-horario-grid" style="display:flex;flex-direction:column;gap:0.45rem;">
+                        <!-- generado por JS -->
+                    </div>
+                </div>
+
+                <!-- Estado -->
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.88rem;cursor:pointer;font-weight:600;">
+                        <input type="checkbox" id="ay-activo" checked>
+                        Ayudante activo
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-ayudante')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveAyudante()">💾 Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Ver Perfil Ayudante -->
+    <div class="modal-overlay" id="modal-ver-ayudante">
+        <div class="modal" style="max-width:620px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Perfil del Ayudante</h3>
+                <button class="modal-close" onclick="closeModal('modal-ver-ayudante')">&times;</button>
+            </div>
+            <div class="modal-body" id="ay-ver-body"></div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-ver-ayudante')">Cerrar</button>
+                <button class="btn btn-secondary" id="ay-ver-edit-btn" onclick="">✏️ Editar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Prestar Activo -->
     <div class="modal-overlay" id="modal-inv-loan">
         <div class="modal">
@@ -1682,6 +1834,7 @@
         impresion3d:    'Cola de Impresión 3D',
         pedido:         'Pedido Mensual',
         nfc:            'Gestión NFC',
+        ayudantes:      'Ayudantes del Laboratorio',
         usuarios:       'Gestión de Usuarios',
         accesibilidad:  'Accesibilidad'
     };
@@ -4602,6 +4755,248 @@
     });
 
     checkSession();
+
+    // =====================================================
+    //  AYUDANTES DEL LAB
+    // =====================================================
+
+    const AY_DIAS = ['lunes','martes','miercoles','jueves','viernes','sabado'];
+    const AY_DIAS_LABEL = { lunes:'Lunes', martes:'Martes', miercoles:'Miércoles', jueves:'Jueves', viernes:'Viernes', sabado:'Sábado' };
+
+    db.ayudantes = [];
+    let ayEditingId = null;
+
+    // ── Carga ─────────────────────────────────────────
+    async function loadAyudantes() {
+        const { data, error } = await supabaseClient.from('ayudantes').select('*').order('nombre');
+        if (error) { showToast('Error al cargar ayudantes: ' + error.message, 'error'); return; }
+        db.ayudantes = data || [];
+        renderAyudantes();
+        updateAyStats();
+        const badge = document.getElementById('badge-ayudantes');
+        if (badge) { badge.textContent = db.ayudantes.length; badge.style.display = db.ayudantes.length ? 'inline-flex' : 'none'; }
+    }
+
+    function updateAyStats() {
+        const total   = db.ayudantes.length;
+        const activos = db.ayudantes.filter(a => a.activo).length;
+        const carreras = new Set(db.ayudantes.map(a => a.carrera).filter(Boolean)).size;
+        document.getElementById('ay-stat-total').textContent   = total;
+        document.getElementById('ay-stat-activos').textContent = activos;
+        document.getElementById('ay-stat-carreras').textContent = carreras || '—';
+    }
+
+    // ── Render tarjetas ───────────────────────────────
+    function renderAyudantes() {
+        const q      = (document.getElementById('ay-search')?.value || '').toLowerCase();
+        const filter = document.getElementById('ay-filter')?.value || 'all';
+        const grid   = document.getElementById('ay-cards-grid');
+        const empty  = document.getElementById('ay-empty');
+        if (!grid) return;
+
+        let list = db.ayudantes;
+        if (q)              list = list.filter(a => (a.nombre||'').toLowerCase().includes(q) || (a.carrera||'').toLowerCase().includes(q));
+        if (filter === 'activo')   list = list.filter(a => a.activo);
+        if (filter === 'inactivo') list = list.filter(a => !a.activo);
+
+        if (!list.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+        empty.style.display = 'none';
+
+        grid.innerHTML = list.map(a => {
+            const diasActivos = AY_DIAS.filter(d => a.horario?.[d]?.activo);
+            const habilidades = (a.habilidades || '').split(',').map(h => h.trim()).filter(Boolean);
+            return `
+            <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;">
+                <div style="height:5px;background:${a.activo ? 'var(--green)' : '#d1d5db'};"></div>
+                <div style="padding:1.1rem 1rem;">
+                    <div style="display:flex;align-items:center;gap:0.9rem;margin-bottom:0.85rem;">
+                        <div style="width:52px;height:52px;border-radius:50%;background:var(--bg-secondary);border:2px solid var(--border);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">
+                            ${a.foto ? `<img src="${escapeHTML(a.foto)}" style="width:100%;height:100%;object-fit:cover;">` : '🧑‍🔬'}
+                        </div>
+                        <div style="min-width:0;">
+                            <div style="font-weight:700;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(a.nombre)}</div>
+                            <div style="font-size:0.78rem;color:var(--text-muted);">${escapeHTML(a.carrera || '—')} ${a.anio ? '· ' + escapeHTML(a.anio) : ''}</div>
+                            <span style="display:inline-block;margin-top:3px;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:50px;${a.activo ? 'background:var(--green-glow);color:var(--green)' : 'background:#f3f4f6;color:#9ca3af'};">${a.activo ? '✅ Activo' : 'Inactivo'}</span>
+                        </div>
+                    </div>
+                    ${diasActivos.length ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">🗓 ${diasActivos.map(d => AY_DIAS_LABEL[d].slice(0,3)).join(' · ')}</div>` : ''}
+                    ${habilidades.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:0.75rem;">${habilidades.slice(0,4).map(h => `<span style="font-size:0.68rem;background:var(--blue-glow);color:var(--blue);padding:2px 7px;border-radius:50px;">${escapeHTML(h)}</span>`).join('')}${habilidades.length > 4 ? `<span style="font-size:0.68rem;color:var(--text-muted);">+${habilidades.length - 4}</span>` : ''}</div>` : ''}
+                    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                        <button class="btn btn-secondary btn-sm" onclick="openVerAyudante(${a.id})" style="flex:1;">Ver perfil</button>
+                        <button class="btn btn-ghost btn-sm" onclick="openAyudanteModal(${a.id})" title="Editar">✏️</button>
+                        <button class="btn btn-ghost btn-sm" onclick="deleteAyudante(${a.id})" style="color:#dc2626;" title="Eliminar">🗑️</button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ── Modal Crear / Editar ──────────────────────────
+    function buildHorarioGrid(horario = {}) {
+        const grid = document.getElementById('ay-horario-grid');
+        if (!grid) return;
+        grid.innerHTML = AY_DIAS.map(d => {
+            const h = horario[d] || {};
+            return `
+            <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+                <label style="display:flex;align-items:center;gap:0.4rem;width:90px;flex-shrink:0;font-size:0.83rem;font-weight:600;cursor:pointer;">
+                    <input type="checkbox" id="ay-h-${d}" ${h.activo ? 'checked' : ''} onchange="toggleHorarioDia('${d}')">
+                    ${AY_DIAS_LABEL[d]}
+                </label>
+                <div id="ay-h-${d}-rango" style="display:${h.activo ? 'flex' : 'none'};align-items:center;gap:0.4rem;flex-wrap:wrap;">
+                    <input type="time" class="form-input" id="ay-h-${d}-desde" value="${h.desde || '08:00'}" style="width:110px;padding:5px 8px;font-size:0.82rem;">
+                    <span style="font-size:0.82rem;color:var(--text-muted);">a</span>
+                    <input type="time" class="form-input" id="ay-h-${d}-hasta" value="${h.hasta || '13:00'}" style="width:110px;padding:5px 8px;font-size:0.82rem;">
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    window.toggleHorarioDia = d => {
+        const checked = document.getElementById(`ay-h-${d}`)?.checked;
+        const rango   = document.getElementById(`ay-h-${d}-rango`);
+        if (rango) rango.style.display = checked ? 'flex' : 'none';
+    };
+
+    function readHorarioGrid() {
+        const h = {};
+        AY_DIAS.forEach(d => {
+            const activo = document.getElementById(`ay-h-${d}`)?.checked || false;
+            h[d] = activo
+                ? { activo: true, desde: document.getElementById(`ay-h-${d}-desde`)?.value || '08:00', hasta: document.getElementById(`ay-h-${d}-hasta`)?.value || '13:00' }
+                : { activo: false };
+        });
+        return h;
+    }
+
+    window.previewAyFoto = (input) => {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('ay-foto').value = e.target.result;
+            const prev = document.getElementById('ay-foto-preview');
+            prev.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.openAyudanteModal = (id) => {
+        const a = id ? db.ayudantes.find(x => x.id === id) : null;
+        ayEditingId = a ? a.id : null;
+        document.getElementById('ay-modal-title').textContent = a ? '✏️ Editar Ayudante' : '➕ Nuevo Ayudante';
+        document.getElementById('ay-id').value           = a?.id      || '';
+        document.getElementById('ay-nombre').value       = a?.nombre  || '';
+        document.getElementById('ay-rut').value          = a?.rut     || '';
+        document.getElementById('ay-email').value        = a?.email   || '';
+        document.getElementById('ay-telefono').value     = a?.telefono|| '';
+        document.getElementById('ay-carrera').value      = a?.carrera || '';
+        document.getElementById('ay-anio').value         = a?.anio    || '';
+        document.getElementById('ay-descripcion').value  = a?.descripcion || '';
+        document.getElementById('ay-habilidades').value  = a?.habilidades || '';
+        document.getElementById('ay-activo').checked     = a ? !!a.activo : true;
+        document.getElementById('ay-foto').value         = a?.foto    || '';
+        document.getElementById('ay-foto-file').value    = '';
+        const prev = document.getElementById('ay-foto-preview');
+        prev.innerHTML = a?.foto ? `<img src="${escapeHTML(a.foto)}" style="width:100%;height:100%;object-fit:cover;">` : '🧑‍🔬';
+        buildHorarioGrid(a?.horario || {});
+        openModal('modal-ayudante');
+    };
+
+    window.saveAyudante = async () => {
+        const nombre  = document.getElementById('ay-nombre').value.trim();
+        const carrera = document.getElementById('ay-carrera').value.trim();
+        if (!nombre) { showToast('El nombre es obligatorio.', 'error'); return; }
+
+        const payload = {
+            nombre,
+            rut:         document.getElementById('ay-rut').value.trim() || null,
+            email:       document.getElementById('ay-email').value.trim() || null,
+            telefono:    document.getElementById('ay-telefono').value.trim() || null,
+            carrera:     carrera || null,
+            anio:        document.getElementById('ay-anio').value.trim() || null,
+            descripcion: document.getElementById('ay-descripcion').value.trim() || null,
+            habilidades: document.getElementById('ay-habilidades').value.trim() || null,
+            foto:        document.getElementById('ay-foto').value || null,
+            activo:      document.getElementById('ay-activo').checked,
+            horario:     readHorarioGrid(),
+        };
+
+        if (ayEditingId) {
+            const { error } = await supabaseClient.from('ayudantes').update(payload).eq('id', ayEditingId);
+            if (error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
+            db.ayudantes = db.ayudantes.map(a => a.id === ayEditingId ? { ...a, ...payload, id: ayEditingId } : a);
+            showToast('Ayudante actualizado.', 'success');
+        } else {
+            const { data, error } = await supabaseClient.from('ayudantes').insert(payload).select().single();
+            if (error) { showToast('Error al crear: ' + error.message, 'error'); return; }
+            db.ayudantes.push(data);
+            showToast('Ayudante registrado.', 'success');
+        }
+
+        renderAyudantes();
+        updateAyStats();
+        closeModal('modal-ayudante');
+    };
+
+    window.deleteAyudante = async (id) => {
+        const a = db.ayudantes.find(x => x.id === id);
+        if (!confirm(`¿Eliminar a ${a?.nombre || 'este ayudante'}?`)) return;
+        const { error } = await supabaseClient.from('ayudantes').delete().eq('id', id);
+        if (error) { showToast('Error: ' + error.message, 'error'); return; }
+        db.ayudantes = db.ayudantes.filter(x => x.id !== id);
+        renderAyudantes();
+        updateAyStats();
+        showToast('Ayudante eliminado.', 'success');
+    };
+
+    // ── Modal Ver Perfil ──────────────────────────────
+    window.openVerAyudante = (id) => {
+        const a = db.ayudantes.find(x => x.id === id);
+        if (!a) return;
+        const body = document.getElementById('ay-ver-body');
+        const habilidades = (a.habilidades || '').split(',').map(h => h.trim()).filter(Boolean);
+
+        const horarioHTML = AY_DIAS.map(d => {
+            const h = a.horario?.[d];
+            if (!h?.activo) return '';
+            return `<div style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;padding:0.3rem 0;border-bottom:1px solid var(--border-light);">
+                <span style="width:80px;font-weight:600;">${AY_DIAS_LABEL[d]}</span>
+                <span style="color:var(--text-muted);">${h.desde} – ${h.hasta}</span>
+            </div>`;
+        }).join('') || '<p style="font-size:0.82rem;color:var(--text-muted);">Sin horario registrado.</p>';
+
+        body.innerHTML = `
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;">
+                <div style="width:72px;height:72px;border-radius:50%;background:var(--bg-secondary);border:2px solid var(--border);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:2rem;">
+                    ${a.foto ? `<img src="${escapeHTML(a.foto)}" style="width:100%;height:100%;object-fit:cover;">` : '🧑‍🔬'}
+                </div>
+                <div>
+                    <div style="font-size:1.1rem;font-weight:800;">${escapeHTML(a.nombre)}</div>
+                    <div style="font-size:0.82rem;color:var(--text-muted);">${escapeHTML(a.carrera||'—')}${a.anio ? ' · ' + escapeHTML(a.anio) : ''}</div>
+                    <span style="display:inline-block;margin-top:4px;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:50px;${a.activo ? 'background:var(--green-glow);color:var(--green)' : 'background:#f3f4f6;color:#9ca3af'};">${a.activo ? '✅ Activo' : 'Inactivo'}</span>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;font-size:0.83rem;">
+                ${a.rut     ? `<div><span style="color:var(--text-muted);">RUT</span><br><strong>${escapeHTML(a.rut)}</strong></div>` : ''}
+                ${a.email   ? `<div><span style="color:var(--text-muted);">Correo</span><br><a href="mailto:${escapeHTML(a.email)}" style="color:var(--blue);">${escapeHTML(a.email)}</a></div>` : ''}
+                ${a.telefono? `<div><span style="color:var(--text-muted);">Teléfono</span><br><strong>${escapeHTML(a.telefono)}</strong></div>` : ''}
+                ${a.fecha_ingreso ? `<div><span style="color:var(--text-muted);">Ingreso</span><br><strong>${a.fecha_ingreso}</strong></div>` : ''}
+            </div>
+            ${a.descripcion ? `<div style="margin-bottom:1rem;"><div style="font-weight:700;font-size:0.83rem;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);">Currículum</div><p style="font-size:0.85rem;line-height:1.6;">${escapeHTML(a.descripcion)}</p></div>` : ''}
+            ${habilidades.length ? `<div style="margin-bottom:1rem;"><div style="font-weight:700;font-size:0.83rem;margin-bottom:0.45rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);">Habilidades</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${habilidades.map(h => `<span style="font-size:0.78rem;background:var(--blue-glow);color:var(--blue);padding:3px 10px;border-radius:50px;">${escapeHTML(h)}</span>`).join('')}</div></div>` : ''}
+            <div><div style="font-weight:700;font-size:0.83rem;margin-bottom:0.6rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);">Horario disponible</div>${horarioHTML}</div>`;
+
+        document.getElementById('ay-ver-edit-btn').onclick = () => { closeModal('modal-ver-ayudante'); openAyudanteModal(id); };
+        openModal('modal-ver-ayudante');
+    };
+
+    // Cargar al navegar a la sección
+    document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.dataset.section === 'ayudantes' && !db.ayudantes.length) loadAyudantes();
+        });
+    });
 
 </script>
 </body>
