@@ -4096,7 +4096,7 @@
 
     async function saveInvReturn() {
         const id        = document.getElementById('inv-return-asset-id').value;
-        const qty       = parseInt(document.getElementById('inv-return-qty').value) || 1;
+        const qty       = parseInt(document.getElementById('inv-return-qty').value, 10);
         const condition = document.getElementById('inv-return-condition').value;
         const notes     = document.getElementById('inv-return-notes').value.trim();
         const errEl     = document.getElementById('inv-return-error');
@@ -4162,15 +4162,18 @@
             status.innerHTML = '⚠️ Web NFC no compatible con este dispositivo/navegador.<br><small>Use el botón "Simular Lectura" para probar.</small>';
             return;
         }
+        // Cancelar escaneo previo antes de iniciar uno nuevo
+        _invScanAbort?.abort();
+        _invScanAbort = new AbortController();
         try {
             const ndef = new NDEFReader();
-            await ndef.scan();
+            await ndef.scan({ signal: _invScanAbort.signal });
             status.innerHTML = '⏳ Escaneando… acerque el tag NFC.';
             ndef.addEventListener('reading', ({ serialNumber, message }) => {
                 handleInvScan(readNFCAssetCode(message) || serialNumber, serialNumber);
             });
         } catch (err) {
-            status.innerHTML = `❌ Error: ${err.message}`;
+            if (err.name !== 'AbortError') status.innerHTML = `❌ Error: ${err.message}`;
         }
     }
 
@@ -4271,10 +4274,9 @@
 
             asset.nfc_configured = true;
             renderInventario();
-            const { error: markError } = await supabaseClient.from('assets').update({ nfc_configured: true }).eq('id', asset.id);
-            if (markError) {
-                console.warn('No se pudo guardar el estado "NFC configurado" en Supabase (¿falta la columna nfc_configured?):', markError.message);
-            }
+            const { error: markError } = await supabaseClient
+                .from('assets').update({ nfc_configured: true }).eq('id', asset.id);
+            if (markError) console.warn('nfc_configured update failed:', markError.message);
         } catch (err) {
             status.innerHTML = `❌ Error al escribir: ${escapeHTML(err.message)}`;
             showToast('Error al configurar el NFC: ' + err.message, 'error');
@@ -4283,6 +4285,7 @@
 
     // ── NFC en modal Nuevo/Editar Activo ──────────────────────────
 
+    let _invScanAbort     = null;
     let _invModalNFCAbort = null;
 
     window.toggleInvModalNFC = () => {
@@ -4450,17 +4453,18 @@
         // Verificar si el UID ya está asignado a otro activo
         const existing = db.assets.find(a => a.nfc_uid === uid);
         const warn = document.getElementById('nfc-reg-already-warning');
+        const select = document.getElementById('nfc-reg-asset-select');
         if (existing) {
             warn.style.display = 'block';
             warn.textContent = `⚠️ Este tag ya está asignado a "${existing.name}" (${existing.id}). Al guardar se reasignará.`;
-            // Preseleccionar ese activo en el select
-            document.getElementById('nfc-reg-asset-select').value = existing.id;
+            // Solo preseleccionar si el usuario no ha elegido un activo distinto
+            if (!select.value) select.value = existing.id;
         } else {
             warn.style.display = 'none';
-            // Si el tag tiene contenido que coincide con un activo, preseleccionarlo
-            if (content) {
+            // Preseleccionar solo si el dropdown está vacío y el tag tiene contenido válido
+            if (!select.value && content) {
                 const byContent = db.assets.find(a => a.id === content);
-                if (byContent) document.getElementById('nfc-reg-asset-select').value = byContent.id;
+                if (byContent) select.value = byContent.id;
             }
         }
 
@@ -4479,11 +4483,14 @@
         const asset = db.assets.find(a => a.id === assetId);
         if (!asset) return;
 
-        // Si había otro activo con este UID, quitárselo
+        // Si había otro activo con este UID, quitárselo (incluyendo nfc_configured)
         const prev = db.assets.find(a => a.nfc_uid === uid && a.id !== assetId);
         if (prev) {
-            await supabaseClient.from('assets').update({ nfc_uid: null }).eq('id', prev.id);
+            const { error: prevErr } = await supabaseClient
+                .from('assets').update({ nfc_uid: null, nfc_configured: false }).eq('id', prev.id);
+            if (prevErr) { showToast('Error al limpiar asignación anterior: ' + prevErr.message, 'error'); return; }
             prev.nfc_uid = null;
+            prev.nfc_configured = false;
         }
 
         // Guardar UID en el activo seleccionado
@@ -4550,7 +4557,7 @@
     // ===========================
     //  PEDIDO MENSUAL
     // ===========================
-    let pedidoItems = JSON.parse(localStorage.getItem('fablab_pedido_items') || '[]');
+    let pedidoItems = (() => { try { return JSON.parse(localStorage.getItem('fablab_pedido_items') || '[]'); } catch { return []; } })();
 
     function savePedidoToStorage() {
         localStorage.setItem('fablab_pedido_items', JSON.stringify(pedidoItems));
@@ -4665,15 +4672,13 @@
         const usuario = document.getElementById('ped-usuario').value.trim() || '';
         const fechaFmt = fecha ? new Date(fecha + 'T12:00:00').toLocaleDateString('es-CL') : '';
 
-        function eh(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
         const itemRows = pedidoItems.map((item, i) => `
             <tr>
                 <td style="padding:10px;font-weight:bold;border:1px solid #ccc;">ITEM ${i+1}</td>
                 <td style="padding:10px;text-align:center;border:1px solid #ccc;">${item.cantidad}</td>
-                <td style="padding:10px;font-weight:600;border:1px solid #ccc;">${eh(item.nombre)}</td>
-                <td style="padding:10px;border:1px solid #ccc;">${eh(item.descripcion)}</td>
-                <td style="padding:10px;border:1px solid #ccc;">${eh(item.caracteristicas)}</td>
+                <td style="padding:10px;font-weight:600;border:1px solid #ccc;">${escapeHTML(item.nombre)}</td>
+                <td style="padding:10px;border:1px solid #ccc;">${escapeHTML(item.descripcion)}</td>
+                <td style="padding:10px;border:1px solid #ccc;">${escapeHTML(item.caracteristicas)}</td>
                 <td style="padding:10px;border:1px solid #ccc;min-width:120px;min-height:80px;"></td>
             </tr>`).join('');
 
