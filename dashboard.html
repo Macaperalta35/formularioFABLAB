@@ -279,6 +279,10 @@
                     </div>
                 </div>
                 <div class="header-actions">
+                    <div id="db-status" title="Estado de conexión a base de datos" style="display:flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:600;color:var(--text-muted);padding:4px 10px;background:var(--bg-card);border:1px solid var(--border);border-radius:50px;">
+                        <span id="db-status-dot" style="width:8px;height:8px;border-radius:50%;background:#d1d5db;display:inline-block;"></span>
+                        <span id="db-status-text">BD</span>
+                    </div>
                     <div class="header-clock" id="header-clock">--:--</div>
                 </div>
             </header>
@@ -1729,6 +1733,75 @@
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('modal-ver-ayudante')">Cerrar</button>
                 <button class="btn btn-secondary" id="ay-ver-edit-btn" onclick="">✏️ Editar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Ingresar Unidades -->
+    <div class="modal-overlay" id="modal-inv-add-units">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 class="modal-title">➕ Ingresar Unidades</h3>
+                <button class="modal-close" onclick="closeModal('modal-inv-add-units')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="inv-add-asset-id">
+                <div style="background:var(--bg-secondary);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;">
+                    <div style="font-weight:700;" id="inv-add-asset-name">—</div>
+                    <div style="font-size:0.82rem;color:var(--text-muted);">Stock actual: <span id="inv-add-current">—</span> disponibles</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cantidad a ingresar *</label>
+                    <input type="number" class="form-input" id="inv-add-qty" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Motivo</label>
+                    <input type="text" class="form-input" id="inv-add-reason" placeholder="Ej: Compra, donación, devolución de baja…">
+                </div>
+                <div id="inv-add-error" style="display:none;padding:0.6rem 0.9rem;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);border-radius:6px;font-size:0.82rem;color:#dc2626;margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-inv-add-units')">Cancelar</button>
+                <button class="btn btn-primary" id="inv-add-btn" onclick="saveInvAddUnits()">➕ Confirmar Ingreso</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Restar Unidades -->
+    <div class="modal-overlay" id="modal-inv-remove-units">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 class="modal-title">➖ Restar Unidades</h3>
+                <button class="modal-close" onclick="closeModal('modal-inv-remove-units')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="inv-rem-asset-id">
+                <div style="background:var(--bg-secondary);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;">
+                    <div style="font-weight:700;" id="inv-rem-asset-name">—</div>
+                    <div style="font-size:0.82rem;color:var(--text-muted);">Stock actual: <span id="inv-rem-current">—</span> disponibles</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cantidad a restar *</label>
+                    <input type="number" class="form-input" id="inv-rem-qty" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Motivo</label>
+                    <select class="form-select" id="inv-rem-reason">
+                        <option value="consumo">Consumo / Uso</option>
+                        <option value="daño">Daño / Pérdida</option>
+                        <option value="baja">Baja / Descarte</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observaciones</label>
+                    <input type="text" class="form-input" id="inv-rem-notes" placeholder="Detalle adicional…">
+                </div>
+                <div id="inv-rem-error" style="display:none;padding:0.6rem 0.9rem;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);border-radius:6px;font-size:0.82rem;color:#dc2626;margin-top:0.5rem;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-inv-remove-units')">Cancelar</button>
+                <button class="btn btn-primary" id="inv-rem-btn" onclick="saveInvRemoveUnits()" style="background:linear-gradient(135deg,#d97706,#b45309);">➖ Confirmar Resta</button>
             </div>
         </div>
     </div>
@@ -3796,7 +3869,7 @@
             html += `<tr><td colspan="11" style="background:var(--bg-secondary);font-weight:700;padding:0.6rem 1rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">📁 ${escapeHTML(cat)}</td></tr>`;
             html += items.map(a => `
                 <tr>
-                    <td><code style="font-size:0.78rem;">${escapeHTML(a.id)}</code>${a.nfc_configured ? ` <span title="NFC configurado" style="font-size:0.75rem;">📡</span>` : ''}</td>
+                    <td><code style="font-size:0.78rem;">${escapeHTML(a.id)}</code>${(a.nfc_configured || a.nfc_uid) ? ` <span title="NFC configurado${a.nfc_uid ? ': ' + a.nfc_uid : ''}" style="font-size:0.75rem;">📡</span>` : ''}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:0.5rem;">
                             ${a.image ? `<img src="${a.image}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" title="${escapeHTML(a.name)}">` : ''}
@@ -4208,20 +4281,32 @@
         if (!asset && uid) asset = db.assets.find(a => a.nfc_uid === uid);
         if (asset) {
             const statusLabel = { active: '✅ Activo', maintenance: '🔧 Mantenimiento', lost: '❌ Baja' };
+            const nfcRegistered = asset.nfc_uid || asset.nfc_configured;
+            const id = escapeHTML(asset.id);
+            const scannedUid = uid ? escapeHTML(uid) : '';
             status.innerHTML = `
                 <div style="text-align:left;width:100%;">
-                    <div style="font-size:1.1rem;font-weight:700;margin-bottom:0.25rem;">✅ ${escapeHTML(asset.name)}</div>
-                    <div style="font-size:0.85rem;color:var(--text-muted);">Código: <code>${escapeHTML(asset.id)}</code> · ${escapeHTML(asset.category)}</div>
-                    <div style="font-size:0.85rem;margin-top:0.25rem;">Stock: ${asset.available}/${asset.total} disponible · ${statusLabel[asset.status]}</div>
-                    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
-                        <button class="btn btn-primary btn-sm" onclick="invEditAsset('${escapeHTML(asset.id)}')">✏️ Editar</button>
-                        ${asset.available > 0 ? `<button class="btn btn-secondary btn-sm" onclick="invOpenLoanModal('${escapeHTML(asset.id)}')">🤝 Prestar</button>` : ''}
-                        ${asset.borrowed > 0  ? `<button class="btn btn-secondary btn-sm" onclick="invOpenReturnModal('${escapeHTML(asset.id)}')">↩️ Devolver</button>` : ''}
-                        ${canAdmin() ? `<button class="btn btn-secondary btn-sm" onclick="invOpenNFCModal('${escapeHTML(asset.id)}')">📡 Configurar NFC</button>` : ''}
+                    <div style="font-size:1.05rem;font-weight:700;margin-bottom:0.2rem;">✅ ${escapeHTML(asset.name)}</div>
+                    <div style="font-size:0.82rem;color:var(--text-muted);">Código: <code>${id}</code> · ${escapeHTML(asset.category || '')} · ${statusLabel[asset.status] || ''}</div>
+                    <div style="font-size:0.82rem;margin-top:0.2rem;">Disponible: <strong>${asset.available}</strong>/${asset.total} · Prestado: <strong>${asset.borrowed || 0}</strong></div>
+                    <div style="margin-top:0.85rem;display:flex;gap:0.4rem;flex-wrap:wrap;">
+                        ${canAdmin() ? `<button class="btn btn-primary btn-sm" onclick="invOpenAddUnitsModal('${id}')">➕ Ingresar</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" style="border:1px solid var(--amber);color:#b45309;" onclick="invOpenRemoveUnitsModal('${id}')">➖ Restar</button>` : ''}
+                        ${asset.available > 0 ? `<button class="btn btn-secondary btn-sm" onclick="invOpenLoanModal('${id}')">🤝 Prestar</button>` : ''}
+                        ${asset.borrowed > 0  ? `<button class="btn btn-secondary btn-sm" onclick="invOpenReturnModal('${id}')">↩️ Devolver</button>` : ''}
+                        ${canAdmin() && !nfcRegistered && scannedUid ? `<button class="btn btn-ghost btn-sm" style="color:#7c3aed;border:1px solid #7c3aed;" onclick="quickRegisterNFC('${id}','${scannedUid}')">📡 Registrar NFC</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenNFCModal('${id}')">📡 Config NFC</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invEditAsset('${id}')">✏️ Editar</button>` : ''}
                     </div>
                 </div>`;
         } else {
-            status.innerHTML = `⚠️ Tag no encontrado en el inventario: <code>${escapeHTML(serialNumber)}</code>`;
+            const scannedUid = uid ? escapeHTML(uid) : '';
+            status.innerHTML = `
+                <div style="text-align:left;width:100%;">
+                    <div style="color:#dc2626;font-weight:600;margin-bottom:0.5rem;">⚠️ Tag no registrado en el inventario</div>
+                    <div style="font-size:0.82rem;color:var(--text-muted);">UID: <code>${escapeHTML(serialNumber)}</code></div>
+                    ${canAdmin() ? `<div style="margin-top:0.75rem;"><button class="btn btn-primary btn-sm" onclick="openNFCRegisterModal(null,'${scannedUid}')">📡 Registrar este tag</button></div>` : ''}
+                </div>`;
         }
     }
 
@@ -4281,6 +4366,117 @@
             status.innerHTML = `❌ Error al escribir: ${escapeHTML(err.message)}`;
             showToast('Error al configurar el NFC: ' + err.message, 'error');
         }
+    };
+
+    // ── Ingresar / Restar unidades ────────────────────────────────
+
+    window.invOpenAddUnitsModal = (id) => {
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset) return;
+        document.getElementById('inv-add-asset-id').value       = id;
+        document.getElementById('inv-add-asset-name').textContent = asset.name;
+        document.getElementById('inv-add-current').textContent  = asset.available ?? 0;
+        document.getElementById('inv-add-qty').value            = 1;
+        document.getElementById('inv-add-reason').value         = '';
+        document.getElementById('inv-add-error').style.display  = 'none';
+        openModal('modal-inv-add-units');
+    };
+
+    window.saveInvAddUnits = async () => {
+        const id    = document.getElementById('inv-add-asset-id').value;
+        const qty   = parseInt(document.getElementById('inv-add-qty').value, 10);
+        const reason = document.getElementById('inv-add-reason').value.trim();
+        const errEl = document.getElementById('inv-add-error');
+        const btn   = document.getElementById('inv-add-btn');
+        errEl.style.display = 'none';
+
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset) { errEl.textContent = 'Activo no encontrado.'; errEl.style.display = 'block'; return; }
+        if (!qty || qty < 1) { errEl.textContent = 'Ingrese una cantidad válida.'; errEl.style.display = 'block'; return; }
+
+        btn.disabled = true; btn.textContent = '⏳ Guardando…';
+        const newAvail = (asset.available ?? 0) + qty;
+        const newTotal = (asset.total ?? 0) + qty;
+
+        const { error } = await supabaseClient.from('assets')
+            .update({ available: newAvail, total: newTotal }).eq('id', id);
+        if (error) {
+            errEl.textContent = 'Error: ' + error.message; errEl.style.display = 'block';
+            btn.disabled = false; btn.textContent = '➕ Confirmar Ingreso'; return;
+        }
+        supabaseClient.from('loans').insert({ asset_id: id, asset_name: asset.name, user_name: currentUser?.name || 'Admin', action: 'add_units', qty, notes: reason || null })
+            .then(({ error: le }) => { if (le) console.warn('loan insert:', le.message); });
+
+        asset.available = newAvail; asset.total = newTotal;
+        renderInventario(); updateInventarioStats();
+        btn.disabled = false; btn.textContent = '➕ Confirmar Ingreso';
+        closeModal('modal-inv-add-units');
+        showToast(`${qty} unidades ingresadas a ${asset.name}.`, 'success');
+    };
+
+    window.invOpenRemoveUnitsModal = (id) => {
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset) return;
+        document.getElementById('inv-rem-asset-id').value       = id;
+        document.getElementById('inv-rem-asset-name').textContent = asset.name;
+        document.getElementById('inv-rem-current').textContent  = asset.available ?? 0;
+        document.getElementById('inv-rem-qty').value            = 1;
+        document.getElementById('inv-rem-qty').max              = asset.available ?? 0;
+        document.getElementById('inv-rem-reason').value         = 'consumo';
+        document.getElementById('inv-rem-notes').value          = '';
+        document.getElementById('inv-rem-error').style.display  = 'none';
+        openModal('modal-inv-remove-units');
+    };
+
+    window.saveInvRemoveUnits = async () => {
+        const id     = document.getElementById('inv-rem-asset-id').value;
+        const qty    = parseInt(document.getElementById('inv-rem-qty').value, 10);
+        const reason = document.getElementById('inv-rem-reason').value;
+        const notes  = document.getElementById('inv-rem-notes').value.trim();
+        const errEl  = document.getElementById('inv-rem-error');
+        const btn    = document.getElementById('inv-rem-btn');
+        errEl.style.display = 'none';
+
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset) { errEl.textContent = 'Activo no encontrado.'; errEl.style.display = 'block'; return; }
+        if (!qty || qty < 1) { errEl.textContent = 'Ingrese una cantidad válida.'; errEl.style.display = 'block'; return; }
+        const avail = asset.available ?? 0;
+        if (qty > avail) { errEl.textContent = `Solo hay ${avail} unidades disponibles.`; errEl.style.display = 'block'; return; }
+
+        btn.disabled = true; btn.textContent = '⏳ Guardando…';
+        const newAvail = avail - qty;
+        const newTotal = Math.max(0, (asset.total ?? 0) - qty);
+        const newStatus = reason === 'daño' || reason === 'baja' ? 'maintenance' : asset.status;
+
+        const { error } = await supabaseClient.from('assets')
+            .update({ available: newAvail, total: newTotal, status: newStatus }).eq('id', id);
+        if (error) {
+            errEl.textContent = 'Error: ' + error.message; errEl.style.display = 'block';
+            btn.disabled = false; btn.textContent = '➖ Confirmar Resta'; return;
+        }
+        supabaseClient.from('loans').insert({ asset_id: id, asset_name: asset.name, user_name: currentUser?.name || 'Admin', action: 'remove_units', qty, condition: reason, notes: notes || null })
+            .then(({ error: le }) => { if (le) console.warn('loan insert:', le.message); });
+
+        asset.available = newAvail; asset.total = newTotal; asset.status = newStatus;
+        renderInventario(); updateInventarioStats();
+        btn.disabled = false; btn.textContent = '➖ Confirmar Resta';
+        closeModal('modal-inv-remove-units');
+        showToast(`${qty} unidades restadas de ${asset.name}.`, 'success');
+    };
+
+    // Registro rápido de NFC desde el resultado del escaneo en inventario
+    window.quickRegisterNFC = async (assetId, uid) => {
+        if (!assetId || !uid) return;
+        const asset = db.assets.find(a => a.id === assetId);
+        if (!asset) return;
+        const { error } = await supabaseClient.from('assets')
+            .update({ nfc_uid: uid, nfc_configured: true }).eq('id', assetId);
+        if (error) { showToast('Error al registrar NFC: ' + error.message, 'error'); return; }
+        asset.nfc_uid = uid; asset.nfc_configured = true;
+        showToast(`Tag NFC registrado al activo ${assetId}.`, 'success');
+        renderInventario();
+        // Actualizar el panel de escaneo para mostrar el estado actualizado
+        handleInvScan(assetId, uid);
     };
 
     // ── NFC en modal Nuevo/Editar Activo ──────────────────────────
@@ -4379,13 +4575,8 @@
             </tr>`).join('');
     }
 
-    window.openNFCRegisterModal = (assetId) => {
+    window.openNFCRegisterModal = (assetId, preloadedUid = null) => {
         // Resetear modal
-        document.getElementById('nfc-reg-scan-status').textContent = 'Presione "Escanear" y acerque el tag NFC.';
-        document.getElementById('nfc-reg-result').style.display = 'none';
-        document.getElementById('nfc-reg-save-btn').style.display = 'none';
-        document.getElementById('nfc-reg-uid').textContent = '—';
-        document.getElementById('nfc-reg-content').textContent = '—';
         document.getElementById('nfc-reg-already-warning').style.display = 'none';
         document.getElementById('nfc-reg-write-tag').checked = true;
         _nfcReader = null;
@@ -4397,12 +4588,26 @@
             .join('');
         document.getElementById('nfc-reg-asset-search').value = '';
 
-        // Preseleccionar activo si se pasó uno
         if (assetId) {
             select.value = assetId;
-            // Forzar visibilidad de esa opción
             const opt = select.querySelector(`option[value="${CSS.escape(assetId)}"]`);
             if (opt) opt.selected = true;
+        }
+
+        // Si viene con UID pre-cargado (desde escaneo en inventario), mostrarlo directamente
+        if (preloadedUid) {
+            document.getElementById('nfc-reg-uid').textContent     = preloadedUid;
+            document.getElementById('nfc-reg-content').textContent = '(desde escaneo)';
+            document.getElementById('nfc-reg-scan-status').innerHTML = `✅ Tag leído: <code>${escapeHTML(preloadedUid)}</code>`;
+            document.getElementById('nfc-reg-result').style.display = 'block';
+            document.getElementById('nfc-reg-save-btn').style.display = 'inline-flex';
+            onNFCTagRead(preloadedUid, '', document.getElementById('nfc-reg-scan-status'));
+        } else {
+            document.getElementById('nfc-reg-scan-status').textContent = 'Presione "Escanear" y acerque el tag NFC.';
+            document.getElementById('nfc-reg-result').style.display = 'none';
+            document.getElementById('nfc-reg-save-btn').style.display = 'none';
+            document.getElementById('nfc-reg-uid').textContent = '—';
+            document.getElementById('nfc-reg-content').textContent = '—';
         }
 
         openModal('modal-nfc-register');
@@ -4767,6 +4972,29 @@
             }
         });
     });
+
+    // ── DB Health Check ───────────────────────────────────────────
+    async function checkDBStatus() {
+        const dot  = document.getElementById('db-status-dot');
+        const text = document.getElementById('db-status-text');
+        if (!dot) return;
+        try {
+            const { error } = await supabaseClient.from('assets').select('id').limit(1);
+            if (error) throw error;
+            dot.style.background  = '#10b981';
+            text.textContent      = 'BD OK';
+            document.getElementById('db-status').title = 'Base de datos conectada';
+        } catch (e) {
+            dot.style.background  = '#ef4444';
+            text.textContent      = 'BD Error';
+            document.getElementById('db-status').title = 'Sin conexión a la base de datos: ' + e.message;
+            showToast('Sin conexión a la base de datos. Verifique su conexión.', 'error');
+        }
+    }
+
+    // Verificar DB al cargar y cada 2 minutos
+    checkDBStatus();
+    setInterval(checkDBStatus, 120000);
 
     checkSession();
 
