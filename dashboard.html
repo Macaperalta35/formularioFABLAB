@@ -5255,6 +5255,131 @@
         });
     });
 
+    // =====================================================
+    //  MOBILE BOTTOM NAVIGATION
+    // =====================================================
+    (function () {
+        // Inject markup
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="mbd-overlay" id="mbd-overlay"></div>
+            <div class="mbd" id="mbd">
+                <div class="mbd-handle"></div>
+                <div class="mbd-user">
+                    <div class="mbd-avatar" id="mbd-avatar">--</div>
+                    <div>
+                        <div class="mbd-user-name" id="mbd-user-name">Cargando...</div>
+                        <div class="mbd-user-role" id="mbd-user-role">—</div>
+                    </div>
+                </div>
+                <div class="mbd-items">
+                    <button class="mbd-item admin-only" data-section="pedido">📋 Pedido Mensual</button>
+                    <button class="mbd-item admin-only" data-section="ayudantes">👥 Ayudantes del Lab</button>
+                    <button class="mbd-item admin-only" data-section="ocupacion">📊 Ocupación del Lab</button>
+                    <button class="mbd-item admin-only" data-section="secciones">🏫 Secciones y Alumnos</button>
+                    <button class="mbd-item" data-section="recordatorios">🔔 Recordatorios</button>
+                    <button class="mbd-item" data-section="impresion3d">🖨️ Cola Impresión 3D</button>
+                    <div class="mbd-divider"></div>
+                    <button class="mbd-item superadmin-only" data-section="usuarios">👤 Gestión de Usuarios</button>
+                    <button class="mbd-item" data-section="accesibilidad">♿ Accesibilidad</button>
+                    <div class="mbd-divider"></div>
+                    <a href="index.html" class="mbd-item">📝 Formulario de Registro</a>
+                    <a href="qr.html" class="mbd-item">📲 Código QR</a>
+                    <a href="https://docs.google.com/spreadsheets/d/1wQmC5H388sfJoZpvT3kj-59BPUyNjK9J4YLW5wiNKo8/edit" target="_blank" class="mbd-item">📊 Google Sheets</a>
+                    <div class="mbd-divider"></div>
+                    <button class="mbd-item mbd-logout" onclick="doLogout()">🚪 Cerrar Sesión</button>
+                </div>
+            </div>
+            <nav class="mbn" id="mbn">
+                <button class="mbn-item active" data-mbn="overview">
+                    <span class="mbn-icon">🏠</span>
+                    <span class="mbn-label">Panel</span>
+                </button>
+                <button class="mbn-item" data-mbn="visitas">
+                    <span class="mbn-icon">📋</span>
+                    <span class="mbn-label">Visitas</span>
+                </button>
+                <button class="mbn-item" data-mbn="inventario">
+                    <span class="mbn-icon">📦</span>
+                    <span class="mbn-label">Inventario</span>
+                </button>
+                <button class="mbn-item admin-only" data-mbn="nfc">
+                    <span class="mbn-icon">📡</span>
+                    <span class="mbn-label">NFC</span>
+                </button>
+                <button class="mbn-item" id="mbn-more">
+                    <span class="mbn-icon">☰</span>
+                    <span class="mbn-label">Más</span>
+                </button>
+            </nav>
+        `);
+
+        const mbn = document.getElementById('mbn');
+        const mbd = document.getElementById('mbd');
+        const mbdOverlay = document.getElementById('mbd-overlay');
+        const mbnMore = document.getElementById('mbn-more');
+
+        function openDrawer() {
+            // Sync user info
+            const nm = document.getElementById('sidebar-user-name');
+            const rl = document.getElementById('sidebar-role-badge');
+            const av = document.getElementById('sidebar-avatar');
+            if (nm) document.getElementById('mbd-user-name').textContent = nm.textContent;
+            if (rl) document.getElementById('mbd-user-role').textContent = rl.textContent;
+            if (av) document.getElementById('mbd-avatar').textContent = av.textContent;
+
+            mbd.classList.add('open');
+            mbdOverlay.classList.add('visible');
+            mbnMore.classList.add('active');
+        }
+
+        function closeDrawer() {
+            mbd.classList.remove('open');
+            mbdOverlay.classList.remove('visible');
+            // Restore active state to current section
+            const active = document.querySelector('.nav-item[data-section].active');
+            if (active) syncMBN(active.dataset.section);
+        }
+
+        function syncMBN(section) {
+            mbn.querySelectorAll('.mbn-item').forEach(i => {
+                i.classList.toggle('active', i.dataset.mbn === section);
+            });
+            // If section not in bottom bar, highlight Más
+            if (!mbn.querySelector(`.mbn-item[data-mbn="${section}"]`)) {
+                mbnMore.classList.add('active');
+            }
+        }
+
+        // Bottom nav clicks
+        mbn.querySelectorAll('[data-mbn]').forEach(item => {
+            item.addEventListener('click', () => {
+                const s = item.dataset.mbn;
+                goToSection(s);
+                mbn.querySelectorAll('.mbn-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+
+        // "Más" button
+        mbnMore.addEventListener('click', openDrawer);
+        mbdOverlay.addEventListener('click', closeDrawer);
+
+        // Drawer section items
+        mbd.querySelectorAll('[data-section]').forEach(item => {
+            item.addEventListener('click', () => {
+                const s = item.dataset.section;
+                closeDrawer();
+                goToSection(s);
+                syncMBN(s);
+            });
+        });
+
+        // Sync bottom nav when sidebar nav is clicked (desktop keeps working)
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => syncMBN(item.dataset.section));
+        });
+    })();
+
     // Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
