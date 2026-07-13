@@ -59,6 +59,7 @@ html {
     font-size: 16px;
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    height: 100%;
 }
 
 body {
@@ -66,7 +67,27 @@ body {
     background: var(--bg-deep);
     color: var(--text-primary);
     min-height: 100vh;
+    min-height: 100dvh;
     overflow-x: hidden;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    /* Safe area insets for notch/punch-hole phones */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+/* Native app feel for all interactive elements */
+button, a, input, select, textarea {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+input, select, textarea {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 
 /* ---------- AMBIENT BACKGROUND ---------- */
@@ -1456,9 +1477,14 @@ body {
 
     .form-input,
     .form-select {
-        font-size: 1rem;
+        font-size: 1rem; /* >= 16px previene zoom automático en iOS */
         padding: 13px 16px;
         min-height: 50px;
+    }
+
+    /* Previene zoom en iOS al enfocar inputs */
+    input, select, textarea {
+        font-size: max(16px, 0.9rem);
     }
 
     .form-label {
@@ -1619,6 +1645,32 @@ body {
 
     .btn-sm {
         min-height: 38px;
+    }
+}
+
+/* ---------- PWA STANDALONE MODE ---------- */
+@media (display-mode: standalone) {
+    /* When opened as installed app, account for status bar */
+    .top-header {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
+        height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+    }
+
+    .sidebar {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    body {
+        /* Remove double padding since header handles it */
+        padding-top: 0;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+}
+
+/* Safe area bottom padding for page content on notch phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .page-content {
+        padding-bottom: max(28px, calc(20px + env(safe-area-inset-bottom)));
     }
 }
 

@@ -1,0 +1,30 @@
+{
+  "name": "FAB LAB INACAP",
+  "short_name": "FAB LAB",
+  "description": "Panel de Administración del FAB LAB INACAP — Gestión de visitas, inventario y laboratorio",
+  "start_url": "./dashboard.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ED1C24",
+  "theme_color": "#ED1C24",
+  "lang": "es",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

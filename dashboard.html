@@ -2,10 +2,21 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Panel de Administración del FAB LAB INACAP - Gestión de visitas, ocupación del laboratorio y secciones de alumnos">
-    <meta name="theme-color" content="#f0f2f5">
+    <meta name="theme-color" content="#ED1C24">
     <title>FAB LAB INACAP — Dashboard</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FAB LAB">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="FAB LAB INACAP">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -5243,6 +5254,11 @@
             if (item.dataset.section === 'ayudantes' && !db.ayudantes.length) loadAyudantes();
         });
     });
+
+    // Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
 
 </script>
 </body>
