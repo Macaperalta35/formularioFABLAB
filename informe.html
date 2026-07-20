@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe de Entrega — Panel FAB LAB INACAP</title>
+<style>
+/* ── Reset ─────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:16px; scroll-behavior:smooth; }
+
+/* ── Tokens ─────────────────────────────────────────── */
+:root {
+  --red:        #ED1C24;
+  --red-dark:   #B01219;
+  --red-soft:   rgba(237,28,36,0.10);
+  --navy:       #0E1624;
+  --navy-mid:   #1C2940;
+  --smoke:      #F7F6F3;
+  --text:       #111827;
+  --text-mid:   #374151;
+  --text-muted: #6B7280;
+  --border:     #E2E1DE;
+  --green:      #059669;
+  --green-soft: rgba(5,150,105,0.10);
+  --blue:       #1D4ED8;
+  --blue-soft:  rgba(29,78,216,0.10);
+  --amber:      #B45309;
+  --amber-soft: rgba(180,83,9,0.10);
+  --surface:    #FFFFFF;
+  --surface-alt:#F0EFEC;
+  --rule:       1px solid var(--border);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --smoke:      #0D1219;
+    --surface:    #141C28;
+    --surface-alt:#1A2436;
+    --text:       #EEEDEa;
+    --text-mid:   #C1BFB8;
+    --text-muted: #7C8A9E;
+    --border:     #243044;
+  }
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--smoke);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ────────────────────────────────────── */
+.t-display {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  line-height: 1.08;
+  font-weight: normal;
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+.t-h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+/* ── Layout ────────────────────────────────────────── */
+.container { max-width:1100px; margin:0 auto; padding:0 clamp(20px,5vw,60px); }
+
+/* ── Cover ─────────────────────────────────────────── */
+.cover {
+  background: var(--navy);
+  color: #fff;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  position: relative;
+  overflow: hidden;
+}
+.cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 80%, rgba(237,28,36,0.18), transparent),
+    radial-gradient(ellipse 50% 50% at 90% 10%, rgba(29,78,216,0.10), transparent);
+  pointer-events: none;
+}
+.cover-top {
+  position: relative; z-index: 1;
+  padding: 36px clamp(24px,5vw,64px);
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.brand-mark { display:flex; align-items:center; gap:10px; }
+.brand-blocks { display:flex; gap:5px; }
+.brand-block-a { width:18px; height:27px; background:var(--red); border-radius:2px; }
+.brand-block-b { width:6px;  height:27px; background:var(--red); border-radius:2px; }
+.brand-text { display:flex; flex-direction:column; }
+.brand-inacap { font-size:1rem; font-weight:800; color:#fff; letter-spacing:0.08em; line-height:1; }
+.brand-sub { font-size:0.68rem; color:rgba(255,255,255,0.55); letter-spacing:0.14em; text-transform:uppercase; margin-top:2px; }
+.cover-badge {
+  font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+  color:rgba(255,255,255,0.45); border:1px solid rgba(255,255,255,0.15);
+  padding:6px 14px; border-radius:50px;
+}
+.cover-body {
+  position:relative; z-index:1;
+  padding: clamp(48px,10vh,100px) clamp(24px,5vw,64px);
+  display:flex; flex-direction:column; justify-content:center; gap:32px;
+}
+.cover-eyebrow {
+  display:flex; align-items:center; gap:12px;
+  font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:0.16em; color:var(--red);
+}
+.cover-eyebrow::before {
+  content:''; display:block; width:32px; height:2px; background:var(--red); flex-shrink:0;
+}
+.cover-headline .t-display { color:#fff; }
+.cover-headline .t-display em { font-style:normal; color:var(--red); }
+.cover-desc { max-width:540px; font-size:1.05rem; color:rgba(255,255,255,0.6); line-height:1.65; }
+.cover-meta { display:flex; flex-wrap:wrap; gap:32px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); }
+.cover-meta-item label { display:block; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:rgba(255,255,255,0.35); margin-bottom:4px; }
+.cover-meta-item span { font-size:0.9rem; color:rgba(255,255,255,0.8); font-weight:500; }
+.cover-bottom {
+  position:relative; z-index:1;
+  padding:28px clamp(24px,5vw,64px);
+  border-top:1px solid rgba(255,255,255,0.08);
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+}
+.cover-bottom-left { font-size:0.75rem; color:rgba(255,255,255,0.3); letter-spacing:0.05em; }
+.cover-bottom-right { font-size:0.75rem; color:rgba(255,255,255,0.3); display:flex; align-items:center; gap:8px; }
+.cover-bottom-right::before { content:''; display:block; width:6px; height:6px; background:var(--red); border-radius:50%; }
+
+/* ── Chapters ──────────────────────────────────────── */
+.chapter { background:var(--navy-mid); color:#fff; padding:48px clamp(24px,5vw,64px); }
+.chapter-inner { max-width:1100px; margin:0 auto; display:flex; align-items:baseline; gap:24px; }
+.chapter-num { font-family:Georgia,serif; font-size:4rem; color:var(--red); line-height:1; font-weight:normal; flex-shrink:0; opacity:0.4; }
+.chapter-eyebrow { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.18em; color:rgba(255,255,255,0.35); margin-bottom:6px; }
+.chapter-title { font-family:Georgia,serif; font-size:clamp(1.4rem,3vw,2rem); font-weight:normal; color:#fff; line-height:1.2; }
+
+/* ── Sections ──────────────────────────────────────── */
+.section { padding:clamp(56px,8vh,96px) 0; background:var(--surface); }
+.section.alt { background:var(--smoke); }
+
+/* ── Summary ───────────────────────────────────────── */
+.summary-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0; border:var(--rule); border-radius:12px; overflow:hidden; background:var(--surface); }
+.summary-card { padding:36px 32px; border-right:var(--rule); position:relative; }
+.summary-card:last-child { border-right:none; }
+.summary-card::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; background:var(--card-accent,var(--red)); }
+.summary-num { font-family:Georgia,serif; font-size:3.2rem; font-weight:normal; line-height:1; color:var(--card-accent,var(--red)); margin-bottom:8px; }
+.summary-label { font-size:0.8rem; font-weight:600; color:var(--text-mid); text-transform:uppercase; letter-spacing:0.08em; }
+.summary-desc { font-size:0.82rem; color:var(--text-muted); margin-top:6px; line-height:1.5; }
+
+/* ── Features ──────────────────────────────────────── */
+.features-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1px; background:var(--border); border:var(--rule); border-radius:12px; overflow:hidden; }
+.feature-card { background:var(--surface); padding:32px 28px; display:flex; flex-direction:column; gap:14px; transition:background 0.15s; }
+.feature-card:hover { background:var(--surface-alt); }
+.feature-icon { font-size:1.6rem; line-height:1; }
+.feature-name { font-size:1.05rem; font-weight:700; color:var(--text); line-height:1.2; }
+.feature-desc { font-size:0.85rem; color:var(--text-muted); line-height:1.6; flex:1; }
+.feature-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+.tag { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:3px 9px; border-radius:50px; background:var(--surface-alt); color:var(--text-muted); border:1px solid var(--border); }
+.tag.red   { background:var(--red-soft);   color:var(--red-dark); border-color:transparent; }
+.tag.green { background:var(--green-soft); color:var(--green);    border-color:transparent; }
+.tag.blue  { background:var(--blue-soft);  color:var(--blue);     border-color:transparent; }
+
+/* ── Stack ─────────────────────────────────────────── */
+.stack-layers { display:flex; flex-direction:column; gap:2px; }
+.stack-layer { display:grid; grid-template-columns:120px 1fr; border-radius:8px; overflow:hidden; min-height:72px; }
+.stack-label { background:var(--navy); color:rgba(255,255,255,0.5); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; display:flex; align-items:center; padding:16px; }
+.stack-items { background:var(--surface-alt); display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:16px 20px; }
+.stack-item { padding:6px 14px; background:var(--surface); border:var(--rule); border-radius:6px; font-size:0.82rem; font-weight:600; color:var(--text); }
+.stack-item.accent       { background:var(--red);   border-color:var(--red);   color:#fff; }
+.stack-item.accent-blue  { background:var(--blue);  border-color:var(--blue);  color:#fff; }
+.stack-item.accent-green { background:var(--green); border-color:var(--green); color:#fff; }
+
+/* ── QA ────────────────────────────────────────────── */
+.qa-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.qa-card { padding:28px; border-radius:10px; background:var(--surface); border:var(--rule); border-left:4px solid var(--card-accent,var(--red)); }
+.qa-title { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--card-accent,var(--red)); margin-bottom:12px; }
+.qa-list { list-style:none; display:flex; flex-direction:column; gap:8px; }
+.qa-list li { font-size:0.85rem; color:var(--text-mid); display:flex; gap:10px; align-items:flex-start; line-height:1.4; }
+.qa-list li::before { content:'→'; color:var(--card-accent,var(--red)); flex-shrink:0; font-weight:700; }
+
+/* ── PWA ───────────────────────────────────────────── */
+.pwa-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; }
+.pwa-card { background:var(--surface-alt); border-radius:10px; padding:28px 24px; display:flex; flex-direction:column; gap:12px; }
+.pwa-icon { font-size:2rem; line-height:1; }
+.pwa-title { font-size:0.95rem; font-weight:700; color:var(--text); }
+.pwa-desc { font-size:0.82rem; color:var(--text-muted); line-height:1.55; }
+
+/* ── Deliverables ──────────────────────────────────── */
+.deliverable-list { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border:var(--rule); border-radius:10px; overflow:hidden; }
+.deliverable-item { background:var(--surface); padding:24px 28px; display:flex; gap:16px; align-items:flex-start; }
+.deliverable-check { width:22px; height:22px; background:var(--green); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#fff; font-size:0.65rem; font-weight:900; margin-top:2px; }
+.deliverable-name { font-size:0.9rem; font-weight:600; color:var(--text); margin-bottom:3px; }
+.deliverable-detail { font-size:0.78rem; color:var(--text-muted); }
+
+/* ── Next Steps ────────────────────────────────────── */
+.steps-list { display:flex; flex-direction:column; border:var(--rule); border-radius:10px; overflow:hidden; }
+.step-item { display:grid; grid-template-columns:48px 1fr auto; gap:20px; align-items:center; padding:20px 24px; background:var(--surface); border-bottom:var(--rule); }
+.step-item:last-child { border-bottom:none; }
+.step-num { font-family:Georgia,serif; font-size:1.6rem; color:var(--border); font-weight:normal; text-align:right; line-height:1; }
+.step-title { font-size:0.92rem; font-weight:700; color:var(--text); margin-bottom:3px; }
+.step-desc { font-size:0.8rem; color:var(--text-muted); }
+.priority-badge { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; padding:4px 10px; border-radius:50px; white-space:nowrap; }
+.priority-badge.alta  { background:var(--red-soft);   color:var(--red-dark); }
+.priority-badge.media { background:var(--amber-soft); color:var(--amber); }
+.priority-badge.baja  { background:var(--blue-soft);  color:var(--blue); }
+
+/* ── Closing ───────────────────────────────────────── */
+.closing { background:var(--navy); padding:80px clamp(24px,5vw,64px); text-align:center; color:rgba(255,255,255,0.7); }
+.closing-logo { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:32px; }
+.closing-title { font-family:Georgia,serif; font-size:clamp(1.4rem,3vw,2rem); color:#fff; font-weight:normal; margin-bottom:16px; }
+.closing-divider { width:48px; height:3px; background:var(--red); margin:24px auto; }
+.closing-details { display:flex; justify-content:center; flex-wrap:wrap; gap:40px; margin-top:48px; padding-top:48px; border-top:1px solid rgba(255,255,255,0.08); }
+.closing-detail label { display:block; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.14em; color:rgba(255,255,255,0.3); margin-bottom:4px; }
+.closing-detail span { font-size:0.88rem; color:rgba(255,255,255,0.7); }
+
+/* ── Two-col layout ────────────────────────────────── */
+.content-row { display:grid; grid-template-columns:2fr 1fr; gap:64px; align-items:start; }
+.section-intro { font-size:1.1rem; color:var(--text-mid); line-height:1.75; max-width:64ch; }
+.aside-box { background:var(--surface-alt); border-radius:10px; padding:24px; border:var(--rule); }
+.aside-label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:var(--text-muted); margin-bottom:12px; }
+.aside-list { list-style:none; display:flex; flex-direction:column; gap:7px; }
+.aside-list li { font-size:0.82rem; color:var(--text-mid); display:flex; gap:8px; }
+.aside-list li::before { content:'·'; color:var(--red); font-weight:900; }
+
+/* ── Section headers ───────────────────────────────── */
+.section-header { margin-bottom:40px; }
+.section-header-rule { display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+.section-header-rule::before { content:''; display:block; width:4px; height:36px; background:var(--red); border-radius:2px; flex-shrink:0; }
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 860px) {
+  .summary-grid { grid-template-columns:1fr 1fr; }
+  .summary-card { border-bottom:var(--rule); }
+  .content-row { grid-template-columns:1fr; gap:32px; }
+  .qa-grid { grid-template-columns:1fr; }
+  .pwa-grid { grid-template-columns:1fr 1fr; }
+  .deliverable-list { grid-template-columns:1fr; }
+}
+@media (max-width: 560px) {
+  .summary-grid { grid-template-columns:1fr; }
+  .pwa-grid { grid-template-columns:1fr; }
+  .stack-layer { grid-template-columns:80px 1fr; }
+  .chapter-num { font-size:2.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="cover">
+  <div class="cover-top">
+    <div class="brand-mark">
+      <div class="brand-blocks">
+        <div class="brand-block-a"></div>
+        <div class="brand-block-b"></div>
+      </div>
+      <div class="brand-text">
+        <span class="brand-inacap">INACAP</span>
+        <span class="brand-sub">Sede San Pedro de la Paz</span>
+      </div>
+    </div>
+    <span class="cover-badge">Informe de Entrega v1.0</span>
+  </div>
+
+  <div class="cover-body">
+    <div class="cover-eyebrow">Proyecto de Desarrollo · Julio 2026</div>
+    <div class="cover-headline">
+      <h1 class="t-display">Panel de Administración<br><em>FAB LAB</em></h1>
+    </div>
+    <p class="cover-desc">
+      Sistema web integral para la gestión del laboratorio de fabricación digital: visitas, inventario, activos NFC, impresión 3D, ayudantes y usuarios — desplegado como Progressive Web App.
+    </p>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <label>Cliente</label>
+        <span>FAB LAB INACAP — San Pedro de la Paz</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Tipo de entrega</label>
+        <span>Sistema web + PWA + Documentación</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Estado</label>
+        <span>✓ Producción</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Fecha</label>
+        <span>Julio 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-bottom">
+    <span class="cover-bottom-left">Confidencial · Uso interno FAB LAB INACAP</span>
+    <span class="cover-bottom-right">Documento generado para entrega formal del proyecto</span>
+  </div>
+</div>
+
+<!-- CAP. 1 -->
+<div class="chapter">
+  <div class="chapter-inner">
+    <div class="chapter-num">1</div>
+    <div>
+      <div class="chapter-eyebrow">Capítulo uno</div>
+      <div class="chapter-title">Resumen Ejecutivo</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <div class="content-row" style="margin-bottom:56px">
+      <div>
+        <p class="section-intro">
+          Se desarrolló desde cero un panel de administración completo para el FAB LAB INACAP, reemplazando procesos manuales dispersos por un sistema centralizado, accesible desde cualquier dispositivo y con capacidad de instalación como aplicación nativa.
+        </p>
+        <p class="section-intro" style="margin-top:20px">
+          El sistema integra Google Sheets (registro de visitas), Supabase (base de datos en tiempo real), tecnología NFC (identificación de activos físicos) y un diseño mobile-first que permite operar el laboratorio desde el celular como si fuera una app nativa.
+        </p>
+      </div>
+      <div>
+        <div class="aside-box">
+          <div class="aside-label">Tecnologías principales</div>
+          <ul class="aside-list">
+            <li>Supabase — base de datos y autenticación</li>
+            <li>Google Apps Script — integración Sheets</li>
+            <li>Web NFC API — escaneo de tags físicos</li>
+            <li>Netlify — hospedaje y funciones serverless</li>
+            <li>PWA — instalable como app nativa</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card" style="--card-accent:var(--red)">
+        <div class="summary-num">8</div>
+        <div class="summary-label">Módulos funcionales</div>
+        <div class="summary-desc">Desde el panel general hasta gestión NFC y ayudantes del lab</div>
+      </div>
+      <div class="summary-card" style="--card-accent:var(--green)">
+        <div class="summary-num">15</div>
+        <div class="summary-label">Bugs corregidos en QA</div>
+        <div class="summary-desc">Revisión exhaustiva con múltiples agentes antes de entrega</div>
+      </div>
+      <div class="summary-card" style="--card-accent:var(--blue)">
+        <div class="summary-num">3</div>
+        <div class="summary-label">Niveles de acceso</div>
+        <div class="summary-desc">Superadmin, Administrador y Operador con control granular</div>
+      </div>
+      <div class="summary-card" style="--card-accent:var(--amber)">
+        <div class="summary-num">100%</div>
+        <div class="summary-label">Instalable como app</div>
+        <div class="summary-desc">PWA con ícono, modo standalone y caché offline en Android e iOS</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CAP. 2 -->
+<div class="chapter">
+  <div class="chapter-inner">
+    <div class="chapter-num">2</div>
+    <div>
+      <div class="chapter-eyebrow">Capítulo dos</div>
+      <div class="chapter-title">Módulos Desarrollados</div>
+    </div>
+  </div>
+</div>
+
+<div class="section alt">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-header-rule">
+        <div>
+          <div class="t-h2" style="margin-bottom:6px">Funcionalidades entregadas</div>
+          <p style="font-size:0.9rem;color:var(--text-muted);max-width:55ch">Cada módulo fue construido, probado y refinado de forma iterativa, incorporando feedback del equipo del laboratorio.</p>
+        </div>
+      </div>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-name">Panel General</div>
+        <div class="feature-desc">Vista centralizada con estadísticas en tiempo real: visitas totales, activos disponibles, ocupación del día, recordatorios pendientes y actividad reciente.</div>
+        <div class="feature-tags"><span class="tag green">Tiempo real</span><span class="tag">Supabase</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <div class="feature-name">Gestión de Visitas</div>
+        <div class="feature-desc">Registro, edición y búsqueda de visitas sincronizado bidireccionalmente con Google Sheets. Exportación a Excel y PDF. Formulario público accesible por QR.</div>
+        <div class="feature-tags"><span class="tag red">Google Sheets</span><span class="tag">QR</span><span class="tag">PDF / Excel</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <div class="feature-name">Inventario de Activos</div>
+        <div class="feature-desc">Control completo de equipos: stock disponible, prestados y en mantenimiento. Préstamo, devolución y ajuste de unidades con historial de movimientos.</div>
+        <div class="feature-tags"><span class="tag green">Stock en vivo</span><span class="tag">Historial</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📡</div>
+        <div class="feature-name">Gestión NFC</div>
+        <div class="feature-desc">Registro de tags NFC y asociación a activos físicos. Al escanear un tag: ingreso/resta de unidades, préstamo, devolución, configuración y edición del activo — todo desde el celular.</div>
+        <div class="feature-tags"><span class="tag red">NFC</span><span class="tag blue">Web NFC API</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖨️</div>
+        <div class="feature-name">Cola de Impresión 3D</div>
+        <div class="feature-desc">Gestión de trabajos de impresión con estados (pendiente, imprimiendo, listo, cancelado), asignación de prioridad y exportación del historial.</div>
+        <div class="feature-tags"><span class="tag">Estados</span><span class="tag">Cola ordenada</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <div class="feature-name">Ayudantes del Lab</div>
+        <div class="feature-desc">Perfiles completos de ayudantes: foto, currículum, habilidades, tipo (voluntario/pagado), horario semanal interactivo y estado activo/inactivo.</div>
+        <div class="feature-tags"><span class="tag green">Perfiles</span><span class="tag">Horario</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏫</div>
+        <div class="feature-name">Ocupación y Secciones</div>
+        <div class="feature-desc">Registro de ocupación del laboratorio por día y hora. Gestión de secciones de alumnos y docentes con capacidad y observaciones.</div>
+        <div class="feature-tags"><span class="tag">Calendario</span><span class="tag">Secciones</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <div class="feature-name">Sistema de Usuarios</div>
+        <div class="feature-desc">Autenticación segura con Supabase Auth. Tres roles: Superadmin, Administrador y Operador. Row Level Security en base de datos. Alta y baja de usuarios.</div>
+        <div class="feature-tags"><span class="tag red">Seguridad</span><span class="tag blue">RLS</span><span class="tag">Auth</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CAP. 3 -->
+<div class="chapter">
+  <div class="chapter-inner">
+    <div class="chapter-num">3</div>
+    <div>
+      <div class="chapter-eyebrow">Capítulo tres</div>
+      <div class="chapter-title">Arquitectura Técnica</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-header-rule">
+        <div>
+          <div class="t-h2" style="margin-bottom:6px">Stack tecnológico</div>
+          <p style="font-size:0.9rem;color:var(--text-muted)">Arquitectura sin servidor — escalable, de bajo costo operativo y fácil de mantener.</p>
+        </div>
+      </div>
+    </div>
+    <div class="stack-layers">
+      <div class="stack-layer">
+        <div class="stack-label">Interfaz</div>
+        <div class="stack-items">
+          <span class="stack-item accent">HTML5 + CSS3</span>
+          <span class="stack-item accent">JavaScript ES2022</span>
+          <span class="stack-item">Sin frameworks</span>
+          <span class="stack-item">SheetJS · jsPDF</span>
+          <span class="stack-item">Web NFC API</span>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-label">PWA</div>
+        <div class="stack-items">
+          <span class="stack-item accent-blue">Web App Manifest</span>
+          <span class="stack-item accent-blue">Service Worker</span>
+          <span class="stack-item">Cache offline</span>
+          <span class="stack-item">Icono nativo</span>
+          <span class="stack-item">viewport-fit=cover</span>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-label">Backend</div>
+        <div class="stack-items">
+          <span class="stack-item accent-green">Supabase Auth</span>
+          <span class="stack-item accent-green">PostgreSQL + RLS</span>
+          <span class="stack-item">Google Apps Script</span>
+          <span class="stack-item">Netlify Functions</span>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-label">Deploy</div>
+        <div class="stack-items">
+          <span class="stack-item">Netlify CDN</span>
+          <span class="stack-item">GitHub (control de versiones)</span>
+          <span class="stack-item">Google Sheets (visitas)</span>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-label">Seguridad</div>
+        <div class="stack-items">
+          <span class="stack-item accent">Row Level Security</span>
+          <span class="stack-item">escapeHTML XSS</span>
+          <span class="stack-item">HTTPS forzado</span>
+          <span class="stack-item">Roles granulares</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CAP. 4 -->
+<div class="chapter">
+  <div class="chapter-inner">
+    <div class="chapter-num">4</div>
+    <div>
+      <div class="chapter-eyebrow">Capítulo cuatro</div>
+      <div class="chapter-title">Calidad y Pruebas</div>
+    </div>
+  </div>
+</div>
+
+<div class="section alt">
+  <div class="container">
+    <div class="content-row" style="margin-bottom:48px">
+      <div>
+        <div class="section-header">
+          <div class="section-header-rule">
+            <div><div class="t-h2" style="margin-bottom:6px">Revisión exhaustiva pre-entrega</div></div>
+          </div>
+        </div>
+        <p class="section-intro">
+          Antes de la entrega se realizó una revisión de código a máximo esfuerzo con 5 agentes de análisis independientes ejecutados en paralelo, cubriendo 10 ángulos distintos: seguridad XSS, validación de datos, condiciones de carrera, patrones peligrosos de JavaScript y eficiencia.
+        </p>
+      </div>
+      <div>
+        <div class="aside-box">
+          <div class="aside-label">Resultado del QA</div>
+          <ul class="aside-list">
+            <li>15 bugs identificados y corregidos</li>
+            <li>4 vulnerabilidades XSS eliminadas</li>
+            <li>6 errores de lógica de negocio</li>
+            <li>5 mejoras de robustez aplicadas</li>
+            <li>0 bugs críticos en producción</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="qa-grid">
+      <div class="qa-card" style="--card-accent:var(--red)">
+        <div class="qa-title">Seguridad — XSS (4 fixes)</div>
+        <ul class="qa-list">
+          <li>Toasts: mensajes de error escapados con escapeHTML()</li>
+          <li>Inventario: URLs de imagen en atributos src escapadas</li>
+          <li>Ayudantes: fecha_ingreso sin escapar en modal de perfil</li>
+          <li>escapeHTML incluye comilla simple para atributos onclick</li>
+        </ul>
+      </div>
+      <div class="qa-card" style="--card-accent:var(--amber)">
+        <div class="qa-title">Lógica de negocio (6 fixes)</div>
+        <ul class="qa-list">
+          <li>Devolución: NaN pasaba validación qty y corrompía stock</li>
+          <li>Préstamo: campo vacío enviaba null zeroeando el stock</li>
+          <li>NFC modal: AbortController anterior no se abortaba al re-escanear</li>
+          <li>checkSession: error de BD causaba cierre de sesión sin aviso</li>
+          <li>doLogout: try/finally garantiza reload aunque signOut falle</li>
+          <li>saveNFCRegistration: retorno silencioso cuando activo no existe</li>
+        </ul>
+      </div>
+      <div class="qa-card" style="--card-accent:var(--blue)">
+        <div class="qa-title">Robustez del sistema (5 fixes)</div>
+        <ul class="qa-list">
+          <li>checkDBStatus movido a post-login (evita falso error al ingresar)</li>
+          <li>db.ayudantes declarado en objeto inicial (no parcheado a posteriori)</li>
+          <li>parseInt con radix 10 en 6 funciones (previene error octal)</li>
+          <li>updateNFCStats con null-guards en elementos del DOM</li>
+          <li>@keyframes slideUp movido fuera del @media query</li>
+        </ul>
+      </div>
+      <div class="qa-card" style="--card-accent:var(--green)">
+        <div class="qa-title">Buenas prácticas aplicadas</div>
+        <ul class="qa-list">
+          <li>Todos los parseInt con radix explícito</li>
+          <li>Feedback visible al usuario en todos los flujos de error</li>
+          <li>Service Worker registra advertencias en consola</li>
+          <li>Validación de cantidad en préstamos con guard !qty</li>
+          <li>Estructura del objeto db declarada completamente al inicio</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CAP. 5 -->
+<div class="chapter">
+  <div class="chapter-inner">
+    <div class="chapter-num">5</div>
+    <div>
+      <div class="chapter-eyebrow">Capítulo cinco</div>
+      <div class="chapter-title">Experiencia Móvil y PWA</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-header-rule">
+        <div>
+          <div class="t-h2" style="margin-bottom:6px">Diseño tipo aplicación nativa</div>
+          <p style="font-size:0.9rem;color:var(--text-muted);max-width:60ch">El panel se comporta como una app nativa en dispositivos móviles, eliminando la fricción del navegador web.</p>
+        </div>
+      </div>
+    </div>
+    <div class="pwa-grid">
+      <div class="pwa-card">
+        <div class="pwa-icon">📱</div>
+        <div class="pwa-title">Barra de navegación inferior</div>
+        <div class="pwa-desc">Panel, Visitas, Inventario, NFC y Más — como WhatsApp o Instagram. El menú hamburguesa desaparece en móvil; todo accesible con el pulgar.</div>
+      </div>
+      <div class="pwa-card">
+        <div class="pwa-icon">⬆️</div>
+        <div class="pwa-title">Drawer "Más" tipo sheet</div>
+        <div class="pwa-desc">Se desliza desde abajo mostrando usuario, rol y acceso a todas las secciones secundarias. Animación nativa slide-up.</div>
+      </div>
+      <div class="pwa-card">
+        <div class="pwa-icon">🗂️</div>
+        <div class="pwa-title">Modales como bottom sheets</div>
+        <div class="pwa-desc">Todos los modales abren desde la parte inferior con bordes redondeados y handle bar — patrón estándar de iOS y Android.</div>
+      </div>
+      <div class="pwa-card">
+        <div class="pwa-icon">🏠</div>
+        <div class="pwa-title">Instalable en pantalla de inicio</div>
+        <div class="pwa-desc">Android: Chrome → "Agregar a pantalla de inicio". iOS: Safari → Compartir → "Agregar al inicio". Aparece con ícono y nombre propio.</div>
+      </div>
+      <div class="pwa-card">
+        <div class="pwa-icon">📵</div>
+        <div class="pwa-title">Funciona sin conexión</div>
+        <div class="pwa-desc">Service Worker cachea HTML y CSS. La interfaz carga incluso sin internet; los datos requieren conexión para sincronizarse con Supabase.</div>
+      </div>
+      <div class="pwa-card">
+        <div class="pwa-icon">⚡</div>
+        <div class="pwa-title">Optimizada para tacto</div>
+        <div class="pwa-desc">Botones de mínimo 48px, sin delay táctil, sin highlight azul en toque, inputs que no hacen zoom en iOS. Área segura en notch/punch-hole.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CAP. 6 -->
+<div class="chapter">
+  <div class="chapter-inner">
+    <div class="chapter-num">6</div>
+    <div>
+      <div class="chapter-eyebrow">Capítulo seis</div>
+      <div class="chapter-title">Entregables del Proyecto</div>
+    </div>
+  </div>
+</div>
+
+<div class="section alt">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-header-rule">
+        <div><div class="t-h2" style="margin-bottom:6px">Qué se entrega</div></div>
+      </div>
+    </div>
+    <div class="deliverable-list">
+      <div class="deliverable-item">
+        <div class="deliverable-check">✓</div>
+        <div>
+          <div class="deliverable-name">Panel de administración (dashboard.html)</div>
+          <div class="deliverable-detail">Aplicación completa con todos los módulos, estilos y lógica de negocio</div>
+        </div>
+      </div>
+      <div class="deliverable-item">
+        <div class="deliverable-check">✓</div>
+        <div>
+          <div class="deliverable-name">Formulario público de visitas (index.html)</div>
+          <div class="deliverable-detail">Formulario accesible por QR para registro de visitantes</div>
+        </div>
+      </div>
+      <div class="deliverable-item">
+        <div class="deliverable-check">✓</div>
+        <div>
+          <div class="deliverable-name">Configuración PWA (manifest.json + sw.js)</div>
+          <div class="deliverable-detail">Permite instalar el panel como app nativa en cualquier dispositivo</div>
+        </div>
+      </div>
+      <div class="deliverable-item">
+        <div class="deliverable-check">✓</div>
+        <div>
+          <div class="deliverable-name">Hoja de Google Sheets integrada</div>
+          <div class="deliverable-detail">Base de datos de visitas con conexión bidireccional vía Apps Script</div>
+        </div>
+      </div>
+      <div class="deliverable-item">
+        <div class="deliverable-check">✓</div>
+        <div>
+          <div class="deliverable-name">Base de datos Supabase configurada</div>
+          <div class="deliverable-detail">Tablas assets, users, loans, ayudantes con RLS y políticas de seguridad</div>
+        </div>
+      </div>
+      <div class="deliverable-item">
+        <div class="deliverable-check">✓</div>
+        <div>
+          <div class="deliverable-name">Deploy en Netlify</div>
+          <div class="deliverable-detail">Hosting con HTTPS, funciones serverless y headers de caché configurados</div>
+        </div>
+      </div>
+      <div class="deliverable-item">
+        <div class="deliverable-check">✓</div>
+        <div>
+          <div class="deliverable-name">Repositorio Git con historial</div>
+          <div class="deliverable-detail">Todo el código versionado con commits descriptivos en español</div>
+        </div>
+      </div>
+      <div class="deliverable-item">
+        <div class="deliverable-check">✓</div>
+        <div>
+          <div class="deliverable-name">Informe de entrega (informe.html)</div>
+          <div class="deliverable-detail">Detalle de todos los módulos, bugs corregidos y decisiones técnicas</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CAP. 7 -->
+<div class="chapter">
+  <div class="chapter-inner">
+    <div class="chapter-num">7</div>
+    <div>
+      <div class="chapter-eyebrow">Capítulo siete</div>
+      <div class="chapter-title">Próximos Pasos Sugeridos</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-header-rule">
+        <div>
+          <div class="t-h2" style="margin-bottom:6px">Hoja de ruta recomendada</div>
+          <p style="font-size:0.9rem;color:var(--text-muted)">Mejoras opcionales para una segunda fase del proyecto.</p>
+        </div>
+      </div>
+    </div>
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Íconos PNG para PWA (192×192 y 512×512)</div>
+          <div class="step-desc">Los íconos SVG no son soportados en todos los navegadores. Generar PNGs mejora la compatibilidad en iOS Safari y launchers de Android.</div>
+        </div>
+        <span class="priority-badge alta">Alta</span>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Notificaciones push para recordatorios</div>
+          <div class="step-desc">Usar la Push API del Service Worker para enviar alertas al dispositivo del encargado, incluso con el browser cerrado.</div>
+        </div>
+        <span class="priority-badge media">Media</span>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Vista de tarjetas en inventario para móvil</div>
+          <div class="step-desc">Transformar la tabla de activos en cards apiladas en mobile para una experiencia aún más nativa al gestionar el inventario desde el celular.</div>
+        </div>
+        <span class="priority-badge media">Media</span>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">Sincronización offline completa</div>
+          <div class="step-desc">Implementar una cola de operaciones locales (IndexedDB) que se sincronice con Supabase al recuperar conexión.</div>
+        </div>
+        <span class="priority-badge baja">Baja</span>
+      </div>
+      <div class="step-item">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-title">App móvil nativa con Capacitor</div>
+          <div class="step-desc">Envolver el panel como app nativa Android/iOS usando Capacitor, habilitando distribución por las tiendas de apps.</div>
+        </div>
+        <span class="priority-badge baja">Baja</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CIERRE -->
+<div class="closing">
+  <div class="closing-logo">
+    <div class="brand-blocks">
+      <div class="brand-block-a" style="opacity:0.5"></div>
+      <div class="brand-block-b" style="opacity:0.5"></div>
+    </div>
+  </div>
+  <h2 class="closing-title">Panel FAB LAB INACAP</h2>
+  <p style="font-size:0.95rem;max-width:500px;margin:0 auto;line-height:1.7">
+    Sistema entregado en producción, probado, documentado y listo para operar. Diseñado para crecer junto con el laboratorio.
+  </p>
+  <div class="closing-divider"></div>
+  <p style="font-size:0.82rem">Para consultas sobre el sistema, credenciales o configuración adicional, contactar al equipo de desarrollo.</p>
+  <div class="closing-details">
+    <div class="closing-detail">
+      <label>Proyecto</label>
+      <span>Panel de Administración FAB LAB</span>
+    </div>
+    <div class="closing-detail">
+      <label>Institución</label>
+      <span>INACAP — Sede San Pedro de la Paz</span>
+    </div>
+    <div class="closing-detail">
+      <label>Fecha de entrega</label>
+      <span>Julio 2026</span>
+    </div>
+    <div class="closing-detail">
+      <label>Versión</label>
+      <span>1.0 — Producción</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
