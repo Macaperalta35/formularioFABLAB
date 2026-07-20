@@ -1,0 +1,12 @@
+{
+  "appId": "cl.inacap.fablab",
+  "appName": "FAB LAB INACAP",
+  "webDir": ".",
+  "server": {
+    "url": "https://macaperalta35.github.io/formularioFABLAB/dashboard.html",
+    "cleartext": false
+  },
+  "android": {
+    "backgroundColor": "#0E1624"
+  }
+}

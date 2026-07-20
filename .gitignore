@@ -1,3 +1,8 @@
+# Capacitor / Node
+node_modules/
+android/
+ios/
+
 # Archivos de base de datos
 *.db
 *.sqlite
