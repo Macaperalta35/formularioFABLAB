@@ -1901,7 +1901,8 @@
         secciones: [],
         assets: [],
         recordatorios: [],
-        impresiones: []
+        impresiones: [],
+        ayudantes: []
     };
 
     function generateId() {
@@ -1989,11 +1990,18 @@
     async function checkSession() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) { showLogin(); return; }
-        const { data: rows } = await supabaseClient
+        const { data: rows, error: profileError } = await supabaseClient
             .from('users')
             .select('id, name, email, role, active')
             .eq('email', session.user.email)
             .limit(1);
+        if (profileError) {
+            console.error('Error al cargar perfil:', profileError.message);
+            showToast('Error al conectar con la base de datos. Intente de nuevo.', 'error');
+            await supabaseClient.auth.signOut();
+            showLogin();
+            return;
+        }
         const profile = rows?.[0];
         if (profile && profile.active) {
             currentUser = { id: profile.id, name: profile.name, email: profile.email, role: profile.role };
@@ -2012,6 +2020,7 @@
         document.getElementById('login-overlay').classList.add('hidden');
         applyRoleUI();
         initDashboard();
+        checkDBStatus();
     }
 
     function applyRoleUI() {
@@ -2078,8 +2087,7 @@
     async function doLogout() {
         currentUser = null;
         localStorage.removeItem('fablab_session');
-        await supabaseClient.auth.signOut();
-        location.reload();
+        try { await supabaseClient.auth.signOut(); } finally { location.reload(); }
     }
 
     // ===========================
@@ -2274,7 +2282,7 @@
         toast.className = `toast ${type}`;
         toast.innerHTML = `
             <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
-            <span>${message}</span>
+            <span>${escapeHTML(String(message))}</span>
             <button class="toast-dismiss" onclick="this.parentElement.remove()">&times;</button>
         `;
         container.appendChild(toast);
@@ -2997,7 +3005,7 @@
     }
 
     async function saveEditVisita() {
-        const rowIndex = parseInt(document.getElementById('edit-visita-row').value);
+        const rowIndex = parseInt(document.getElementById('edit-visita-row').value, 10);
         const nombre = document.getElementById('edit-nombre').value.trim();
         const rut = document.getElementById('edit-rut').value.trim();
         const tipo = document.getElementById('edit-tipo').value;
@@ -3194,7 +3202,12 @@
     }
     function escapeHTML(str) {
         if (!str) return '';
-        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     function driveDownloadUrl(viewUrl) {
@@ -3239,7 +3252,7 @@
         const nuevaOcu = {
             id: generateId(),
             nombre, tipo, docente, asignatura, fecha, horaInicio, horaFin,
-            capacidad: capacidad ? parseInt(capacidad) : null,
+            capacidad: capacidad ? parseInt(capacidad, 10) : null,
             observaciones
         };
 
@@ -3883,7 +3896,7 @@
                     <td><code style="font-size:0.78rem;">${escapeHTML(a.id)}</code>${(a.nfc_configured || a.nfc_uid) ? ` <span title="NFC configurado${a.nfc_uid ? ': ' + a.nfc_uid : ''}" style="font-size:0.75rem;">📡</span>` : ''}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:0.5rem;">
-                            ${a.image ? `<img src="${a.image}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" title="${escapeHTML(a.name)}">` : ''}
+                            ${a.image ? `<img src="${escapeHTML(a.image)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" title="${escapeHTML(a.name)}">` : ''}
                             <strong>${escapeHTML(a.name)}</strong>
                         </div>
                     </td>
@@ -4035,7 +4048,7 @@
         document.getElementById('inv-asset-image').value    = asset?.image       || '';
         document.getElementById('inv-asset-image-file').value = '';
         const preview = document.getElementById('inv-image-preview');
-        preview.innerHTML = asset?.image ? `<img src="${asset.image}" style="max-height:100px;border-radius:6px;">` : '';
+        preview.innerHTML = asset?.image ? `<img src="${escapeHTML(asset.image)}" style="max-height:100px;border-radius:6px;">` : '';
         // Resetear panel NFC
         document.getElementById('inv-modal-nfc-uid').value = asset?.nfc_uid || '';
         document.getElementById('inv-modal-nfc-panel').style.display = 'none';
@@ -4064,9 +4077,9 @@
             owner:       document.getElementById('inv-asset-owner').value,
             status:      document.getElementById('inv-asset-status').value,
             location:    document.getElementById('inv-asset-location').value.trim() || 'FabLab',
-            total:       parseInt(document.getElementById('inv-asset-total').value)    || 0,
-            available:   parseInt(document.getElementById('inv-asset-avail').value)    || 0,
-            borrowed:    parseInt(document.getElementById('inv-asset-borrowed').value) || 0,
+            total:       parseInt(document.getElementById('inv-asset-total').value, 10)    || 0,
+            available:   parseInt(document.getElementById('inv-asset-avail').value, 10)    || 0,
+            borrowed:    parseInt(document.getElementById('inv-asset-borrowed').value, 10) || 0,
             image:       document.getElementById('inv-asset-image').value || null,
             ...(nfcUid ? { nfc_uid: nfcUid, nfc_configured: true } : {})
         };
@@ -4091,6 +4104,7 @@
                 showToast(`Tag NFC grabado con código ${nfc}.`, 'success');
             } catch (e) {
                 console.warn('No se pudo grabar en el tag:', e.message);
+                showToast('Activo guardado, pero no se pudo grabar el tag NFC físico: ' + e.message, 'error');
             }
         }
 
@@ -4140,10 +4154,11 @@
 
     async function saveInvLoan() {
         const id   = document.getElementById('inv-loan-asset-id').value;
-        const qty  = parseInt(document.getElementById('inv-loan-qty').value);
+        const qty  = parseInt(document.getElementById('inv-loan-qty').value, 10);
         const name = document.getElementById('inv-loan-borrower-name').value.trim();
         const rut  = document.getElementById('inv-loan-borrower-rut').value.trim();
         if (!name) { showToast('El nombre del solicitante es obligatorio.', 'error'); return; }
+        if (!qty || qty < 1) { showToast('Ingrese una cantidad válida.', 'error'); return; }
 
         const asset = db.assets.find(a => a.id === id);
         if (!asset || asset.available < qty) { showToast('Stock insuficiente.', 'error'); return; }
@@ -4193,7 +4208,7 @@
         if (!asset) { showErr('No se encontró el activo.'); return; }
 
         const borrowed = asset.borrowed ?? 0;
-        if (qty < 1 || qty > borrowed) { showErr(`Cantidad inválida. Prestados: ${borrowed}.`); return; }
+        if (!qty || qty < 1 || qty > borrowed) { showErr(`Cantidad inválida. Prestados: ${borrowed}.`); return; }
 
         btn.disabled = true;
         btn.textContent = '⏳ Guardando…';
@@ -4510,6 +4525,7 @@
             return;
         }
         try {
+            _invModalNFCAbort?.abort();
             _invModalNFCAbort = new AbortController();
             const ndef = new NDEFReader();
             await ndef.scan({ signal: _invModalNFCAbort.signal });
@@ -4546,9 +4562,12 @@
     function updateNFCStats() {
         const total = db.assets.length;
         const con   = db.assets.filter(a => a.nfc_uid).length;
-        document.getElementById('nfc-stat-total').textContent = total;
-        document.getElementById('nfc-stat-con').textContent   = con;
-        document.getElementById('nfc-stat-sin').textContent   = total - con;
+        const elTotal = document.getElementById('nfc-stat-total');
+        const elCon   = document.getElementById('nfc-stat-con');
+        const elSin   = document.getElementById('nfc-stat-sin');
+        if (elTotal) elTotal.textContent = total;
+        if (elCon)   elCon.textContent   = con;
+        if (elSin)   elSin.textContent   = total - con;
     }
 
     function renderNFCTable() {
@@ -4697,7 +4716,7 @@
         if (!assetId)             { showToast('Seleccione un activo.', 'error'); return; }
 
         const asset = db.assets.find(a => a.id === assetId);
-        if (!asset) return;
+        if (!asset) { showToast('Activo no encontrado. Recargue el inventario.', 'error'); return; }
 
         // Si había otro activo con este UID, quitárselo (incluyendo nfc_configured)
         const prev = db.assets.find(a => a.nfc_uid === uid && a.id !== assetId);
@@ -4801,7 +4820,7 @@
 
     function savePedidoItem() {
         const nombre   = document.getElementById('ped-item-nombre').value.trim();
-        const cantidad = parseInt(document.getElementById('ped-item-cantidad').value) || 1;
+        const cantidad = parseInt(document.getElementById('ped-item-cantidad').value, 10) || 1;
         if (!nombre) { showToast('El nombre del artículo es obligatorio', 'error'); return; }
 
         const item = {
@@ -4813,7 +4832,7 @@
 
         const idxVal = document.getElementById('ped-item-idx').value;
         if (idxVal !== '') {
-            pedidoItems[parseInt(idxVal)] = item;
+            pedidoItems[parseInt(idxVal, 10)] = item;
         } else {
             pedidoItems.push(item);
         }
@@ -5003,8 +5022,7 @@
         }
     }
 
-    // Verificar DB al cargar y cada 2 minutos
-    checkDBStatus();
+    // Verificar DB solo después de autenticar (evita falso error antes del login)
     setInterval(checkDBStatus, 120000);
 
     checkSession();
@@ -5016,7 +5034,6 @@
     const AY_DIAS = ['lunes','martes','miercoles','jueves','viernes','sabado'];
     const AY_DIAS_LABEL = { lunes:'Lunes', martes:'Martes', miercoles:'Miércoles', jueves:'Jueves', viernes:'Viernes', sabado:'Sábado' };
 
-    db.ayudantes = [];
     let ayEditingId = null;
 
     // ── Carga ─────────────────────────────────────────
@@ -5238,7 +5255,7 @@
                 ${a.rut     ? `<div><span style="color:var(--text-muted);">RUT</span><br><strong>${escapeHTML(a.rut)}</strong></div>` : ''}
                 ${a.email   ? `<div><span style="color:var(--text-muted);">Correo</span><br><a href="mailto:${escapeHTML(a.email)}" style="color:var(--blue);">${escapeHTML(a.email)}</a></div>` : ''}
                 ${a.telefono? `<div><span style="color:var(--text-muted);">Teléfono</span><br><strong>${escapeHTML(a.telefono)}</strong></div>` : ''}
-                ${a.fecha_ingreso ? `<div><span style="color:var(--text-muted);">Ingreso</span><br><strong>${a.fecha_ingreso}</strong></div>` : ''}
+                ${a.fecha_ingreso ? `<div><span style="color:var(--text-muted);">Ingreso</span><br><strong>${escapeHTML(a.fecha_ingreso)}</strong></div>` : ''}
             </div>
             ${a.descripcion ? `<div style="margin-bottom:1rem;"><div style="font-weight:700;font-size:0.83rem;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);">Currículum</div><p style="font-size:0.85rem;line-height:1.6;">${escapeHTML(a.descripcion)}</p></div>` : ''}
             ${habilidades.length ? `<div style="margin-bottom:1rem;"><div style="font-weight:700;font-size:0.83rem;margin-bottom:0.45rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);">Habilidades</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${habilidades.map(h => `<span style="font-size:0.78rem;background:var(--blue-glow);color:var(--blue);padding:3px 10px;border-radius:50px;">${escapeHTML(h)}</span>`).join('')}</div></div>` : ''}
@@ -5382,7 +5399,9 @@
 
     // Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
+        navigator.serviceWorker.register('./sw.js').catch(err => {
+            console.warn('Service Worker no pudo registrarse:', err.message);
+        });
     }
 
 </script>
