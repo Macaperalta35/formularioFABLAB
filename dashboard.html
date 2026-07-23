@@ -894,6 +894,9 @@
                         </div>
                     </div>
 
+                    <div id="ay-loading" class="loader" style="display:none;justify-content:center;padding:3rem;">
+                        <div class="loader-spinner"></div>
+                    </div>
                     <div id="ay-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;"></div>
                     <div id="ay-empty" class="empty-state" style="display:none;padding:3rem;">
                         <div class="empty-icon">🧑‍🔬</div>
@@ -1884,6 +1887,22 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL: CONFIRMAR ==================== -->
+    <div class="modal-overlay" id="modal-confirm">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirm-modal-title">⚠️ Confirmar acción</h3>
+            </div>
+            <div class="modal-body" style="padding-top:0.5rem;">
+                <p id="confirm-modal-msg" style="color:var(--text-secondary);line-height:1.6;margin:0;font-size:0.95rem;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="confirm-cancel-btn">Cancelar</button>
+                <button class="btn btn-danger" id="confirm-ok-btn">🗑️ Eliminar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ========== JAVASCRIPT ========== -->
     <script>
     // ===========================
@@ -1954,6 +1973,7 @@
                 if (s.id === 'section-' + target) s.classList.add('active');
             });
             headerTitle.textContent = sectionTitles[target] || '';
+            document.title = (sectionTitles[target] ? sectionTitles[target] + ' | ' : '') + 'FAB LAB INACAP';
             backHomeBtn.style.display = target === 'overview' ? 'none' : 'flex';
             closeSidebar();
         });
@@ -2324,6 +2344,16 @@
         document.getElementById(id).classList.remove('visible');
     }
 
+    function showConfirm(message, onConfirm, { label = '🗑️ Eliminar', title = '⚠️ Confirmar' } = {}) {
+        document.getElementById('confirm-modal-title').textContent = title;
+        document.getElementById('confirm-modal-msg').textContent = message;
+        const okBtn = document.getElementById('confirm-ok-btn');
+        okBtn.textContent = label;
+        okBtn.onclick = () => { closeModal('modal-confirm'); onConfirm(); };
+        document.getElementById('confirm-cancel-btn').onclick = () => closeModal('modal-confirm');
+        openModal('modal-confirm');
+    }
+
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) overlay.classList.remove('visible');
@@ -2542,13 +2572,14 @@
         }
     }
 
-    async function deleteImpresion(id) {
-        if (!confirm('¿Eliminar este trabajo de impresión?')) return;
-        db.impresiones = db.impresiones.filter(j => String(j.id) !== String(id));
-        renderImpresiones();
-        updateImpresionBadge();
-        await apiRequest('deleteImpresion', { id });
-        showToast('Trabajo eliminado', 'success');
+    function deleteImpresion(id) {
+        showConfirm('¿Eliminar este trabajo de impresión?', async () => {
+            db.impresiones = db.impresiones.filter(j => String(j.id) !== String(id));
+            renderImpresiones();
+            updateImpresionBadge();
+            await apiRequest('deleteImpresion', { id });
+            showToast('Trabajo eliminado', 'success');
+        });
     }
 
     function updateImpresionBadge() {
@@ -2705,14 +2736,15 @@
         setTimeout(() => jsonpRequest('getRecordatorios').then(d => { if (Array.isArray(d)) { db.recordatorios = d; renderRecordatorios(); refreshOverviewRecordatorios(); updateRecordatoriosBadge(); } }), 2000);
     }
 
-    async function deleteRecordatorio(id) {
-        if (!confirm('¿Eliminar este recordatorio?')) return;
-        db.recordatorios = db.recordatorios.filter(r => String(r.id) !== String(id));
-        renderRecordatorios();
-        refreshOverviewRecordatorios();
-        updateRecordatoriosBadge();
-        await apiRequest('deleteRecordatorio', { id });
-        showToast('Recordatorio eliminado', 'success');
+    function deleteRecordatorio(id) {
+        showConfirm('¿Eliminar este recordatorio?', async () => {
+            db.recordatorios = db.recordatorios.filter(r => String(r.id) !== String(id));
+            renderRecordatorios();
+            refreshOverviewRecordatorios();
+            updateRecordatoriosBadge();
+            await apiRequest('deleteRecordatorio', { id });
+            showToast('Recordatorio eliminado', 'success');
+        });
     }
 
     async function toggleRecordatorio(id) {
@@ -3069,18 +3101,19 @@
         }
     }
 
-    async function deleteVisita(rowIndex) {
-        if (!confirm('¿Eliminar este registro de visita? Esta acción no se puede deshacer.')) return;
-        try {
-            await apiRequest('deleteVisita', { rowIndex });
-            db.visitas = db.visitas.filter(v => v._rowIndex !== rowIndex);
-            db.visitas.forEach(v => { if (v._rowIndex > rowIndex) v._rowIndex--; });
-            filterVisitas();
-            refreshOverview();
-            document.getElementById('badge-visitas').textContent = db.visitas.length;
-            showToast('Visita eliminada de Google Sheets', 'info');
-            setTimeout(silentSync, 2000);
-        } catch (e) {}
+    function deleteVisita(rowIndex) {
+        showConfirm('¿Eliminar este registro de visita? Esta acción no se puede deshacer.', async () => {
+            try {
+                await apiRequest('deleteVisita', { rowIndex });
+                db.visitas = db.visitas.filter(v => v._rowIndex !== rowIndex);
+                db.visitas.forEach(v => { if (v._rowIndex > rowIndex) v._rowIndex--; });
+                filterVisitas();
+                refreshOverview();
+                document.getElementById('badge-visitas').textContent = db.visitas.length;
+                showToast('Visita eliminada de Google Sheets', 'info');
+                setTimeout(silentSync, 2000);
+            } catch (e) {}
+        });
     }
 
     function filterVisitas() {
@@ -3291,17 +3324,17 @@
         }
     }
 
-    async function deleteOcupacion(id) {
-        if (!confirm('¿Eliminar esta actividad?')) return;
-
-        try {
-            await apiRequest('deleteOcupacion', { id });
-            db.ocupaciones = db.ocupaciones.filter(o => o.id !== id);
-            renderOcupaciones(currentOcuTab);
-            refreshOverview();
-            showToast('Actividad eliminada de Sheets', 'info');
-            setTimeout(silentSync, 2000);
-        } catch (e) {}
+    function deleteOcupacion(id) {
+        showConfirm('¿Eliminar esta actividad?', async () => {
+            try {
+                await apiRequest('deleteOcupacion', { id });
+                db.ocupaciones = db.ocupaciones.filter(o => o.id !== id);
+                renderOcupaciones(currentOcuTab);
+                refreshOverview();
+                showToast('Actividad eliminada de Sheets', 'info');
+                setTimeout(silentSync, 2000);
+            } catch (e) {}
+        });
     }
 
     function openEditOcupacionModal(id) {
@@ -3540,20 +3573,20 @@
         }
     }
 
-    async function deleteSeccion(id) {
-        if (!confirm('¿Eliminar esta sección y todos sus alumnos de Google Sheets?')) return;
-
-        try {
-            await apiRequest('deleteSeccion', { id });
-            db.secciones = db.secciones.filter(s => s.id !== id);
-            renderSecciones();
-            refreshOverview();
-            document.getElementById('badge-secciones').textContent = db.secciones.length;
-            showToast('Sección eliminada', 'info');
-            setTimeout(silentSync, 2000);
-        } catch (e) {
-            showToast('Error al eliminar sección: ' + (e?.message || 'Sin conexión'), 'error');
-        }
+    function deleteSeccion(id) {
+        showConfirm('¿Eliminar esta sección y todos sus alumnos de Google Sheets?', async () => {
+            try {
+                await apiRequest('deleteSeccion', { id });
+                db.secciones = db.secciones.filter(s => s.id !== id);
+                renderSecciones();
+                refreshOverview();
+                document.getElementById('badge-secciones').textContent = db.secciones.length;
+                showToast('Sección eliminada', 'info');
+                setTimeout(silentSync, 2000);
+            } catch (e) {
+                showToast('Error al eliminar sección: ' + (e?.message || 'Sin conexión'), 'error');
+            }
+        });
     }
 
     function openAddAlumno(seccionId) {
@@ -3616,23 +3649,23 @@
         }
     }
 
-    async function removeAlumno(seccionId, alumnoId) {
-        if (!confirm('¿Remover a este alumno?')) return;
-        try {
-            await apiRequest('deleteAlumno', { alumnoId });
-
-            const seccion = db.secciones.find(s => s.id === seccionId);
-            if (seccion) {
-                seccion.alumnos = seccion.alumnos.filter(a => a.id !== alumnoId);
-                renderSecciones();
-                viewSeccion(seccionId);
-                refreshOverview();
-                showToast('Alumno removido de Sheets', 'info');
-                setTimeout(silentSync, 2000);
+    function removeAlumno(seccionId, alumnoId) {
+        showConfirm('¿Remover a este alumno?', async () => {
+            try {
+                await apiRequest('deleteAlumno', { alumnoId });
+                const seccion = db.secciones.find(s => s.id === seccionId);
+                if (seccion) {
+                    seccion.alumnos = seccion.alumnos.filter(a => a.id !== alumnoId);
+                    renderSecciones();
+                    viewSeccion(seccionId);
+                    refreshOverview();
+                    showToast('Alumno removido de Sheets', 'info');
+                    setTimeout(silentSync, 2000);
+                }
+            } catch (e) {
+                showToast('Error al remover alumno: ' + (e?.message || 'Sin conexión'), 'error');
             }
-        } catch (e) {
-            showToast('Error al remover alumno: ' + (e?.message || 'Sin conexión'), 'error');
-        }
+        }, { label: '🗑️ Remover', title: '⚠️ Confirmar' });
     }
 
     function viewSeccion(seccionId) {
@@ -4173,14 +4206,15 @@
         if (asset) openInvModal(asset);
     };
 
-    window.invDeleteAsset = async id => {
-        if (!confirm('¿Eliminar este activo del inventario?')) return;
-        const { error } = await supabaseClient.from('assets').delete().eq('id', id);
-        if (error) { showToast('Error al eliminar: ' + error.message, 'error'); return; }
-        db.assets = db.assets.filter(a => a.id !== id);
-        renderInventario();
-        updateInventarioStats();
-        showToast('Activo eliminado.', 'success');
+    window.invDeleteAsset = id => {
+        showConfirm('¿Eliminar este activo del inventario?', async () => {
+            const { error } = await supabaseClient.from('assets').delete().eq('id', id);
+            if (error) { showToast('Error al eliminar: ' + error.message, 'error'); return; }
+            db.assets = db.assets.filter(a => a.id !== id);
+            renderInventario();
+            updateInventarioStats();
+            showToast('Activo eliminado.', 'success');
+        });
     };
 
     // ── Modal Préstamo ────────────────────────────────────────────
@@ -4805,16 +4839,17 @@
         renderInventario();
     };
 
-    window.clearNFCForAsset = async (assetId) => {
-        if (!confirm(`¿Quitar el registro NFC del activo ${assetId}?`)) return;
-        const { error } = await supabaseClient.from('assets').update({ nfc_uid: null, nfc_configured: false }).eq('id', assetId);
-        if (error) { showToast('Error: ' + error.message, 'error'); return; }
-        const asset = db.assets.find(a => a.id === assetId);
-        if (asset) { asset.nfc_uid = null; asset.nfc_configured = false; }
-        showToast('Registro NFC eliminado.', 'success');
-        renderNFCTable();
-        updateNFCStats();
-        renderInventario();
+    window.clearNFCForAsset = (assetId) => {
+        showConfirm(`¿Quitar el registro NFC del activo ${assetId}?`, async () => {
+            const { error } = await supabaseClient.from('assets').update({ nfc_uid: null, nfc_configured: false }).eq('id', assetId);
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            const asset = db.assets.find(a => a.id === assetId);
+            if (asset) { asset.nfc_uid = null; asset.nfc_configured = false; }
+            showToast('Registro NFC eliminado.', 'success');
+            renderNFCTable();
+            updateNFCStats();
+            renderInventario();
+        }, { label: '🔒 Quitar NFC', title: '⚠️ Quitar registro NFC' });
     };
 
     // Cargar inventario cuando se navega a esa sección
@@ -4894,17 +4929,19 @@
     }
 
     function deletePedidoItem(idx) {
-        if (!confirm('¿Eliminar este artículo?')) return;
-        pedidoItems.splice(idx, 1);
-        savePedidoToStorage();
-        renderPedidoItems();
+        showConfirm('¿Eliminar este artículo?', () => {
+            pedidoItems.splice(idx, 1);
+            savePedidoToStorage();
+            renderPedidoItems();
+        });
     }
 
     function clearPedido() {
-        if (!confirm('¿Limpiar todos los artículos del pedido?')) return;
-        pedidoItems = [];
-        savePedidoToStorage();
-        renderPedidoItems();
+        showConfirm('¿Limpiar todos los artículos del pedido?', () => {
+            pedidoItems = [];
+            savePedidoToStorage();
+            renderPedidoItems();
+        }, { label: '🧹 Limpiar todo', title: '⚠️ Limpiar pedido' });
     }
 
     function renderPedidoItems() {
@@ -5090,7 +5127,13 @@
 
     // ── Carga ─────────────────────────────────────────
     async function loadAyudantes() {
+        const loading = document.getElementById('ay-loading');
+        const grid    = document.getElementById('ay-cards-grid');
+        if (loading) { loading.style.display = 'flex'; }
+        if (grid)    { grid.style.display = 'none'; }
         const { data, error } = await supabaseClient.from('ayudantes').select('*').order('nombre');
+        if (loading) { loading.style.display = 'none'; }
+        if (grid)    { grid.style.display = 'grid'; }
         if (error) { showToast('Error al cargar ayudantes: ' + error.message, 'error'); return; }
         db.ayudantes = data || [];
         renderAyudantes();
@@ -5274,15 +5317,16 @@
         closeModal('modal-ayudante');
     };
 
-    window.deleteAyudante = async (id) => {
+    window.deleteAyudante = (id) => {
         const a = db.ayudantes.find(x => x.id === id);
-        if (!confirm(`¿Eliminar a ${a?.nombre || 'este ayudante'}?`)) return;
-        const { error } = await supabaseClient.from('ayudantes').delete().eq('id', id);
-        if (error) { showToast('Error: ' + error.message, 'error'); return; }
-        db.ayudantes = db.ayudantes.filter(x => x.id !== id);
-        renderAyudantes();
-        updateAyStats();
-        showToast('Ayudante eliminado.', 'success');
+        showConfirm(`¿Eliminar a ${a?.nombre || 'este ayudante'}?`, async () => {
+            const { error } = await supabaseClient.from('ayudantes').delete().eq('id', id);
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            db.ayudantes = db.ayudantes.filter(x => x.id !== id);
+            renderAyudantes();
+            updateAyStats();
+            showToast('Ayudante eliminado.', 'success');
+        });
     };
 
     // ── Modal Ver Perfil ──────────────────────────────
