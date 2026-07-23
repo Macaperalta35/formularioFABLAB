@@ -2014,6 +2014,14 @@
 
     let currentUser = null;
 
+    supabaseClient.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT' && currentUser) {
+            currentUser = null;
+            showLogin();
+            showToast('Sesión expirada. Ingresa de nuevo.', 'info');
+        }
+    });
+
     async function checkSession() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) { showLogin(); return; }
@@ -2875,12 +2883,18 @@
             const script = document.createElement('script');
             const cleanup = () => { delete window[cb]; script.remove(); };
 
+            const timer = setTimeout(() => {
+                cleanup();
+                reject(new Error('Tiempo de espera agotado al conectar con Google Sheets'));
+            }, 15000);
+
             window[cb] = (data) => {
+                clearTimeout(timer);
                 cleanup();
                 if (data && data.error) reject(new Error(data.error));
                 else resolve(data);
             };
-            script.onerror = () => { cleanup(); reject(new Error('No se pudo conectar con Sheets')); };
+            script.onerror = () => { clearTimeout(timer); cleanup(); reject(new Error('No se pudo conectar con Sheets')); };
             script.src = `${GOOGLE_SCRIPT_URL}?action=${encodeURIComponent(action)}&token=${encodeURIComponent(token)}&callback=${cb}&t=${Date.now()}`;
             document.head.appendChild(script);
         });
