@@ -3312,9 +3312,9 @@
         document.getElementById('edit-ocu-tipo').value        = o.tipo || '';
         document.getElementById('edit-ocu-docente').value     = o.docente || '';
         document.getElementById('edit-ocu-asignatura').value  = o.asignatura || '';
-        document.getElementById('edit-ocu-fecha').value       = o.fecha || '';
-        document.getElementById('edit-ocu-hora-inicio').value = o.horaInicio || '';
-        document.getElementById('edit-ocu-hora-fin').value    = o.horaFin || '';
+        document.getElementById('edit-ocu-fecha').value       = normFecha(o.fecha) || '';
+        document.getElementById('edit-ocu-hora-inicio').value = normHora(o.horaInicio) || '';
+        document.getElementById('edit-ocu-hora-fin').value    = normHora(o.horaFin) || '';
         document.getElementById('edit-ocu-capacidad').value   = o.capacidad || '';
         document.getElementById('edit-ocu-observaciones').value = o.observaciones || '';
         openModal('modal-editar-ocupacion');
@@ -3647,7 +3647,7 @@
                 <div class="meta-row"><span class="meta-icon">📌</span> <span class="type-badge ${sec.tipo === 'clase' ? 'clase' : 'capacitacion'}">${tipoLabels[sec.tipo] || sec.tipo}</span></div>
                 <div class="meta-row"><span class="meta-icon">👨‍🏫</span> ${escapeHTML(sec.docente)}</div>
                 <div class="meta-row"><span class="meta-icon">📅</span> ${formatDate(sec.fecha)}</div>
-                ${sec.horaInicio ? `<div class="meta-row"><span class="meta-icon">🕐</span> ${sec.horaInicio}${sec.horaFin ? ' — ' + sec.horaFin : ''}</div>` : ''}
+                ${sec.horaInicio ? `<div class="meta-row"><span class="meta-icon">🕐</span> ${normHora(sec.horaInicio)}${sec.horaFin ? ' — ' + normHora(sec.horaFin) : ''}</div>` : ''}
             </div>
             <div class="section-header" style="margin-bottom:12px;">
                 <span class="section-title" style="font-size:0.9rem;">👥 Alumnos Inscritos (${sec.alumnos ? sec.alumnos.length : 0})</span>
@@ -3704,7 +3704,7 @@
                     <div class="info-card-meta">
                         <div class="meta-row"><span class="meta-icon">👨‍🏫</span> ${escapeHTML(s.docente)}</div>
                         <div class="meta-row"><span class="meta-icon">📅</span> ${formatDate(s.fecha)}</div>
-                        ${s.horaInicio ? `<div class="meta-row"><span class="meta-icon">🕐</span> ${s.horaInicio}${s.horaFin ? ' — ' + s.horaFin : ''}</div>` : ''}
+                        ${s.horaInicio ? `<div class="meta-row"><span class="meta-icon">🕐</span> ${normHora(s.horaInicio)}${s.horaFin ? ' — ' + normHora(s.horaFin) : ''}</div>` : ''}
                         <div class="meta-row"><span class="meta-icon">👥</span> <strong>${alumnoCount}</strong> alumnos inscritos</div>
                     </div>
                     ${previewAlumnos.length > 0 ? `
@@ -4192,11 +4192,17 @@
         const asset = db.assets.find(a => a.id === id);
         if (!asset || asset.available < qty) { showToast('Stock insuficiente.', 'error'); return; }
 
+        const btn = document.querySelector('#modal-inv-loan .btn-primary');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Registrando...'; }
+
         const newAvail = asset.available - qty;
         const newBorrowed = asset.borrowed + qty;
 
         const { error } = await supabaseClient.from('assets').update({ available: newAvail, borrowed: newBorrowed }).eq('id', id);
-        if (error) { showToast('Error al registrar préstamo: ' + error.message, 'error'); return; }
+        if (error) {
+            if (btn) { btn.disabled = false; btn.textContent = '✅ Registrar Préstamo'; }
+            showToast('Error al registrar préstamo: ' + error.message, 'error'); return;
+        }
 
         await supabaseClient.from('loans').insert({ asset_id: id, asset_name: asset.name, user_name: name, borrower_rut: rut, action: 'loan', qty, condition: null, notes: null });
 
@@ -4204,6 +4210,7 @@
         asset.borrowed  = newBorrowed;
         renderInventario();
         updateInventarioStats();
+        if (btn) { btn.disabled = false; btn.textContent = '✅ Registrar Préstamo'; }
         closeModal('modal-inv-loan');
         showToast(`Préstamo registrado: ${qty}× ${asset.name}.`, 'success');
     }
