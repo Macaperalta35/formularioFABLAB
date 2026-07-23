@@ -282,8 +282,12 @@
         <div class="main-content">
             <!-- Top Header -->
             <header class="top-header">
-                <div style="display:flex;align-items:center;gap:14px;">
+                <div style="display:flex;align-items:center;gap:10px;">
                     <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+                    <button id="back-to-home-btn" onclick="goToSection('overview')"
+                        style="display:none;align-items:center;gap:5px;padding:6px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:50px;cursor:pointer;font-size:0.8rem;font-weight:600;color:var(--text-primary);white-space:nowrap;transition:background 0.15s;">
+                        ← Inicio
+                    </button>
                     <div class="header-title">
                         <h2 id="header-section-title">Panel General</h2>
                         <span>FAB LAB INACAP · San Pedro de la Paz</span>
@@ -1938,6 +1942,8 @@
         if (btn) btn.click();
     }
 
+    const backHomeBtn = document.getElementById('back-to-home-btn');
+
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             const target = item.dataset.section;
@@ -1948,6 +1954,7 @@
                 if (s.id === 'section-' + target) s.classList.add('active');
             });
             headerTitle.textContent = sectionTitles[target] || '';
+            backHomeBtn.style.display = target === 'overview' ? 'none' : 'flex';
             closeSidebar();
         });
     });
