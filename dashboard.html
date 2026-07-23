@@ -3330,7 +3330,7 @@
         btn.textContent = 'Guardando...';
 
         const updated = { id, nombre, tipo, docente, asignatura, fecha, horaInicio, horaFin,
-                          capacidad: capacidad ? parseInt(capacidad) : '', observaciones };
+                          capacidad: capacidad ? parseInt(capacidad, 10) : '', observaciones };
 
         try {
             await apiRequest('updateOcupacion', updated);
@@ -3519,6 +3519,7 @@
             showToast('Sección creada en Google Sheets', 'success');
             setTimeout(silentSync, 2000);
         } catch (e) {
+            showToast('Error al crear sección: ' + (e?.message || 'Sin conexión'), 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = '💾 Crear Sección';
@@ -3536,7 +3537,9 @@
             document.getElementById('badge-secciones').textContent = db.secciones.length;
             showToast('Sección eliminada', 'info');
             setTimeout(silentSync, 2000);
-        } catch (e) {}
+        } catch (e) {
+            showToast('Error al eliminar sección: ' + (e?.message || 'Sin conexión'), 'error');
+        }
     }
 
     function openAddAlumno(seccionId) {
@@ -3592,6 +3595,7 @@
             showToast('Alumno agregado en Sheets', 'success');
             setTimeout(silentSync, 2000);
         } catch (e) {
+            showToast('Error al agregar alumno: ' + (e?.message || 'Sin conexión'), 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = '➕ Agregar Alumno';
@@ -3612,7 +3616,9 @@
                 showToast('Alumno removido de Sheets', 'info');
                 setTimeout(silentSync, 2000);
             }
-        } catch (e) {}
+        } catch (e) {
+            showToast('Error al remover alumno: ' + (e?.message || 'Sin conexión'), 'error');
+        }
     }
 
     function viewSeccion(seccionId) {
@@ -4926,7 +4932,7 @@
 
         const html = `<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8">
-<title>Solicitud de Pedido — ${eh(area)}</title>
+<title>Solicitud de Pedido — ${escapeHTML(area)}</title>
 <style>
   * { margin:0;padding:0;box-sizing:border-box; }
   body { font-family:Arial,sans-serif;font-size:11pt;padding:20mm; }
@@ -4942,11 +4948,11 @@
 </head><body>
 <p class="intro">Favor Cotizar a:</p>
 <table class="header-table">
-  <tr><td class="lbl">Razón social</td><td>${eh(razon)}</td></tr>
-  <tr><td class="lbl">Rut</td><td>${eh(rut)}</td></tr>
+  <tr><td class="lbl">Razón social</td><td>${escapeHTML(razon)}</td></tr>
+  <tr><td class="lbl">Rut</td><td>${escapeHTML(rut)}</td></tr>
   <tr><td class="lbl">Fecha de entrega</td><td>${fechaFmt}</td></tr>
-  <tr><td class="lbl">Área solicitante</td><td>${eh(area)}</td></tr>
-  <tr><td class="lbl">Usuario Solicitante</td><td>${eh(usuario)}</td></tr>
+  <tr><td class="lbl">Área solicitante</td><td>${escapeHTML(area)}</td></tr>
+  <tr><td class="lbl">Usuario Solicitante</td><td>${escapeHTML(usuario)}</td></tr>
 </table>
 <table class="items-table">
   <thead><tr>
