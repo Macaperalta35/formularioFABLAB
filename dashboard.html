@@ -4343,6 +4343,7 @@
         asset.status    = newStatus;
         renderInventario();
         updateInventarioStats();
+        loadInvLoans();
         btn.disabled = false;
         btn.textContent = '✅ Confirmar Recepción';
         closeModal('modal-inv-return');
@@ -5149,8 +5150,14 @@
         if (grid)    { grid.style.display = 'none'; }
         const { data, error } = await supabaseClient.from('ayudantes').select('*').order('nombre');
         if (loading) { loading.style.display = 'none'; }
+        if (error) {
+            if (grid) { grid.style.display = 'grid'; }
+            showToast('Error al cargar ayudantes: ' + error.message, 'error');
+            db.ayudantes = [];
+            renderAyudantes();
+            return;
+        }
         if (grid)    { grid.style.display = 'grid'; }
-        if (error) { showToast('Error al cargar ayudantes: ' + error.message, 'error'); return; }
         db.ayudantes = data || [];
         renderAyudantes();
         updateAyStats();
@@ -5343,6 +5350,8 @@
             db.ayudantes = db.ayudantes.filter(x => x.id !== id);
             renderAyudantes();
             updateAyStats();
+            const delBadge = document.getElementById('badge-ayudantes');
+            if (delBadge) { delBadge.textContent = db.ayudantes.length; delBadge.style.display = db.ayudantes.length ? 'inline-flex' : 'none'; }
             showToast('Ayudante eliminado.', 'success');
         });
     };
