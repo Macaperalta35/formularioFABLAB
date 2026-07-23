@@ -4113,14 +4113,28 @@
             ...(nfcUid ? { nfc_uid: nfcUid, nfc_configured: true } : {})
         };
 
+        if (asset.available + asset.borrowed > asset.total) {
+            showToast(`Disponible (${asset.available}) + Prestado (${asset.borrowed}) no puede superar el total (${asset.total}).`, 'error');
+            return;
+        }
+
+        const btn = document.querySelector('#modal-inv-asset .btn-primary');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
+
         if (invEditingId) {
             const { error } = await supabaseClient.from('assets').update(asset).eq('id', invEditingId);
-            if (error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
+            if (error) {
+                if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
+                showToast('Error al guardar: ' + error.message, 'error'); return;
+            }
             db.assets = db.assets.map(a => a.id === invEditingId ? { ...a, ...asset } : a);
             showToast('Activo actualizado correctamente.', 'success');
         } else {
             const { data, error } = await supabaseClient.from('assets').insert(asset).select().single();
-            if (error) { showToast('Error al crear activo: ' + error.message, 'error'); return; }
+            if (error) {
+                if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
+                showToast('Error al crear activo: ' + error.message, 'error'); return;
+            }
             db.assets.push(data);
             showToast('Activo creado correctamente.', 'success');
         }
@@ -4139,6 +4153,7 @@
 
         renderInventario();
         updateInventarioStats();
+        if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
         closeModal('modal-inv-asset');
     }
 
@@ -5041,6 +5056,7 @@
 
     // ── DB Health Check ───────────────────────────────────────────
     async function checkDBStatus() {
+        if (!currentUser) return;
         const dot  = document.getElementById('db-status-dot');
         const text = document.getElementById('db-status-text');
         if (!dot) return;
@@ -5231,20 +5247,30 @@
             horario:     readHorarioGrid(),
         };
 
+        const btn = document.querySelector('#modal-ayudante .btn-primary');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
+
         if (ayEditingId) {
             const { error } = await supabaseClient.from('ayudantes').update(payload).eq('id', ayEditingId);
-            if (error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
+            if (error) {
+                if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
+                showToast('Error al guardar: ' + error.message, 'error'); return;
+            }
             db.ayudantes = db.ayudantes.map(a => a.id === ayEditingId ? { ...a, ...payload, id: ayEditingId } : a);
             showToast('Ayudante actualizado.', 'success');
         } else {
             const { data, error } = await supabaseClient.from('ayudantes').insert(payload).select().single();
-            if (error) { showToast('Error al crear: ' + error.message, 'error'); return; }
+            if (error) {
+                if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
+                showToast('Error al crear: ' + error.message, 'error'); return;
+            }
             db.ayudantes.push(data);
             showToast('Ayudante registrado.', 'success');
         }
 
         renderAyudantes();
         updateAyStats();
+        if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
         closeModal('modal-ayudante');
     };
 
