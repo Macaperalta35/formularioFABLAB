@@ -2741,7 +2741,7 @@
 
         await apiRequest(isEdit ? 'updateRecordatorio' : 'saveRecordatorio', rec);
         showToast(isEdit ? 'Recordatorio actualizado' : 'Recordatorio guardado', 'success');
-        setTimeout(() => jsonpRequest('getRecordatorios').then(d => { if (Array.isArray(d)) { db.recordatorios = d; renderRecordatorios(); refreshOverviewRecordatorios(); updateRecordatoriosBadge(); } }), 2000);
+        setTimeout(() => jsonpRequest('getRecordatorios').then(d => { if (Array.isArray(d)) { db.recordatorios = d; renderRecordatorios(); refreshOverviewRecordatorios(); updateRecordatoriosBadge(); } }).catch(() => {}), 2000);
     }
 
     function deleteRecordatorio(id) {
@@ -2972,6 +2972,7 @@
 
         } catch (e) {
             document.getElementById('visitas-loading').style.display = 'none';
+            document.getElementById('visitas-table').style.display = 'table';
             throw e;
         }
     }
@@ -4273,6 +4274,7 @@
         asset.borrowed  = newBorrowed;
         renderInventario();
         updateInventarioStats();
+        loadInvLoans();
         if (btn) { btn.disabled = false; btn.textContent = '✅ Registrar Préstamo'; }
         closeModal('modal-inv-loan');
         showToast(`Préstamo registrado: ${qty}× ${asset.name}.`, 'success');
@@ -5327,6 +5329,8 @@
 
         renderAyudantes();
         updateAyStats();
+        const ayBadge = document.getElementById('badge-ayudantes');
+        if (ayBadge) { ayBadge.textContent = db.ayudantes.length; ayBadge.style.display = db.ayudantes.length ? 'inline-flex' : 'none'; }
         if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
         closeModal('modal-ayudante');
     };
