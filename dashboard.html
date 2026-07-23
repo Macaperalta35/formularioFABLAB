@@ -2190,12 +2190,18 @@
 
                 // Si ingresó nueva contraseña, actualizarla vía Netlify Function
                 if (password) {
-                    const res = await fetch('/.netlify/functions/fablab-update-password', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password, adminToken: ADMIN_TOKEN })
-                    });
-                    const data = await res.json();
+                    let res, data;
+                    try {
+                        res = await fetch('/.netlify/functions/fablab-update-password', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email, password, adminToken: ADMIN_TOKEN })
+                        });
+                        data = await res.json();
+                    } catch {
+                        showToast('Error al cambiar contraseña: el servidor de funciones no está disponible en este entorno.', 'error');
+                        return;
+                    }
                     if (!res.ok) { showToast('Usuario actualizado pero error al cambiar contraseña: ' + data.error, 'error'); return; }
                 }
                 showToast('✅ Usuario actualizado.', 'success');
@@ -2204,12 +2210,18 @@
                 // Crear usuario — requiere contraseña
                 if (!password) { showToast('La contraseña es obligatoria.', 'error'); return; }
 
-                const res = await fetch('/.netlify/functions/fablab-create-user', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, role, adminToken: ADMIN_TOKEN })
-                });
-                const data = await res.json();
+                let res, data;
+                try {
+                    res = await fetch('/.netlify/functions/fablab-create-user', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email, password, role, adminToken: ADMIN_TOKEN })
+                    });
+                    data = await res.json();
+                } catch {
+                    showToast('Error al crear usuario: el servidor de funciones no está disponible en este entorno.', 'error');
+                    return;
+                }
                 if (!res.ok) { showToast('Error al crear usuario: ' + data.error, 'error'); return; }
                 showToast('✅ Usuario creado correctamente.', 'success');
             }
@@ -3437,8 +3449,10 @@
         document.getElementById('lab-week-count').textContent = weekOcu.length;
 
         const currentOcu = todayOcu.find(o => {
-            const s = new Date(o.fecha + 'T' + o.horaInicio);
-            const e = new Date(o.fecha + 'T' + o.horaFin);
+            const hi = normHora(o.horaInicio);
+            const hf = normHora(o.horaFin);
+            const s = new Date(normFecha(o.fecha) + 'T' + (hi || '00:00') + ':00');
+            const e = new Date(normFecha(o.fecha) + 'T' + (hf || '23:59') + ':00');
             return now >= s && now <= e;
         });
 
@@ -3951,6 +3965,7 @@
 
     function invExportExcel() {
         if (!db.assets.length) { showToast('No hay datos para exportar.', 'error'); return; }
+        if (typeof XLSX === 'undefined') { showToast('Librería Excel no disponible, verifica conexión.', 'error'); return; }
         const rows = db.assets.map(a => ({
             'Código NFC': a.id,
             'Nombre':     a.name,
@@ -3974,6 +3989,7 @@
 
     function invExportPDF() {
         if (!db.assets.length) { showToast('No hay datos para exportar.', 'error'); return; }
+        if (typeof window.jspdf === 'undefined') { showToast('Librería PDF no disponible, verifica conexión.', 'error'); return; }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'landscape' });
         doc.setFontSize(18);
