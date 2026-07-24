@@ -4004,6 +4004,8 @@
                     <td style="white-space:nowrap;">
                         ${a.available > 0 ? `<button class="btn btn-ghost btn-sm" onclick="invOpenLoanModal('${escapeHTML(a.id)}')" style="color:#2563eb;">🤝 Prestar</button>` : ''}
                         ${a.borrowed > 0  ? `<button class="btn btn-ghost btn-sm" onclick="invOpenReturnModal('${escapeHTML(a.id)}')" style="color:#16a34a;">↩️ Devolver</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenAddUnitsModal('${escapeHTML(a.id)}')" title="Ingresar unidades" style="color:#16a34a;">➕</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenRemoveUnitsModal('${escapeHTML(a.id)}')" title="Restar unidades" style="color:#b45309;">➖</button>` : ''}
                         ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenNFCModal('${escapeHTML(a.id)}')" title="Configurar NFC" style="color:#7c3aed;">📡</button>` : ''}
                         ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invEditAsset('${escapeHTML(a.id)}')" title="Editar">✏️</button>` : ''}
                         ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invDeleteAsset('${escapeHTML(a.id)}')" title="Eliminar" style="color:#dc2626;">🗑️</button>` : ''}
