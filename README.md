@@ -11,6 +11,8 @@ Sistema de gestión integral para el **FAB LAB INACAP Sede San Pedro de la Paz**
 | Formulario de registro (público) | https://macaperalta35.github.io/formularioFABLAB/ |
 | Código QR imprimible | https://macaperalta35.github.io/formularioFABLAB/qr.html |
 | **Panel de administración** | https://macaperalta35.github.io/formularioFABLAB/dashboard.html |
+| **Informe de presentación** (para usuarios) | https://macaperalta35.github.io/formularioFABLAB/informe-sistema.html |
+| **Informe de entrega** (técnico) | https://macaperalta35.github.io/formularioFABLAB/informe.html |
 | Google Sheets (visitas) | https://docs.google.com/spreadsheets/d/1wQmC5H388sfJoZpvT3kj-59BPUyNjK9J4YLW5wiNKo8/edit |
 | Supabase (inventario) | https://supabase.com/dashboard/project/jcojygzofplajvnpobpw |
 
