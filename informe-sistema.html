@@ -1,0 +1,509 @@
+<title>Sistema de Gestión FAB LAB INACAP</title>
+<style>
+  /* ── Tokens ── */
+  :root {
+    --navy:      #0E2A4A;
+    --navy-mid:  #1A3D5C;
+    --amber:     #D97706;
+    --amber-lt:  #FEF3C7;
+    --white:     #FFFFFF;
+    --surface:   #F1F5F9;
+    --border:    #E2E8F0;
+    --text:      #1E293B;
+    --text-mid:  #475569;
+    --text-muted:#64748B;
+    --green:     #16A34A;
+    --radius:    8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --navy:      #0A1E35;
+      --navy-mid:  #112840;
+      --amber:     #F59E0B;
+      --amber-lt:  #1C1408;
+      --white:     #0F1E30;
+      --surface:   #0D1B2A;
+      --border:    #1E3448;
+      --text:      #E2EAF4;
+      --text-mid:  #94A3B8;
+      --text-muted:#64748B;
+      --green:     #22C55E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --navy:      #0A1E35;
+    --navy-mid:  #112840;
+    --amber:     #F59E0B;
+    --amber-lt:  #1C1408;
+    --white:     #0F1E30;
+    --surface:   #0D1B2A;
+    --border:    #1E3448;
+    --text:      #E2EAF4;
+    --text-mid:  #94A3B8;
+    --text-muted:#64748B;
+    --green:     #22C55E;
+  }
+  :root[data-theme="light"] {
+    --navy:      #0E2A4A;
+    --navy-mid:  #1A3D5C;
+    --amber:     #D97706;
+    --amber-lt:  #FEF3C7;
+    --white:     #FFFFFF;
+    --surface:   #F1F5F9;
+    --border:    #E2E8F0;
+    --text:      #1E293B;
+    --text-mid:  #475569;
+    --text-muted:#64748B;
+    --green:     #16A34A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--navy);
+    color: #fff;
+    padding: 56px 40px 52px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    right: -60px; top: -60px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: rgba(217, 119, 6, 0.12);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .hero-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: normal;
+    line-height: 1.2;
+    text-wrap: balance;
+    color: #fff;
+    margin-bottom: 18px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--amber);
+  }
+  .hero-sub {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.72);
+    max-width: 520px;
+    line-height: 1.65;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 28px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.85);
+  }
+  .hero-badge span { color: var(--amber); font-size: 0.9rem; }
+
+  /* ── Métricas ── */
+  .metrics {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+  }
+  .metrics-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .metric {
+    padding: 28px 20px;
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+  .metric:last-child { border-right: none; }
+  .metric-val {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--navy);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .metric-val.amber { color: var(--amber); }
+  .metric-val.green { color: var(--green); }
+  .metric-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
+  }
+
+  /* ── Secciones ── */
+  .section {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+  .section-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 8px;
+  }
+  .section h2 {
+    font-family: Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: normal;
+    color: var(--text);
+    text-wrap: balance;
+    margin-bottom: 32px;
+    line-height: 1.3;
+  }
+
+  /* ── Grilla de funciones ── */
+  .features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .feature {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .feature-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .feature-icon svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .feature-icon.amber-bg { background: var(--amber); }
+  .feature-icon.green-bg { background: var(--green); }
+  .feature h3 {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 5px;
+  }
+  .feature p {
+    font-size: 0.8rem;
+    color: var(--text-mid);
+    line-height: 1.55;
+  }
+
+  /* ── Strip de beneficios ── */
+  .benefits-strip {
+    background: var(--navy);
+    padding: 48px 24px;
+  }
+  .benefits-inner {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .benefits-strip .section-title { color: var(--amber); }
+  .benefits-strip h2 {
+    font-family: Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: normal;
+    color: #fff;
+    margin-bottom: 28px;
+    text-wrap: balance;
+    line-height: 1.3;
+  }
+  .benefits-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .benefit {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .benefit-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+    margin-top: 7px;
+    flex-shrink: 0;
+  }
+  .benefit-text {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.5;
+  }
+  .benefit-text strong {
+    color: #fff;
+    display: block;
+    font-size: 0.88rem;
+    margin-bottom: 2px;
+  }
+
+  /* ── Acceso ── */
+  .access-strip {
+    background: var(--amber-lt);
+    border-top: 2px solid var(--amber);
+    border-bottom: 2px solid var(--amber);
+  }
+  .access-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .access-icon {
+    width: 52px; height: 52px;
+    flex-shrink: 0;
+    background: var(--amber);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .access-icon svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .access-text h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .access-text p  { font-size: 0.82rem; color: var(--text-mid); line-height: 1.5; }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    padding: 24px;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+  }
+  footer strong { color: rgba(255,255,255,0.8); }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .hero { padding: 40px 20px 36px; }
+    .metrics-inner { grid-template-columns: repeat(2, 1fr); }
+    .metric:nth-child(2) { border-right: none; }
+    .features { grid-template-columns: 1fr; }
+    .benefits-list { grid-template-columns: 1fr; }
+    .access-inner { flex-direction: column; text-align: center; }
+  }
+</style>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-label">FAB LAB INACAP — Sistema de Gestión</div>
+    <h1>El laboratorio <em>siempre organizado,</em><br>desde cualquier lugar</h1>
+    <p class="hero-sub">
+      Plataforma digital que centraliza el control de visitas, inventario y equipos del FAB LAB — sin papeles, sin demoras, sin pérdidas de información.
+    </p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:28px;">
+      <div class="hero-badge">
+        <span>●</span> Activo y funcionando en INACAP
+      </div>
+      <div class="hero-badge">
+        <span>✦</span> Desarrollado por Macarena Peralta
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MÉTRICAS -->
+<div class="metrics">
+  <div class="metrics-inner">
+    <div class="metric">
+      <div class="metric-val">100%</div>
+      <div class="metric-label">Digital,<br>sin papel</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val amber">Tiempo<br style="display:none"> real</div>
+      <div class="metric-label">Datos<br>siempre actualizados</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val green">Web<br>+ App</div>
+      <div class="metric-label">Acceso desde<br>cualquier dispositivo</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">0</div>
+      <div class="metric-label">Pérdidas de<br>información</div>
+    </div>
+  </div>
+</div>
+
+<!-- FUNCIONES -->
+<div style="background: var(--surface);">
+  <div class="section">
+    <div class="section-title">Qué hace el sistema</div>
+    <h2>Todo lo que ocurre en el laboratorio, gestionado desde una sola pantalla</h2>
+
+    <div class="features">
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>Registro de Visitas con QR</h3>
+        <p>Los visitantes se registran en segundos escaneando un código QR con su teléfono. Todo queda guardado automáticamente — sin formularios en papel ni digitación manual.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon amber-bg">
+          <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+        <h3>Inventario de Equipos</h3>
+        <p>Registro completo de todos los activos del laboratorio: disponibilidad, préstamos activos, devoluciones y stock en tiempo real. Fotos incluidas.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon green-bg">
+          <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        </div>
+        <h3>Etiquetas NFC</h3>
+        <p>Cada equipo puede tener una etiqueta NFC. Al acercar el celular, se identifica el activo al instante y aparecen todas sus opciones — sin buscar en listas.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <h3>Panel General con Estadísticas</h3>
+        <p>Resumen visual del estado del laboratorio: visitas del día, ocupación, activos disponibles y actividad reciente — todo en una sola vista.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon amber-bg">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>Control de Ocupación</h3>
+        <p>Registra qué secciones o grupos están usando el laboratorio y en qué horario. Útil para planificar, justificar uso y evitar conflictos de espacio.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon green-bg">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <h3>Cola de Impresión 3D</h3>
+        <p>Gestión de trabajos de impresión 3D: quién solicitó, estado del trabajo, tiempos y seguimiento. Sin hojas de turno extraviadas.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        </div>
+        <h3>Recordatorios y Pedidos</h3>
+        <p>Lista de pendientes, recordatorios de mantención y solicitudes de materiales. Todo anotado y accesible para el equipo, sin depender de mensajes de WhatsApp.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon amber-bg">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>Gestión de Ayudantes</h3>
+        <p>Registro de horarios, turnos y perfil de cada ayudante del laboratorio. Control de quién está a cargo en cada momento.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- BENEFICIOS -->
+<div class="benefits-strip">
+  <div class="benefits-inner">
+    <div class="section-title">Por qué importa</div>
+    <h2>Lo que cambia en el día a día del laboratorio</h2>
+    <div class="benefits-list">
+      <div class="benefit">
+        <div class="benefit-dot"></div>
+        <div class="benefit-text">
+          <strong>Menos tiempo en tareas administrativas</strong>
+          Registrar visitas, actualizar inventario y anotar préstamos toma segundos en lugar de minutos.
+        </div>
+      </div>
+      <div class="benefit">
+        <div class="benefit-dot"></div>
+        <div class="benefit-text">
+          <strong>Cero pérdida de equipos</strong>
+          Siempre se sabe qué activo está prestado, a quién y desde cuándo. Sin sorpresas al cierre.
+        </div>
+      </div>
+      <div class="benefit">
+        <div class="benefit-dot"></div>
+        <div class="benefit-text">
+          <strong>Información disponible para todos</strong>
+          El equipo del laboratorio accede desde el celular o computador, desde cualquier lugar.
+        </div>
+      </div>
+      <div class="benefit">
+        <div class="benefit-dot"></div>
+        <div class="benefit-text">
+          <strong>Trazabilidad completa</strong>
+          Cada acción queda registrada. Útil para reportes internos, auditorías y justificación de uso.
+        </div>
+      </div>
+      <div class="benefit">
+        <div class="benefit-dot"></div>
+        <div class="benefit-text">
+          <strong>Fácil de usar sin capacitación especial</strong>
+          Interfaz intuitiva diseñada para el personal del lab, no para ingenieros de software.
+        </div>
+      </div>
+      <div class="benefit">
+        <div class="benefit-dot"></div>
+        <div class="benefit-text">
+          <strong>Escalable sin costo adicional</strong>
+          Se pueden agregar nuevos activos, usuarios y funciones sin cambiar de plataforma.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACCESO MÓVIL -->
+<div class="access-strip">
+  <div class="access-inner">
+    <div class="access-icon">
+      <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+    </div>
+    <div class="access-text">
+      <h3>Disponible también como aplicación Android</h3>
+      <p>El sistema funciona en el navegador de cualquier computador o celular, y además existe como app instalable en Android — sin necesidad de tienda de aplicaciones. El personal del laboratorio puede operar desde su teléfono durante toda la jornada.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>Sistema de Gestión FAB LAB INACAP</strong><br>
+  Desarrollado por <strong style="color:rgba(255,255,255,0.85);">Macarena Peralta</strong> · Para el equipo del laboratorio
+</footer>
