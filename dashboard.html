@@ -22,6 +22,94 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="dashboard.css">
     <style>
+        /* ── Inventario: alternar tabla/tarjetas según viewport ── */
+        .inv-table-view { display: block; }
+        .inv-cards-view { display: none !important; }
+        @media (max-width: 768px) {
+            .inv-table-view { display: none !important; }
+            .inv-cards-view { display: block !important; }
+        }
+
+        /* Tarjetas de inventario para móvil */
+        .inv-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .inv-card-photo {
+            width: 100%;
+            aspect-ratio: 16/7;
+            object-fit: cover;
+            display: block;
+            background: var(--bg-secondary);
+        }
+        .inv-card-photo-placeholder {
+            width: 100%;
+            aspect-ratio: 16/7;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: var(--text-muted);
+        }
+        .inv-card-body {
+            padding: 10px 12px 6px;
+        }
+        .inv-card-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .inv-card-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .inv-card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .inv-card-stat {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .inv-card-stat-val {
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .inv-card-stat-label {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .inv-card-actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            padding: 0 12px 10px;
+        }
+        .inv-cat-header {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 10px 4px 6px;
+        }
+
         /* ── Accesibilidad ── */
         body.high-contrast {
             --bg-deep: #000;
@@ -592,7 +680,8 @@
                                 <button class="btn btn-ghost btn-sm" onclick="invExportPDF()" title="Exportar PDF">📄 PDF</button>
                             </div>
                         </div>
-                        <div class="table-scroll">
+                        <!-- Vista tabla (desktop) -->
+                        <div class="table-scroll inv-table-view">
                             <table class="data-table" id="inventario-table">
                                 <thead>
                                     <tr>
@@ -612,6 +701,8 @@
                                 <tbody id="inventario-tbody"></tbody>
                             </table>
                         </div>
+                        <!-- Vista tarjetas (móvil) -->
+                        <div id="inventario-cards" class="inv-cards-view" style="display:none;"></div>
                         <div id="inventario-count" style="font-size:0.8rem;color:var(--text-muted);padding:0.4rem 0.5rem;text-align:right;"></div>
                         <div id="inventario-empty" class="table-empty" style="display:none;">
                             <div class="table-empty-icon">📦</div>
@@ -3973,6 +4064,8 @@
             : `${filtered.length} de ${db.assets.length} activos`;
 
         const statusLabel = { active: '✅ Activo', maintenance: '🔧 Mantenimiento', lost: '❌ Baja' };
+        const statusBg    = { active: '#dcfce7', maintenance: '#fef9c3', lost: '#fee2e2' };
+        const statusColor = { active: '#166534', maintenance: '#854d0e', lost: '#991b1b' };
 
         // Agrupar por categoría
         const grouped = filtered.reduce((acc, a) => {
@@ -3981,15 +4074,21 @@
             return acc;
         }, {});
 
-        let html = '';
+        // ── Tabla (desktop) ──
+        let tableHtml = '';
+        // ── Tarjetas (móvil) ──
+        let cardsHtml = '';
+
         for (const [cat, items] of Object.entries(grouped)) {
-            html += `<tr><td colspan="11" style="background:var(--bg-secondary);font-weight:700;padding:0.6rem 1rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">📁 ${escapeHTML(cat)}</td></tr>`;
-            html += items.map(a => `
+            tableHtml += `<tr><td colspan="11" style="background:var(--bg-secondary);font-weight:700;padding:0.6rem 1rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">📁 ${escapeHTML(cat)}</td></tr>`;
+            cardsHtml += `<div class="inv-cat-header">📁 ${escapeHTML(cat)}</div>`;
+
+            tableHtml += items.map(a => `
                 <tr>
                     <td><code style="font-size:0.78rem;">${escapeHTML(a.id)}</code>${(a.nfc_configured || a.nfc_uid) ? ` <span title="NFC configurado${a.nfc_uid ? ': ' + a.nfc_uid : ''}" style="font-size:0.75rem;">📡</span>` : ''}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:0.5rem;">
-                            ${a.image ? `<img src="${escapeHTML(a.image)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" title="${escapeHTML(a.name)}">` : ''}
+                            ${a.image ? `<img src="${escapeHTML(a.image)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border);" title="${escapeHTML(a.name)}">` : ''}
                             <strong>${escapeHTML(a.name)}</strong>
                         </div>
                     </td>
@@ -3999,7 +4098,7 @@
                     <td style="text-align:center;">${a.total ?? '—'}</td>
                     <td style="text-align:center;font-weight:600;color:${a.available > 0 ? '#16a34a' : '#dc2626'};">${a.available ?? '—'}</td>
                     <td style="text-align:center;">${a.borrowed || 0}</td>
-                    <td><span style="font-size:0.8rem;padding:2px 8px;border-radius:20px;background:${a.status==='active'?'#dcfce7':a.status==='maintenance'?'#fef9c3':'#fee2e2'};color:${a.status==='active'?'#166534':a.status==='maintenance'?'#854d0e':'#991b1b'};">${statusLabel[a.status] || a.status}</span></td>
+                    <td><span style="font-size:0.8rem;padding:2px 8px;border-radius:20px;background:${statusBg[a.status]||'#f3f4f6'};color:${statusColor[a.status]||'#374151'};">${statusLabel[a.status] || a.status}</span></td>
                     <td style="font-size:0.82rem;">${escapeHTML(a.location || '')}</td>
                     <td style="white-space:nowrap;">
                         ${a.available > 0 ? `<button class="btn btn-ghost btn-sm" onclick="invOpenLoanModal('${escapeHTML(a.id)}')" style="color:#2563eb;">🤝 Prestar</button>` : ''}
@@ -4010,9 +4109,49 @@
                     </td>
                 </tr>
             `).join('');
+
+            cardsHtml += items.map(a => {
+                const id = escapeHTML(a.id);
+                const photoHtml = a.image
+                    ? `<img src="${escapeHTML(a.image)}" class="inv-card-photo" alt="${escapeHTML(a.name)}">`
+                    : `<div class="inv-card-photo-placeholder">📦</div>`;
+                const nfcIcon = (a.nfc_configured || a.nfc_uid) ? ' 📡' : '';
+                const statusHtml = `<span style="font-size:0.7rem;padding:2px 8px;border-radius:20px;background:${statusBg[a.status]||'#f3f4f6'};color:${statusColor[a.status]||'#374151'};">${statusLabel[a.status] || a.status}</span>`;
+                return `
+                <div class="inv-card">
+                    ${photoHtml}
+                    <div class="inv-card-body">
+                        <div class="inv-card-name">${escapeHTML(a.name)}${nfcIcon}</div>
+                        <div class="inv-card-meta">${id} · ${escapeHTML(a.category || '')} · ${statusHtml}</div>
+                        <div class="inv-card-stats">
+                            <div class="inv-card-stat">
+                                <div class="inv-card-stat-val">${a.total ?? '—'}</div>
+                                <div class="inv-card-stat-label">Total</div>
+                            </div>
+                            <div class="inv-card-stat">
+                                <div class="inv-card-stat-val" style="color:${a.available > 0 ? '#16a34a' : '#dc2626'};">${a.available ?? '—'}</div>
+                                <div class="inv-card-stat-label">Disponible</div>
+                            </div>
+                            <div class="inv-card-stat">
+                                <div class="inv-card-stat-val">${a.borrowed || 0}</div>
+                                <div class="inv-card-stat-label">Prestado</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inv-card-actions">
+                        ${a.available > 0 ? `<button class="btn btn-primary btn-sm" onclick="invOpenLoanModal('${id}')">🤝 Prestar</button>` : ''}
+                        ${a.borrowed > 0  ? `<button class="btn btn-secondary btn-sm" onclick="invOpenReturnModal('${id}')">↩️ Devolver</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenAddUnitsModal('${id}')">➕</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invEditAsset('${id}')">✏️</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invDeleteAsset('${id}')" style="color:#dc2626;">🗑️</button>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
         }
 
-        if (tbody) tbody.innerHTML = html;
+        if (tbody) tbody.innerHTML = tableHtml;
+        const cardsEl = document.getElementById('inventario-cards');
+        if (cardsEl) cardsEl.innerHTML = cardsHtml;
     }
 
     function filterInventario() { renderInventario(); }
