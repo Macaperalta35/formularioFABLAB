@@ -4148,7 +4148,8 @@
         document.getElementById('inv-modal-nfc-uid').value = asset?.nfc_uid || '';
         document.getElementById('inv-modal-nfc-panel').style.display = 'none';
         document.getElementById('inv-modal-nfc-chevron').textContent = '▼';
-        document.getElementById('inv-modal-nfc-write').checked = true;
+        // Al editar, no re-grabar el tag por defecto (el tag ya está configurado)
+        document.getElementById('inv-modal-nfc-write').checked = !asset;
         document.getElementById('inv-modal-nfc-status').textContent = asset?.nfc_uid
             ? `📡 UID registrado: ${asset.nfc_uid}`
             : 'Presione "Escanear" y acerque el tag NFC.';
@@ -4210,14 +4211,20 @@
         }
 
         // Grabar código en el tag físico si se solicitó
+        // Se usa AbortController con timeout de 5s para evitar que la promesa quede colgada
+        // si no hay ningún tag NFC cerca del dispositivo.
         if (nfcUid && writeTag && 'NDEFReader' in window) {
             try {
                 const ndef = new NDEFReader();
-                await ndef.write({ records: [{ recordType: 'text', data: nfc }] });
+                const ctrl = new AbortController();
+                const timer = setTimeout(() => ctrl.abort(), 5000);
+                await ndef.write({ records: [{ recordType: 'text', data: nfc }] }, { signal: ctrl.signal });
+                clearTimeout(timer);
                 showToast(`Tag NFC grabado con código ${nfc}.`, 'success');
             } catch (e) {
-                console.warn('No se pudo grabar en el tag:', e.message);
-                showToast('Activo guardado, pero no se pudo grabar el tag NFC físico: ' + e.message, 'error');
+                if (e.name !== 'AbortError') {
+                    showToast('Activo guardado. No se pudo grabar el tag: ' + e.message, 'error');
+                }
             }
         }
 
