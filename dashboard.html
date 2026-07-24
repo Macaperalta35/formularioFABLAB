@@ -573,10 +573,6 @@
                             <div class="filter-group">
                                 <select class="filter-select" id="filter-categoria" onchange="filterInventario()">
                                     <option value="">Todas las categorías</option>
-                                    <option value="Herramientas">🔨 Herramientas</option>
-                                    <option value="Insumos">📦 Insumos</option>
-                                    <option value="Electrónica">⚡ Electrónica</option>
-                                    <option value="Químicos">🧪 Químicos</option>
                                 </select>
                             </div>
                             <div class="filter-group">
@@ -597,12 +593,12 @@
                                 <thead>
                                     <tr>
                                         <th>Código</th>
-                                        <th>Nombre</th>
+                                        <th onclick="invSetSort('name')" style="cursor:pointer;user-select:none;">Nombre <span id="inv-sort-name"></span></th>
                                         <th>Descripción</th>
                                         <th>Categoría</th>
                                         <th>Propietario</th>
                                         <th>Stock</th>
-                                        <th>Disponible</th>
+                                        <th onclick="invSetSort('available')" style="cursor:pointer;user-select:none;">Disponible <span id="inv-sort-available"></span></th>
                                         <th>Prestado</th>
                                         <th>Estado</th>
                                         <th>Ubicación</th>
@@ -626,9 +622,15 @@
 
                     <!-- Historial de Préstamos -->
                     <div style="margin-top:2rem;">
-                        <div class="section-header" style="margin-bottom:1rem;">
+                        <div class="section-header" style="margin-bottom:0.5rem;">
                             <h4 style="font-size:1rem;font-weight:600;">📋 Historial de Préstamos</h4>
                             <button class="btn btn-ghost btn-sm" onclick="loadInvLoans()">🔄 Actualizar</button>
+                        </div>
+                        <div style="display:flex;gap:6px;margin-bottom:0.75rem;">
+                            <button class="btn btn-sm" id="inv-loans-tab-all" onclick="invLoansFilterTab('all')" style="background:var(--primary);color:#fff;font-size:0.76rem;">Todos</button>
+                            <button class="btn btn-ghost btn-sm" id="inv-loans-tab-loan" onclick="invLoansFilterTab('loan')" style="font-size:0.76rem;">🤝 Préstamos</button>
+                            <button class="btn btn-ghost btn-sm" id="inv-loans-tab-return" onclick="invLoansFilterTab('return')" style="font-size:0.76rem;">↩️ Devoluciones</button>
+                            <button class="btn btn-ghost btn-sm" id="inv-loans-tab-units" onclick="invLoansFilterTab('units')" style="font-size:0.76rem;">➕➖ Unidades</button>
                         </div>
                         <div class="table-scroll">
                             <table class="data-table">
@@ -1479,6 +1481,12 @@
                             <option value="Insumos">📦 Insumos</option>
                             <option value="Electrónica">⚡ Electrónica</option>
                             <option value="Químicos">🧪 Químicos</option>
+                            <option value="Impresión 3D">🖨️ Impresión 3D</option>
+                            <option value="Corte Láser">🔆 Corte Láser</option>
+                            <option value="Computación">💻 Computación</option>
+                            <option value="Seguridad">🦺 Seguridad</option>
+                            <option value="Mobiliario">🪑 Mobiliario</option>
+                            <option value="Otro">📂 Otro</option>
                         </select>
                     </div>
                     <div>
@@ -3938,6 +3946,53 @@
         if (ovDet) ovDet.textContent = `${prestados} prestado${prestados !== 1 ? 's' : ''}`;
     }
 
+    let _invSort = { col: null, dir: 1 };
+    let _invLoansFilter = 'all';
+
+    window.invSetSort = col => {
+        if (_invSort.col === col) _invSort.dir *= -1;
+        else { _invSort.col = col; _invSort.dir = 1; }
+        document.querySelectorAll('[id^="inv-sort-"]').forEach(el => el.textContent = '');
+        const el = document.getElementById('inv-sort-' + col);
+        if (el) el.textContent = _invSort.dir === 1 ? ' ▲' : ' ▼';
+        renderInventario();
+    };
+
+    function updateInvCategoryFilter() {
+        const sel = document.getElementById('filter-categoria');
+        if (!sel) return;
+        const prev = sel.value;
+        const icons = { Herramientas:'🔨', Insumos:'📦', Electrónica:'⚡', Químicos:'🧪', 'Impresión 3D':'🖨️', 'Corte Láser':'🔆', Computación:'💻', Seguridad:'🦺', Mobiliario:'🪑', Otro:'📂' };
+        const cats = [...new Set(db.assets.map(a => a.category).filter(Boolean))].sort();
+        sel.innerHTML = '<option value="">Todas las categorías</option>' +
+            cats.map(c => `<option value="${escapeHTML(c)}">${icons[c] || '📂'} ${escapeHTML(c)}</option>`).join('');
+        if (prev && cats.includes(prev)) sel.value = prev;
+    }
+
+    window.invMarkRepaired = async id => {
+        const asset = db.assets.find(a => a.id === id);
+        if (!asset) return;
+        const { error } = await supabaseClient.from('assets').update({ status: 'active' }).eq('id', id);
+        if (error) { showToast('Error: ' + error.message, 'error'); return; }
+        asset.status = 'active';
+        renderInventario();
+        updateInventarioStats();
+        showToast(`${asset.name} marcado como reparado.`, 'success');
+    };
+
+    window.invLoansFilterTab = type => {
+        _invLoansFilter = type;
+        ['all','loan','return','units'].forEach(t => {
+            const btn = document.getElementById('inv-loans-tab-' + t);
+            if (!btn) return;
+            btn.style.background = t === type ? 'var(--primary)' : '';
+            btn.style.color      = t === type ? '#fff' : '';
+            btn.className = t === type ? 'btn btn-sm' : 'btn btn-ghost btn-sm';
+            btn.style.fontSize = '0.76rem';
+        });
+        loadInvLoans();
+    };
+
     function renderInventario() {
         const search  = (document.getElementById('search-inventario')?.value || '').toLowerCase();
         const cat     = document.getElementById('filter-categoria')?.value || '';
@@ -3972,6 +4027,15 @@
             ? `${filtered.length} activos en total`
             : `${filtered.length} de ${db.assets.length} activos`;
 
+        // Ordenar
+        if (_invSort.col) {
+            filtered.sort((a, b) => {
+                const va = _invSort.col === 'name' ? (a.name || '').toLowerCase() : (a[_invSort.col] ?? 0);
+                const vb = _invSort.col === 'name' ? (b.name || '').toLowerCase() : (b[_invSort.col] ?? 0);
+                return va < vb ? -_invSort.dir : va > vb ? _invSort.dir : 0;
+            });
+        }
+
         const statusLabel = { active: '✅ Activo', maintenance: '🔧 Mantenimiento', lost: '❌ Baja' };
 
         // Agrupar por categoría
@@ -3984,9 +4048,12 @@
         let html = '';
         for (const [cat, items] of Object.entries(grouped)) {
             html += `<tr><td colspan="11" style="background:var(--bg-secondary);font-weight:700;padding:0.6rem 1rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">📁 ${escapeHTML(cat)}</td></tr>`;
-            html += items.map(a => `
-                <tr>
-                    <td><code style="font-size:0.78rem;">${escapeHTML(a.id)}</code>${(a.nfc_configured || a.nfc_uid) ? ` <span title="NFC configurado${a.nfc_uid ? ': ' + a.nfc_uid : ''}" style="font-size:0.75rem;">📡</span>` : ''}</td>
+            html += items.map(a => {
+                const zeroStock = a.available === 0 && a.status === 'active';
+                const eid = escapeHTML(a.id);
+                return `
+                <tr style="${zeroStock ? 'background:rgba(220,38,38,0.04);' : ''}">
+                    <td><code style="font-size:0.78rem;">${eid}</code>${(a.nfc_configured || a.nfc_uid) ? ` <span title="NFC configurado${a.nfc_uid ? ': ' + a.nfc_uid : ''}" style="font-size:0.75rem;">📡</span>` : ''}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:0.5rem;">
                             ${a.image ? `<img src="${escapeHTML(a.image)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" title="${escapeHTML(a.name)}">` : ''}
@@ -3997,24 +4064,26 @@
                     <td style="font-size:0.82rem;">${escapeHTML(a.category || '')}</td>
                     <td style="font-size:0.82rem;">${escapeHTML(a.owner || 'Laboratorio')}</td>
                     <td style="text-align:center;">${a.total ?? '—'}</td>
-                    <td style="text-align:center;font-weight:600;color:${a.available > 0 ? '#16a34a' : '#dc2626'};">${a.available ?? '—'}</td>
+                    <td style="text-align:center;font-weight:600;color:${a.available > 0 ? '#16a34a' : '#dc2626'};">${zeroStock ? '⚠️ ' : ''}${a.available ?? '—'}</td>
                     <td style="text-align:center;">${a.borrowed || 0}</td>
                     <td><span style="font-size:0.8rem;padding:2px 8px;border-radius:20px;background:${a.status==='active'?'#dcfce7':a.status==='maintenance'?'#fef9c3':'#fee2e2'};color:${a.status==='active'?'#166534':a.status==='maintenance'?'#854d0e':'#991b1b'};">${statusLabel[a.status] || a.status}</span></td>
                     <td style="font-size:0.82rem;">${escapeHTML(a.location || '')}</td>
                     <td style="white-space:nowrap;">
-                        ${a.available > 0 ? `<button class="btn btn-ghost btn-sm" onclick="invOpenLoanModal('${escapeHTML(a.id)}')" style="color:#2563eb;">🤝 Prestar</button>` : ''}
-                        ${a.borrowed > 0  ? `<button class="btn btn-ghost btn-sm" onclick="invOpenReturnModal('${escapeHTML(a.id)}')" style="color:#16a34a;">↩️ Devolver</button>` : ''}
-                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenAddUnitsModal('${escapeHTML(a.id)}')" title="Ingresar unidades" style="color:#16a34a;">➕</button>` : ''}
-                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenRemoveUnitsModal('${escapeHTML(a.id)}')" title="Restar unidades" style="color:#b45309;">➖</button>` : ''}
-                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenNFCModal('${escapeHTML(a.id)}')" title="Configurar NFC" style="color:#7c3aed;">📡</button>` : ''}
-                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invEditAsset('${escapeHTML(a.id)}')" title="Editar">✏️</button>` : ''}
-                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invDeleteAsset('${escapeHTML(a.id)}')" title="Eliminar" style="color:#dc2626;">🗑️</button>` : ''}
+                        ${a.available > 0 ? `<button class="btn btn-ghost btn-sm" onclick="invOpenLoanModal('${eid}')" style="color:#2563eb;">🤝 Prestar</button>` : ''}
+                        ${a.borrowed > 0  ? `<button class="btn btn-ghost btn-sm" onclick="invOpenReturnModal('${eid}')" style="color:#16a34a;">↩️ Devolver</button>` : ''}
+                        ${a.status === 'maintenance' && canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invMarkRepaired('${eid}')" title="Marcar como reparado" style="color:#16a34a;">✅ Reparado</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenAddUnitsModal('${eid}')" title="Ingresar unidades" style="color:#16a34a;">➕</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenRemoveUnitsModal('${eid}')" title="Restar unidades" style="color:#b45309;">➖</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invOpenNFCModal('${eid}')" title="Configurar NFC" style="color:#7c3aed;">📡</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invEditAsset('${eid}')" title="Editar">✏️</button>` : ''}
+                        ${canAdmin() ? `<button class="btn btn-ghost btn-sm" onclick="invDeleteAsset('${eid}')" title="Eliminar" style="color:#dc2626;">🗑️</button>` : ''}
                     </td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
         }
 
         if (tbody) tbody.innerHTML = html;
+        updateInvCategoryFilter();
     }
 
     function filterInventario() { renderInventario(); }
@@ -4094,11 +4163,17 @@
         if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:1rem;color:var(--text-muted);">⏳ Cargando...</td></tr>';
 
-        const { data, error } = await supabaseClient
+        let query = supabaseClient
             .from('loans')
             .select('*')
             .order('created_at', { ascending: false })
-            .limit(30);
+            .limit(50);
+
+        if (_invLoansFilter === 'loan')   query = query.eq('action', 'loan');
+        if (_invLoansFilter === 'return') query = query.eq('action', 'return');
+        if (_invLoansFilter === 'units')  query = query.in('action', ['add_units', 'remove_units']);
+
+        const { data, error } = await query;
 
         if (error || !data) {
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#dc2626;padding:1rem;">Error al cargar historial.</td></tr>';
@@ -4510,9 +4585,12 @@
         const format  = document.getElementById('inv-nfc-config-format').value;
         const payload = invBuildNFCPayload(asset, format);
         try {
-            status.innerHTML = '⏳ Acerque el tag NFC para escribir…';
+            status.innerHTML = '⏳ Acerque el tag NFC para escribir… (8 seg)';
             const ndef = new NDEFReader();
-            await ndef.write({ records: [{ recordType: 'text', data: payload }] });
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 8000);
+            await ndef.write({ records: [{ recordType: 'text', data: payload }] }, { signal: ctrl.signal });
+            clearTimeout(timer);
             status.innerHTML = `✅ Tag configurado correctamente con el código <code>${escapeHTML(asset.id)}</code>.`;
             showToast('NFC configurado correctamente.', 'success');
 
@@ -4522,8 +4600,12 @@
                 .from('assets').update({ nfc_configured: true }).eq('id', asset.id);
             if (markError) console.warn('nfc_configured update failed:', markError.message);
         } catch (err) {
-            status.innerHTML = `❌ Error al escribir: ${escapeHTML(err.message)}`;
-            showToast('Error al configurar el NFC: ' + err.message, 'error');
+            if (err.name === 'AbortError') {
+                status.innerHTML = '⏱️ Tiempo agotado. No se detectó ningún tag. Intente de nuevo.';
+            } else {
+                status.innerHTML = `❌ Error al escribir: ${escapeHTML(err.message)}`;
+                showToast('Error al configurar el NFC: ' + err.message, 'error');
+            }
         }
     };
 
