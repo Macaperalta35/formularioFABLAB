@@ -22,101 +22,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="dashboard.css">
     <style>
-        /* ── Inventario: alternar tabla/tarjetas según viewport ── */
-        .inv-table-view { display: block; }
-        .inv-cards-view { display: none !important; }
-        @media (max-width: 768px) {
-            .inv-table-view { display: none !important; }
-            .inv-cards-view { display: block !important; }
-        }
-
-        /* Lista compacta de inventario para móvil */
-        .inv-list-group {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-        .inv-list-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 12px;
-            border-bottom: 1px solid var(--border-light);
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            transition: background 0.1s;
-        }
-        .inv-list-item:last-child { border-bottom: none; }
-        .inv-list-item:active { background: var(--bg-secondary); }
-        .inv-list-thumb {
-            width: 40px;
-            height: 40px;
-            border-radius: 7px;
-            object-fit: cover;
-            flex-shrink: 0;
-            border: 1px solid var(--border-light);
-        }
-        .inv-list-thumb-ph {
-            width: 40px;
-            height: 40px;
-            border-radius: 7px;
-            flex-shrink: 0;
-            background: var(--bg-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-        }
-        .inv-list-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .inv-list-name {
-            font-size: 0.87rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            line-height: 1.3;
-        }
-        .inv-list-sub {
-            font-size: 0.71rem;
-            color: var(--text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-top: 1px;
-        }
-        .inv-list-right {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            flex-shrink: 0;
-        }
-        .inv-list-badge {
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 20px;
-            background: var(--bg-secondary);
-        }
-        .inv-list-chevron {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            line-height: 1;
-        }
-        .inv-cat-header {
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            padding: 10px 4px 4px;
-        }
-
         /* ── Accesibilidad ── */
         body.high-contrast {
             --bg-deep: #000;
@@ -687,8 +592,7 @@
                                 <button class="btn btn-ghost btn-sm" onclick="invExportPDF()" title="Exportar PDF">📄 PDF</button>
                             </div>
                         </div>
-                        <!-- Vista tabla (desktop) -->
-                        <div class="table-scroll inv-table-view">
+                        <div class="table-scroll">
                             <table class="data-table" id="inventario-table">
                                 <thead>
                                     <tr>
@@ -708,8 +612,6 @@
                                 <tbody id="inventario-tbody"></tbody>
                             </table>
                         </div>
-                        <!-- Vista tarjetas (móvil) -->
-                        <div id="inventario-cards" class="inv-cards-view" style="display:none;"></div>
                         <div id="inventario-count" style="font-size:0.8rem;color:var(--text-muted);padding:0.4rem 0.5rem;text-align:right;"></div>
                         <div id="inventario-empty" class="table-empty" style="display:none;">
                             <div class="table-empty-icon">📦</div>
@@ -1542,50 +1444,6 @@
                 <button class="btn btn-ghost" onclick="closeModal('modal-dash-user')">Cancelar</button>
                 <button class="btn btn-primary" onclick="saveDashUser()">💾 Guardar</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Modal: Detalle del Activo -->
-    <div class="modal-overlay" id="modal-inv-detail">
-        <div class="modal" style="max-width:480px;padding:0;overflow:hidden;">
-            <!-- Foto header -->
-            <div id="inv-detail-photo-wrap" style="position:relative;width:100%;background:var(--bg-secondary);">
-                <button class="modal-close" onclick="closeModal('modal-inv-detail')" style="position:absolute;top:10px;right:10px;z-index:2;background:rgba(0,0,0,0.45);color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;border:none;cursor:pointer;line-height:1;">&times;</button>
-                <img id="inv-detail-photo" src="" alt="" style="width:100%;aspect-ratio:16/8;object-fit:cover;display:block;">
-                <div id="inv-detail-no-photo" style="display:none;width:100%;aspect-ratio:16/8;align-items:center;justify-content:center;font-size:4rem;color:var(--text-muted);display:flex;">📦</div>
-            </div>
-            <!-- Info body -->
-            <div style="padding:16px 18px 0;">
-                <!-- Nombre + código + estado -->
-                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;">
-                    <div>
-                        <div id="inv-detail-name" style="font-size:1.1rem;font-weight:800;color:var(--text-primary);line-height:1.2;"></div>
-                        <div id="inv-detail-id" style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;font-family:monospace;"></div>
-                    </div>
-                    <div id="inv-detail-status" style="flex-shrink:0;"></div>
-                </div>
-                <!-- Categoría + Propietario + Ubicación -->
-                <div id="inv-detail-meta" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;"></div>
-                <!-- Descripción -->
-                <div id="inv-detail-desc-wrap" style="display:none;font-size:0.83rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;padding:8px 10px;background:var(--bg-secondary);border-radius:8px;"></div>
-                <!-- Contadores de stock -->
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
-                    <div style="background:var(--bg-secondary);border-radius:10px;padding:10px 6px;text-align:center;">
-                        <div id="inv-detail-total" style="font-size:1.6rem;font-weight:800;line-height:1;"></div>
-                        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-top:3px;">Total</div>
-                    </div>
-                    <div style="background:var(--bg-secondary);border-radius:10px;padding:10px 6px;text-align:center;">
-                        <div id="inv-detail-avail" style="font-size:1.6rem;font-weight:800;line-height:1;"></div>
-                        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-top:3px;">Disponible</div>
-                    </div>
-                    <div style="background:var(--bg-secondary);border-radius:10px;padding:10px 6px;text-align:center;">
-                        <div id="inv-detail-borrowed" style="font-size:1.6rem;font-weight:800;line-height:1;"></div>
-                        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-top:3px;">Prestado</div>
-                    </div>
-                </div>
-            </div>
-            <!-- Acciones -->
-            <div id="inv-detail-actions" style="display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 16px;"></div>
         </div>
     </div>
 
@@ -4115,8 +3973,6 @@
             : `${filtered.length} de ${db.assets.length} activos`;
 
         const statusLabel = { active: '✅ Activo', maintenance: '🔧 Mantenimiento', lost: '❌ Baja' };
-        const statusBg    = { active: '#dcfce7', maintenance: '#fef9c3', lost: '#fee2e2' };
-        const statusColor = { active: '#166534', maintenance: '#854d0e', lost: '#991b1b' };
 
         // Agrupar por categoría
         const grouped = filtered.reduce((acc, a) => {
@@ -4125,21 +3981,15 @@
             return acc;
         }, {});
 
-        // ── Tabla (desktop) ──
-        let tableHtml = '';
-        // ── Tarjetas (móvil) ──
-        let cardsHtml = '';
-
+        let html = '';
         for (const [cat, items] of Object.entries(grouped)) {
-            tableHtml += `<tr><td colspan="11" style="background:var(--bg-secondary);font-weight:700;padding:0.6rem 1rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">📁 ${escapeHTML(cat)}</td></tr>`;
-            cardsHtml += `<div class="inv-cat-header">📁 ${escapeHTML(cat)}</div><div class="inv-list-group">`;
-
-            tableHtml += items.map(a => `
+            html += `<tr><td colspan="11" style="background:var(--bg-secondary);font-weight:700;padding:0.6rem 1rem;font-size:0.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">📁 ${escapeHTML(cat)}</td></tr>`;
+            html += items.map(a => `
                 <tr>
                     <td><code style="font-size:0.78rem;">${escapeHTML(a.id)}</code>${(a.nfc_configured || a.nfc_uid) ? ` <span title="NFC configurado${a.nfc_uid ? ': ' + a.nfc_uid : ''}" style="font-size:0.75rem;">📡</span>` : ''}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:0.5rem;">
-                            ${a.image ? `<img src="${escapeHTML(a.image)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border);" title="${escapeHTML(a.name)}">` : ''}
+                            ${a.image ? `<img src="${escapeHTML(a.image)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" title="${escapeHTML(a.name)}">` : ''}
                             <strong>${escapeHTML(a.name)}</strong>
                         </div>
                     </td>
@@ -4149,7 +3999,7 @@
                     <td style="text-align:center;">${a.total ?? '—'}</td>
                     <td style="text-align:center;font-weight:600;color:${a.available > 0 ? '#16a34a' : '#dc2626'};">${a.available ?? '—'}</td>
                     <td style="text-align:center;">${a.borrowed || 0}</td>
-                    <td><span style="font-size:0.8rem;padding:2px 8px;border-radius:20px;background:${statusBg[a.status]||'#f3f4f6'};color:${statusColor[a.status]||'#374151'};">${statusLabel[a.status] || a.status}</span></td>
+                    <td><span style="font-size:0.8rem;padding:2px 8px;border-radius:20px;background:${a.status==='active'?'#dcfce7':a.status==='maintenance'?'#fef9c3':'#fee2e2'};color:${a.status==='active'?'#166534':a.status==='maintenance'?'#854d0e':'#991b1b'};">${statusLabel[a.status] || a.status}</span></td>
                     <td style="font-size:0.82rem;">${escapeHTML(a.location || '')}</td>
                     <td style="white-space:nowrap;">
                         ${a.available > 0 ? `<button class="btn btn-ghost btn-sm" onclick="invOpenLoanModal('${escapeHTML(a.id)}')" style="color:#2563eb;">🤝 Prestar</button>` : ''}
@@ -4160,33 +4010,9 @@
                     </td>
                 </tr>
             `).join('');
-
-            cardsHtml += items.map(a => {
-                const id = escapeHTML(a.id);
-                const thumbHtml = a.image
-                    ? `<img src="${escapeHTML(a.image)}" class="inv-list-thumb" alt="">`
-                    : `<div class="inv-list-thumb-ph">📦</div>`;
-                const nfcIcon = (a.nfc_configured || a.nfc_uid) ? ' 📡' : '';
-                const availColor = a.available > 0 ? '#16a34a' : '#dc2626';
-                const statusShort = { active: 'Activo', maintenance: 'Mant.', lost: 'Baja' }[a.status] || a.status;
-                return `
-                <div class="inv-list-item" onclick="openInvDetail('${id}')">
-                    ${thumbHtml}
-                    <div class="inv-list-info">
-                        <div class="inv-list-name">${escapeHTML(a.name)}${nfcIcon}</div>
-                        <div class="inv-list-sub">${escapeHTML(a.category || '')} · ${statusShort}</div>
-                    </div>
-                    <div class="inv-list-right">
-                        <span class="inv-list-badge" style="color:${availColor};">${a.available ?? '—'} disp.</span>
-                        <span class="inv-list-chevron">›</span>
-                    </div>
-                </div>`;
-            }).join('') + '</div>';
         }
 
-        if (tbody) tbody.innerHTML = tableHtml;
-        const cardsEl = document.getElementById('inventario-cards');
-        if (cardsEl) cardsEl.innerHTML = cardsHtml;
+        if (tbody) tbody.innerHTML = html;
     }
 
     function filterInventario() { renderInventario(); }
@@ -4422,63 +4248,6 @@
     window.invEditAsset = id => {
         const asset = db.assets.find(a => a.id === id);
         if (asset) openInvModal(asset);
-    };
-
-    window.openInvDetail = id => {
-        const a = db.assets.find(x => x.id === id);
-        if (!a) return;
-
-        const statusLabel = { active: '✅ Activo', maintenance: '🔧 Mantenimiento', lost: '❌ Baja' };
-        const statusBg    = { active: '#dcfce7', maintenance: '#fef9c3', lost: '#fee2e2' };
-        const statusColor = { active: '#166534', maintenance: '#854d0e', lost: '#991b1b' };
-
-        // Foto
-        const photo   = document.getElementById('inv-detail-photo');
-        const noPhoto = document.getElementById('inv-detail-no-photo');
-        if (a.image) {
-            photo.src = a.image;
-            photo.style.display = 'block';
-            noPhoto.style.display = 'none';
-        } else {
-            photo.style.display = 'none';
-            noPhoto.style.display = 'flex';
-        }
-
-        document.getElementById('inv-detail-name').textContent = a.name;
-        document.getElementById('inv-detail-id').textContent   = a.id + ((a.nfc_configured || a.nfc_uid) ? ' · 📡 NFC' : '');
-
-        document.getElementById('inv-detail-status').innerHTML =
-            `<span style="font-size:0.75rem;padding:3px 10px;border-radius:20px;font-weight:600;background:${statusBg[a.status]||'#f3f4f6'};color:${statusColor[a.status]||'#374151'};">${statusLabel[a.status]||a.status}</span>`;
-
-        const chips = [];
-        if (a.category) chips.push(`<span style="font-size:0.72rem;padding:2px 8px;border-radius:20px;background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);">📁 ${escapeHTML(a.category)}</span>`);
-        if (a.owner)    chips.push(`<span style="font-size:0.72rem;padding:2px 8px;border-radius:20px;background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);">👤 ${escapeHTML(a.owner)}</span>`);
-        if (a.location) chips.push(`<span style="font-size:0.72rem;padding:2px 8px;border-radius:20px;background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);">📍 ${escapeHTML(a.location)}</span>`);
-        document.getElementById('inv-detail-meta').innerHTML = chips.join('');
-
-        const descWrap = document.getElementById('inv-detail-desc-wrap');
-        if (a.description) {
-            descWrap.style.display = 'block';
-            descWrap.textContent = a.description;
-        } else {
-            descWrap.style.display = 'none';
-        }
-
-        document.getElementById('inv-detail-total').textContent    = a.total ?? '—';
-        document.getElementById('inv-detail-avail').textContent    = a.available ?? '—';
-        document.getElementById('inv-detail-avail').style.color    = a.available > 0 ? '#16a34a' : '#dc2626';
-        document.getElementById('inv-detail-borrowed').textContent = a.borrowed || 0;
-
-        const eid = escapeHTML(a.id);
-        let btns = '';
-        if (a.available > 0) btns += `<button class="btn btn-primary" style="flex:1;" onclick="closeModal('modal-inv-detail');invOpenLoanModal('${eid}')">🤝 Prestar</button>`;
-        if (a.borrowed > 0)  btns += `<button class="btn btn-secondary" style="flex:1;" onclick="closeModal('modal-inv-detail');invOpenReturnModal('${eid}')">↩️ Devolver</button>`;
-        if (canAdmin())      btns += `<button class="btn btn-ghost btn-sm" onclick="closeModal('modal-inv-detail');invOpenAddUnitsModal('${eid}')">➕ Unidades</button>`;
-        if (canAdmin())      btns += `<button class="btn btn-ghost btn-sm" onclick="closeModal('modal-inv-detail');invEditAsset('${eid}')">✏️ Editar</button>`;
-        if (canAdmin())      btns += `<button class="btn btn-ghost btn-sm" style="color:#dc2626;" onclick="closeModal('modal-inv-detail');invDeleteAsset('${eid}')">🗑️</button>`;
-        document.getElementById('inv-detail-actions').innerHTML = btns;
-
-        openModal('modal-inv-detail');
     };
 
     window.invDeleteAsset = id => {
