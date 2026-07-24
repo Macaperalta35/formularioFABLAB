@@ -1449,105 +1449,123 @@
 
     <!-- ========== MODALES INVENTARIO ========== -->
 
-    <!-- Modal: Agregar / Editar Activo -->
+    <!-- Modal: Agregar / Editar Activo (diseño compacto optimizado para móvil) -->
     <div class="modal-overlay" id="modal-inv-asset">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title" id="inv-asset-modal-title">➕ Agregar Activo</h3>
+        <div class="modal" style="max-width:560px;">
+            <div class="modal-header" style="padding:14px 18px;">
+                <h3 class="modal-title" id="inv-asset-modal-title" style="font-size:0.95rem;">➕ Agregar Activo</h3>
                 <button class="modal-close" onclick="closeModal('modal-inv-asset')">&times;</button>
             </div>
-            <div class="modal-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Código NFC / ID *</label>
-                        <input type="text" class="form-input" id="inv-asset-nfc" placeholder="Ej: HER-001">
+            <div class="modal-body" style="padding:14px 18px;">
+
+                <!-- Código + Nombre -->
+                <div style="display:grid;grid-template-columns:5fr 8fr;gap:8px;margin-bottom:10px;">
+                    <div>
+                        <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Código / ID *</label>
+                        <input type="text" class="form-input" id="inv-asset-nfc" placeholder="HER-001" style="padding:9px 11px;">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Nombre del Activo *</label>
-                        <input type="text" class="form-input" id="inv-asset-name" placeholder="Ej: Impresora 3D Ender 3">
+                    <div>
+                        <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Nombre del Activo *</label>
+                        <input type="text" class="form-input" id="inv-asset-name" placeholder="Ej: Impresora 3D Ender 3" style="padding:9px 11px;">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Descripción</label>
-                    <input type="text" class="form-input" id="inv-asset-desc" placeholder="Detalles del activo">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Categoría</label>
-                        <select class="form-select" id="inv-asset-category">
-                            <option value="Herramientas">Herramientas</option>
-                            <option value="Insumos">Insumos</option>
-                            <option value="Electrónica">Electrónica</option>
-                            <option value="Químicos">Químicos</option>
+
+                <!-- Categoría + Propietario -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+                    <div>
+                        <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Categoría</label>
+                        <select class="form-select" id="inv-asset-category" style="padding:9px 11px;">
+                            <option value="Herramientas">🔨 Herramientas</option>
+                            <option value="Insumos">📦 Insumos</option>
+                            <option value="Electrónica">⚡ Electrónica</option>
+                            <option value="Químicos">🧪 Químicos</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Propietario</label>
-                        <select class="form-select" id="inv-asset-owner">
+                    <div>
+                        <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Propietario</label>
+                        <select class="form-select" id="inv-asset-owner" style="padding:9px 11px;">
                             <option value="Laboratorio">Laboratorio</option>
                             <option value="Prestado">Prestado / Externo</option>
                         </select>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Stock Total</label>
-                        <input type="number" class="form-input" id="inv-asset-total" value="1" min="0">
+
+                <!-- Stock Total + Disponible + Prestado -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
+                    <div>
+                        <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Total</label>
+                        <input type="number" class="form-input" id="inv-asset-total" value="1" min="0" style="padding:9px 6px;text-align:center;">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Disponible</label>
-                        <input type="number" class="form-input" id="inv-asset-avail" value="1" min="0">
+                    <div>
+                        <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Disponible</label>
+                        <input type="number" class="form-input" id="inv-asset-avail" value="1" min="0" style="padding:9px 6px;text-align:center;">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Prestado</label>
-                        <input type="number" class="form-input" id="inv-asset-borrowed" value="0" min="0">
+                    <div>
+                        <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Prestado</label>
+                        <input type="number" class="form-input" id="inv-asset-borrowed" value="0" min="0" style="padding:9px 6px;text-align:center;">
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Estado</label>
-                        <select class="form-select" id="inv-asset-status">
+
+                <!-- Estado + Ubicación -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+                    <div>
+                        <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Estado</label>
+                        <select class="form-select" id="inv-asset-status" style="padding:9px 11px;">
                             <option value="active">✅ Activo</option>
                             <option value="maintenance">🔧 Mantenimiento</option>
                             <option value="lost">❌ Baja / Perdido</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Ubicación</label>
-                        <input type="text" class="form-input" id="inv-asset-location" placeholder="Ej: Laboratorio 1, Estante B">
+                    <div>
+                        <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Ubicación</label>
+                        <input type="text" class="form-input" id="inv-asset-location" placeholder="FabLab" style="padding:9px 11px;">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Fotografía del Activo</label>
-                    <input type="file" class="form-input" id="inv-asset-image-file" accept="image/*">
-                    <input type="hidden" id="inv-asset-image">
-                    <div id="inv-image-preview" style="margin-top:0.75rem;text-align:center;"></div>
+
+                <!-- Descripción y Foto (colapsable) -->
+                <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:8px;">
+                    <button type="button" onclick="toggleInvAssetMore()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--bg-secondary);border:none;cursor:pointer;font-size:0.8rem;font-weight:600;color:var(--text-secondary);">
+                        <span>📝 Descripción y Foto</span>
+                        <span id="inv-asset-more-chevron" style="font-size:0.7rem;">▼</span>
+                    </button>
+                    <div id="inv-asset-more-panel" style="display:none;padding:12px 14px;">
+                        <div style="margin-bottom:10px;">
+                            <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Descripción</label>
+                            <input type="text" class="form-input" id="inv-asset-desc" placeholder="Detalles del activo" style="padding:9px 11px;">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size:0.72rem;margin-bottom:4px;">Fotografía del Activo</label>
+                            <input type="file" class="form-input" id="inv-asset-image-file" accept="image/*" style="padding:8px 10px;font-size:0.8rem;">
+                            <input type="hidden" id="inv-asset-image">
+                            <div id="inv-image-preview" style="margin-top:8px;text-align:center;"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Sección NFC opcional -->
-                <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-top:0.5rem;">
-                    <button type="button" onclick="toggleInvModalNFC()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:var(--bg-secondary);border:none;cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--text-primary);">
-                        <span>📡 Asociar Tag NFC <span id="inv-modal-nfc-badge" style="display:none;font-size:0.72rem;font-weight:700;background:#7c3aed;color:#fff;padding:2px 8px;border-radius:50px;margin-left:6px;">Capturado</span></span>
-                        <span id="inv-modal-nfc-chevron">▼</span>
+                <!-- Sección NFC (colapsable) -->
+                <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+                    <button type="button" onclick="toggleInvModalNFC()" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--bg-secondary);border:none;cursor:pointer;font-size:0.8rem;font-weight:600;color:var(--text-primary);">
+                        <span>📡 Asociar Tag NFC <span id="inv-modal-nfc-badge" style="display:none;font-size:0.7rem;font-weight:700;background:#7c3aed;color:#fff;padding:2px 8px;border-radius:50px;margin-left:6px;">Capturado</span></span>
+                        <span id="inv-modal-nfc-chevron" style="font-size:0.7rem;">▼</span>
                     </button>
-                    <div id="inv-modal-nfc-panel" style="display:none;padding:0.9rem 1rem;">
-                        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Opcional — escanee un tag para vincularlo al activo al momento de crearlo.</p>
-                        <div id="inv-modal-nfc-status" style="padding:0.75rem;background:var(--bg-secondary);border-radius:6px;text-align:center;font-size:0.83rem;min-height:44px;display:flex;align-items:center;justify-content:center;margin-bottom:0.75rem;">
+                    <div id="inv-modal-nfc-panel" style="display:none;padding:12px 14px;">
+                        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">Opcional — escanee un tag para vincularlo al activo al momento de crearlo.</p>
+                        <div id="inv-modal-nfc-status" style="padding:10px;background:var(--bg-secondary);border-radius:6px;text-align:center;font-size:0.82rem;min-height:40px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
                             Presione "Escanear" y acerque el tag NFC.
                         </div>
-                        <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+                        <div style="display:flex;gap:0.5rem;margin-bottom:10px;">
                             <button type="button" class="btn btn-secondary btn-sm" onclick="startInvModalNFCScan()">📡 Escanear</button>
                             <button type="button" class="btn btn-ghost btn-sm" onclick="clearInvModalNFC()">✕ Limpiar</button>
                         </div>
                         <input type="hidden" id="inv-modal-nfc-uid">
-                        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;cursor:pointer;">
+                        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;cursor:pointer;">
                             <input type="checkbox" id="inv-modal-nfc-write" checked>
                             Grabar código del activo en el tag al guardar
                         </label>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="padding:12px 18px;">
                 <button class="btn btn-ghost" onclick="closeModal('modal-inv-asset')">Cancelar</button>
                 <button class="btn btn-primary" onclick="saveInvAsset()">💾 Guardar</button>
             </div>
@@ -4135,6 +4153,10 @@
             ? `📡 UID registrado: ${asset.nfc_uid}`
             : 'Presione "Escanear" y acerque el tag NFC.';
         document.getElementById('inv-modal-nfc-badge').style.display = asset?.nfc_uid ? 'inline' : 'none';
+        // Mostrar panel de descripción/foto si el activo ya tiene datos ahí
+        const hasMore = !!(asset?.description || asset?.image);
+        document.getElementById('inv-asset-more-panel').style.display = hasMore ? 'block' : 'none';
+        document.getElementById('inv-asset-more-chevron').textContent = hasMore ? '▲' : '▼';
         openModal('modal-inv-asset');
     }
 
@@ -4618,6 +4640,14 @@
         const open    = panel.style.display === 'none';
         panel.style.display   = open ? 'block' : 'none';
         chevron.textContent   = open ? '▲' : '▼';
+    };
+
+    window.toggleInvAssetMore = () => {
+        const panel   = document.getElementById('inv-asset-more-panel');
+        const chevron = document.getElementById('inv-asset-more-chevron');
+        const open    = panel.style.display === 'none';
+        panel.style.display = open ? 'block' : 'none';
+        chevron.textContent = open ? '▲' : '▼';
     };
 
     window.startInvModalNFCScan = async () => {
