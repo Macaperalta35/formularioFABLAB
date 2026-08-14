@@ -5395,17 +5395,18 @@
         const container = document.getElementById('ay-schedule-view');
         if (!container) return;
 
+        // Colores vivos y claramente distinguibles entre sí
         const COLORS = [
-            { bg:'#d8eafd', text:'#1a4585', bdr:'#b8d0f5' },
-            { bg:'#d2f0e0', text:'#1a5c3a', bdr:'#a8e0c0' },
-            { bg:'#fde8c8', text:'#7c3a0a', bdr:'#f5c898' },
-            { bg:'#e8d4f7', text:'#5a1a7c', bdr:'#cca8f0' },
-            { bg:'#f7d4e8', text:'#7c1a4a', bdr:'#f0a8c8' },
-            { bg:'#d4eef7', text:'#1a4a6c', bdr:'#a8d8f0' },
-            { bg:'#fdd8c8', text:'#7c2a1a', bdr:'#f5b8a0' },
-            { bg:'#d4f7ee', text:'#1a5c4a', bdr:'#a0f0da' },
-            { bg:'#fdf0c8', text:'#7c5a0a', bdr:'#f0d898' },
-            { bg:'#e8d4d4', text:'#6c1a1a', bdr:'#d4a8a8' },
+            { bg:'#bfdbfe', text:'#1e3a8a', bdr:'#60a5fa' }, // azul
+            { bg:'#bbf7d0', text:'#14532d', bdr:'#4ade80' }, // verde
+            { bg:'#fed7aa', text:'#7c2d12', bdr:'#fb923c' }, // naranja
+            { bg:'#e9d5ff', text:'#4c1d95', bdr:'#c084fc' }, // morado
+            { bg:'#fecdd3', text:'#881337', bdr:'#f87171' }, // rojo/rosa
+            { bg:'#a5f3fc', text:'#164e63', bdr:'#22d3ee' }, // celeste
+            { bg:'#fef08a', text:'#713f12', bdr:'#facc15' }, // amarillo
+            { bg:'#d9f99d', text:'#365314', bdr:'#86efac' }, // lima
+            { bg:'#fbcfe8', text:'#831843', bdr:'#f472b6' }, // rosa
+            { bg:'#c7d2fe', text:'#1e1b4b', bdr:'#818cf8' }, // índigo
         ];
 
         const activos = db.ayudantes.filter(a => a.activo !== false);
@@ -5417,27 +5418,27 @@
         const colorMap = {};
         activos.forEach((a, i) => { colorMap[a.id] = COLORS[i % COLORS.length]; });
 
-        const hours    = Array.from({length: 13}, (_, i) => i + 8); // 08–20
-        const nowH     = new Date().getHours();
-        const nowDay   = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][new Date().getDay()];
-        const inRange  = nowH >= 8 && nowH <= 20;
+        const hours   = Array.from({length: 13}, (_, i) => i + 8); // 08–20
+        const nowH    = new Date().getHours();
+        const nowDay  = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][new Date().getDay()];
+        const inRange = nowH >= 8 && nowH <= 20;
 
-        // Leyenda de colores
+        // Leyenda
         const legend = activos.map((a, i) => {
             const c = COLORS[i % COLORS.length];
-            return `<span style="display:inline-flex;align-items:center;font-size:0.72rem;font-weight:700;padding:4px 12px;border-radius:50px;background:${c.bg};color:${c.text};border:1px solid ${c.bdr};white-space:nowrap;">${escapeHTML(a.nombre)}</span>`;
+            return `<span style="display:inline-flex;align-items:center;font-size:0.72rem;font-weight:700;padding:4px 12px;border-radius:50px;background:${c.bg};color:${c.text};border:1.5px solid ${c.bdr};white-space:nowrap;">${escapeHTML(a.nombre)}</span>`;
         }).join('');
 
-        // Cabecera de días
+        // Cabecera días
         const dayThs = AY_DIAS.map(d => {
             const isToday = d === nowDay;
-            return `<th style="padding:0 3px 12px;font-size:0.7rem;font-weight:800;text-align:center;letter-spacing:0.07em;text-transform:uppercase;color:${isToday ? 'var(--primary)' : 'var(--text-muted)'};white-space:nowrap;">${AY_DIAS_LABEL[d]}</th>`;
+            return `<th style="padding:0 4px 12px;font-size:0.7rem;font-weight:800;text-align:center;letter-spacing:0.07em;text-transform:uppercase;color:${isToday ? 'var(--primary)' : 'var(--text-muted)'};white-space:nowrap;">${AY_DIAS_LABEL[d]}</th>`;
         }).join('');
 
-        // Filas de horas
+        // Filas
         const bodyRows = hours.map(h => {
-            const hMins  = h * 60;
-            const isNow  = inRange && h === nowH;
+            const hMins = h * 60;
+            const isNow = inRange && h === nowH;
 
             const tds = AY_DIAS.map(d => {
                 const working = activos.filter(a => {
@@ -5446,39 +5447,32 @@
                     return _normBloques(dh).some(b => hMins >= _ayMins(b.desde||'08:00') && hMins < _ayMins(b.hasta||'20:00'));
                 });
 
+                const nowRing = isNow ? 'box-shadow:0 0 0 2px rgba(37,99,235,0.35);' : '';
+
                 if (!working.length) {
-                    return `<td style="padding:3px 4px;">
-                        <div style="border-radius:10px;height:36px;background:var(--bg-secondary);${isNow ? 'box-shadow:inset 0 0 0 2px rgba(37,99,235,0.15);' : ''}"></div>
+                    return `<td style="padding:3px 4px;vertical-align:top;">
+                        <div style="border-radius:10px;min-height:36px;background:var(--bg-secondary);${nowRing}"></div>
                     </td>`;
                 }
 
-                if (working.length === 1) {
-                    const c = colorMap[working[0].id];
-                    const firstName = escapeHTML(working[0].nombre.split(' ')[0]);
-                    return `<td style="padding:3px 4px;">
-                        <div style="border-radius:10px;height:36px;background:${c.bg};border:1px solid ${c.bdr};display:flex;align-items:center;justify-content:center;padding:0 6px;${isNow ? 'box-shadow:0 0 0 2px rgba(37,99,235,0.25);' : ''}">
-                            <span style="font-size:0.66rem;font-weight:700;color:${c.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">${firstName}</span>
-                        </div>
-                    </td>`;
-                }
-
-                // Múltiples ayudantes: celdas divididas en segmentos
-                const segs = working.map(a => {
+                // Un chip por ayudante, apilados verticalmente con su propio color
+                const chips = working.map(a => {
                     const c = colorMap[a.id];
-                    return `<div style="flex:1;height:100%;background:${c.bg};display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 2px;">
-                        <span style="font-size:0.58rem;font-weight:700;color:${c.text};white-space:nowrap;overflow:hidden;text-overflow:clip;">${escapeHTML(a.nombre.split(' ')[0])}</span>
+                    const firstName = escapeHTML(a.nombre.split(' ')[0]);
+                    return `<div style="border-radius:7px;background:${c.bg};border:1px solid ${c.bdr};padding:3px 5px;display:flex;align-items:center;justify-content:center;margin-bottom:2px;">
+                        <span style="font-size:0.64rem;font-weight:700;color:${c.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${firstName}</span>
                     </div>`;
                 }).join('');
-                return `<td style="padding:3px 4px;">
-                    <div style="border-radius:10px;height:36px;overflow:hidden;display:flex;${isNow ? 'box-shadow:0 0 0 2px rgba(37,99,235,0.25);' : ''}">
-                        ${segs}
+
+                return `<td style="padding:3px 4px;vertical-align:top;">
+                    <div style="border-radius:10px;min-height:36px;padding:3px;display:flex;flex-direction:column;justify-content:center;${nowRing}">
+                        ${chips}
                     </div>
                 </td>`;
             }).join('');
 
-            const hourLabel = `${String(h).padStart(2,'0')}:00`;
             return `<tr>
-                <td style="padding:3px 10px 3px 0;font-size:0.7rem;font-weight:${isNow ? '800' : '500'};color:${isNow ? 'var(--primary)' : 'var(--text-muted)'};text-align:right;white-space:nowrap;vertical-align:middle;font-variant-numeric:tabular-nums;">${hourLabel}</td>
+                <td style="padding:3px 10px 3px 0;font-size:0.7rem;font-weight:${isNow ? '800' : '500'};color:${isNow ? 'var(--primary)' : 'var(--text-muted)'};text-align:right;white-space:nowrap;vertical-align:top;padding-top:8px;font-variant-numeric:tabular-nums;">${String(h).padStart(2,'0')}:00</td>
                 ${tds}
             </tr>`;
         }).join('');
