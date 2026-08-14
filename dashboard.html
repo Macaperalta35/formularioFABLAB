@@ -5396,78 +5396,105 @@
         if (!container) return;
 
         const COLORS = [
-            { bg:'#dbeafe', text:'#1e40af' },
-            { bg:'#dcfce7', text:'#166534' },
-            { bg:'#fef9c3', text:'#854d0e' },
-            { bg:'#f3e8ff', text:'#6d28d9' },
-            { bg:'#fce7f3', text:'#9d174d' },
-            { bg:'#ffedd5', text:'#c2410c' },
-            { bg:'#ecfdf5', text:'#065f46' },
-            { bg:'#e0f2fe', text:'#0369a1' },
-            { bg:'#fef2f2', text:'#b91c1c' },
-            { bg:'#f0fdf4', text:'#15803d' },
+            { bg:'#d8eafd', text:'#1a4585', bdr:'#b8d0f5' },
+            { bg:'#d2f0e0', text:'#1a5c3a', bdr:'#a8e0c0' },
+            { bg:'#fde8c8', text:'#7c3a0a', bdr:'#f5c898' },
+            { bg:'#e8d4f7', text:'#5a1a7c', bdr:'#cca8f0' },
+            { bg:'#f7d4e8', text:'#7c1a4a', bdr:'#f0a8c8' },
+            { bg:'#d4eef7', text:'#1a4a6c', bdr:'#a8d8f0' },
+            { bg:'#fdd8c8', text:'#7c2a1a', bdr:'#f5b8a0' },
+            { bg:'#d4f7ee', text:'#1a5c4a', bdr:'#a0f0da' },
+            { bg:'#fdf0c8', text:'#7c5a0a', bdr:'#f0d898' },
+            { bg:'#e8d4d4', text:'#6c1a1a', bdr:'#d4a8a8' },
         ];
 
         const activos = db.ayudantes.filter(a => a.activo !== false);
         if (!activos.length) {
-            container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-muted);">No hay ayudantes activos.</div>';
+            container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-muted);">No hay ayudantes activos registrados.</div>';
             return;
         }
 
         const colorMap = {};
         activos.forEach((a, i) => { colorMap[a.id] = COLORS[i % COLORS.length]; });
 
-        const hours   = Array.from({length: 12}, (_, i) => i + 8); // 08–19
-        const nowH    = new Date().getHours();
-        const todayIdx = new Date().getDay(); // 0=dom
-        const nowDay  = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][todayIdx];
+        const hours    = Array.from({length: 13}, (_, i) => i + 8); // 08–20
+        const nowH     = new Date().getHours();
+        const nowDay   = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][new Date().getDay()];
+        const inRange  = nowH >= 8 && nowH <= 20;
 
+        // Leyenda de colores
         const legend = activos.map((a, i) => {
             const c = COLORS[i % COLORS.length];
-            return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;font-weight:600;padding:2px 9px;border-radius:50px;background:${c.bg};color:${c.text};white-space:nowrap;">${escapeHTML(a.nombre)}</span>`;
+            return `<span style="display:inline-flex;align-items:center;font-size:0.72rem;font-weight:700;padding:4px 12px;border-radius:50px;background:${c.bg};color:${c.text};border:1px solid ${c.bdr};white-space:nowrap;">${escapeHTML(a.nombre)}</span>`;
         }).join('');
 
-        const thBase = 'padding:7px 10px;font-size:0.71rem;font-weight:700;text-align:center;background:var(--bg-secondary);border-bottom:2px solid var(--border);white-space:nowrap;';
-        const header = `<tr>
-            <th style="${thBase}width:52px;text-align:right;border-right:2px solid var(--border);color:var(--text-muted);">Hora</th>
-            ${AY_DIAS.map(d => `<th style="${thBase}${d === nowDay ? 'color:var(--primary);' : ''}">${AY_DIAS_LABEL[d]}</th>`).join('')}
-        </tr>`;
+        // Cabecera de días
+        const dayThs = AY_DIAS.map(d => {
+            const isToday = d === nowDay;
+            return `<th style="padding:0 3px 12px;font-size:0.7rem;font-weight:800;text-align:center;letter-spacing:0.07em;text-transform:uppercase;color:${isToday ? 'var(--primary)' : 'var(--text-muted)'};white-space:nowrap;">${AY_DIAS_LABEL[d]}</th>`;
+        }).join('');
 
-        const rows = hours.map(h => {
-            const hMins = h * 60;
-            const isNow = h === nowH && hours.includes(nowH);
-            const cells = AY_DIAS.map(d => {
+        // Filas de horas
+        const bodyRows = hours.map(h => {
+            const hMins  = h * 60;
+            const isNow  = inRange && h === nowH;
+
+            const tds = AY_DIAS.map(d => {
                 const working = activos.filter(a => {
                     const dh = a.horario?.[d];
                     if (!dh?.activo) return false;
                     return _normBloques(dh).some(b => hMins >= _ayMins(b.desde||'08:00') && hMins < _ayMins(b.hasta||'20:00'));
                 });
-                if (!working.length) return `<td style="padding:4px 5px;border:1px solid var(--border-light);min-width:80px;"></td>`;
-                const badges = working.map(a => {
+
+                if (!working.length) {
+                    return `<td style="padding:3px 4px;">
+                        <div style="border-radius:10px;height:36px;background:var(--bg-secondary);${isNow ? 'box-shadow:inset 0 0 0 2px rgba(37,99,235,0.15);' : ''}"></div>
+                    </td>`;
+                }
+
+                if (working.length === 1) {
+                    const c = colorMap[working[0].id];
+                    const firstName = escapeHTML(working[0].nombre.split(' ')[0]);
+                    return `<td style="padding:3px 4px;">
+                        <div style="border-radius:10px;height:36px;background:${c.bg};border:1px solid ${c.bdr};display:flex;align-items:center;justify-content:center;padding:0 6px;${isNow ? 'box-shadow:0 0 0 2px rgba(37,99,235,0.25);' : ''}">
+                            <span style="font-size:0.66rem;font-weight:700;color:${c.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">${firstName}</span>
+                        </div>
+                    </td>`;
+                }
+
+                // Múltiples ayudantes: celdas divididas en segmentos
+                const segs = working.map(a => {
                     const c = colorMap[a.id];
-                    return `<span style="display:inline-block;font-size:0.63rem;padding:1px 6px;border-radius:50px;background:${c.bg};color:${c.text};margin:1px;white-space:nowrap;font-weight:600;">${escapeHTML(a.nombre.split(' ')[0])}</span>`;
+                    return `<div style="flex:1;height:100%;background:${c.bg};display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 2px;">
+                        <span style="font-size:0.58rem;font-weight:700;color:${c.text};white-space:nowrap;overflow:hidden;text-overflow:clip;">${escapeHTML(a.nombre.split(' ')[0])}</span>
+                    </div>`;
                 }).join('');
-                return `<td style="padding:4px 5px;border:1px solid var(--border-light);vertical-align:top;min-width:80px;">${badges}</td>`;
+                return `<td style="padding:3px 4px;">
+                    <div style="border-radius:10px;height:36px;overflow:hidden;display:flex;${isNow ? 'box-shadow:0 0 0 2px rgba(37,99,235,0.25);' : ''}">
+                        ${segs}
+                    </div>
+                </td>`;
             }).join('');
-            return `<tr style="${isNow ? 'background:rgba(37,99,235,0.07);' : ''}">
-                <td style="padding:6px 8px;font-size:0.71rem;font-weight:${isNow ? '800' : '600'};color:${isNow ? 'var(--primary)' : 'var(--text-muted)'};text-align:right;border-right:2px solid var(--border);white-space:nowrap;font-variant-numeric:tabular-nums;">${String(h).padStart(2,'0')}:00</td>
-                ${cells}
+
+            const hourLabel = `${String(h).padStart(2,'0')}:00`;
+            return `<tr>
+                <td style="padding:3px 10px 3px 0;font-size:0.7rem;font-weight:${isNow ? '800' : '500'};color:${isNow ? 'var(--primary)' : 'var(--text-muted)'};text-align:right;white-space:nowrap;vertical-align:middle;font-variant-numeric:tabular-nums;">${hourLabel}</td>
+                ${tds}
             </tr>`;
         }).join('');
 
-        const showNowNote = nowH >= 8 && nowH < 20;
         container.innerHTML = `
-            <div style="margin-bottom:0.8rem;">
-                <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.4rem;font-weight:600;letter-spacing:0.03em;">AYUDANTES ACTIVOS</div>
-                <div style="display:flex;flex-wrap:wrap;gap:5px;">${legend}</div>
+            <div style="background:var(--bg-secondary);border-radius:16px;padding:1.5rem 1.25rem;">
+                <h3 style="text-align:center;letter-spacing:0.14em;text-transform:uppercase;font-size:0.8rem;font-weight:800;color:var(--text);margin:0 0 1.25rem;opacity:0.85;">Horarios Semanales</h3>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem;">${legend}</div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:separate;border-spacing:0;min-width:460px;">
+                        <thead><tr><th style="width:44px;"></th>${dayThs}</tr></thead>
+                        <tbody>${bodyRows}</tbody>
+                    </table>
+                </div>
+                ${inRange ? `<p style="text-align:center;margin:0.75rem 0 0;font-size:0.68rem;color:var(--text-muted);">🕐 Hora actual resaltada</p>` : ''}
             </div>
-            <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-                <table style="width:100%;border-collapse:collapse;min-width:480px;">
-                    <thead>${header}</thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>
-            ${showNowNote ? '<div style="margin-top:0.5rem;font-size:0.68rem;color:var(--text-muted);">🕐 Hora actual resaltada en azul.</div>' : ''}
         `;
     }
 
