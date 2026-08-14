@@ -889,7 +889,9 @@
                 <div class="page-section" id="section-ayudantes">
                     <div class="section-header">
                         <h3 class="section-title">🧑‍🔬 Ayudantes del Lab</h3>
-                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                            <button id="ay-view-btn-cards" class="btn btn-primary btn-sm" onclick="setAyView('cards')" style="font-size:0.75rem;">🗂️ Tarjetas</button>
+                            <button id="ay-view-btn-schedule" class="btn btn-ghost btn-sm" onclick="setAyView('schedule')" style="font-size:0.75rem;">📅 Horario General</button>
                             <button class="btn btn-secondary btn-sm" onclick="loadAyudantes()">🔄 Recargar</button>
                             <button class="btn btn-primary btn-sm" onclick="openAyudanteModal(null)">➕ Nuevo Ayudante</button>
                         </div>
@@ -930,6 +932,7 @@
                         <p class="empty-title">Sin ayudantes registrados</p>
                         <p class="empty-text">Agrega el primer ayudante con el botón "Nuevo Ayudante".</p>
                     </div>
+                    <div id="ay-schedule-view" style="display:none;"></div>
                 </div>
 
                 <div class="page-section" id="section-accesibilidad">
@@ -1752,6 +1755,7 @@
                         <select class="form-select" id="ay-tipo">
                             <option value="voluntario">🤝 Voluntario</option>
                             <option value="pagado">💰 Pagado</option>
+                            <option value="practica">📋 Práctica</option>
                         </select>
                     </div>
                 </div>
@@ -5351,7 +5355,7 @@
                             <div style="font-weight:700;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(a.nombre)}</div>
                             <div style="font-size:0.78rem;color:var(--text-muted);">${escapeHTML(a.carrera || '—')} ${a.anio ? '· ' + escapeHTML(a.anio) : ''}</div>
                             <span style="display:inline-block;margin-top:3px;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:50px;${a.activo ? 'background:var(--green-glow);color:var(--green)' : 'background:#f3f4f6;color:#9ca3af'};">${a.activo ? '✅ Activo' : 'Inactivo'}</span>
-                            <span style="display:inline-block;margin-top:3px;margin-left:4px;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:50px;${a.tipo === 'pagado' ? 'background:var(--amber-glow);color:#b45309' : 'background:var(--purple-glow);color:var(--purple)'};">${a.tipo === 'pagado' ? '💰 Pagado' : '🤝 Voluntario'}</span>
+                            <span style="display:inline-block;margin-top:3px;margin-left:4px;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:50px;${a.tipo === 'pagado' ? 'background:var(--amber-glow);color:#b45309' : a.tipo === 'practica' ? 'background:#e0f2fe;color:#0369a1' : 'background:var(--purple-glow);color:var(--purple)'};">${a.tipo === 'pagado' ? '💰 Pagado' : a.tipo === 'practica' ? '📋 Práctica' : '🤝 Voluntario'}</span>
                         </div>
                     </div>
                     ${diasActivos.length ? `<div style="font-size:0.73rem;color:var(--text-muted);margin-bottom:0.5rem;">🗓 ${diasActivos.map(d => `${AY_DIAS_LABEL[d].slice(0,3)} ${(a.horario[d].desde||'').slice(0,5)}–${(a.horario[d].hasta||'').slice(0,5)}`).join(' · ')}</div>` : ''}
@@ -5364,6 +5368,109 @@
                 </div>
             </div>`;
         }).join('');
+    }
+
+    // ── Horario general (vista por horas) ────────────
+    window.setAyView = view => {
+        const cards    = document.getElementById('ay-cards-grid');
+        const schedule = document.getElementById('ay-schedule-view');
+        const btnC     = document.getElementById('ay-view-btn-cards');
+        const btnS     = document.getElementById('ay-view-btn-schedule');
+
+        if (view === 'schedule') {
+            if (cards)    { cards.style.display = 'none'; }
+            if (schedule) { schedule.style.display = 'block'; renderAySchedule(); }
+            const empty = document.getElementById('ay-empty');
+            if (empty) empty.style.display = 'none';
+        } else {
+            if (schedule) schedule.style.display = 'none';
+            renderAyudantes();
+        }
+
+        if (btnC) { btnC.className = view === 'cards'    ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'; btnC.style.fontSize = '0.75rem'; }
+        if (btnS) { btnS.className = view === 'schedule' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'; btnS.style.fontSize = '0.75rem'; }
+    };
+
+    function renderAySchedule() {
+        const container = document.getElementById('ay-schedule-view');
+        if (!container) return;
+
+        const COLORS = [
+            { bg:'#dbeafe', text:'#1e40af' },
+            { bg:'#dcfce7', text:'#166534' },
+            { bg:'#fef9c3', text:'#854d0e' },
+            { bg:'#f3e8ff', text:'#6d28d9' },
+            { bg:'#fce7f3', text:'#9d174d' },
+            { bg:'#ffedd5', text:'#c2410c' },
+            { bg:'#ecfdf5', text:'#065f46' },
+            { bg:'#e0f2fe', text:'#0369a1' },
+            { bg:'#fef2f2', text:'#b91c1c' },
+            { bg:'#f0fdf4', text:'#15803d' },
+        ];
+
+        const activos = db.ayudantes.filter(a => a.activo !== false);
+        if (!activos.length) {
+            container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-muted);">No hay ayudantes activos.</div>';
+            return;
+        }
+
+        const colorMap = {};
+        activos.forEach((a, i) => { colorMap[a.id] = COLORS[i % COLORS.length]; });
+
+        const hours   = Array.from({length: 12}, (_, i) => i + 8); // 08–19
+        const nowH    = new Date().getHours();
+        const todayIdx = new Date().getDay(); // 0=dom
+        const nowDay  = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'][todayIdx];
+
+        const legend = activos.map((a, i) => {
+            const c = COLORS[i % COLORS.length];
+            return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;font-weight:600;padding:2px 9px;border-radius:50px;background:${c.bg};color:${c.text};white-space:nowrap;">${escapeHTML(a.nombre)}</span>`;
+        }).join('');
+
+        const thBase = 'padding:7px 10px;font-size:0.71rem;font-weight:700;text-align:center;background:var(--bg-secondary);border-bottom:2px solid var(--border);white-space:nowrap;';
+        const header = `<tr>
+            <th style="${thBase}width:52px;text-align:right;border-right:2px solid var(--border);color:var(--text-muted);">Hora</th>
+            ${AY_DIAS.map(d => `<th style="${thBase}${d === nowDay ? 'color:var(--primary);' : ''}">${AY_DIAS_LABEL[d]}</th>`).join('')}
+        </tr>`;
+
+        const rows = hours.map(h => {
+            const hMins = h * 60;
+            const isNow = h === nowH && hours.includes(nowH);
+            const cells = AY_DIAS.map(d => {
+                const working = activos.filter(a => {
+                    const dh = a.horario?.[d];
+                    if (!dh?.activo) return false;
+                    const desde = _ayMins(dh.desde || '08:00');
+                    const hasta = _ayMins(dh.hasta || '20:00');
+                    return hMins >= desde && hMins < hasta;
+                });
+                if (!working.length) return `<td style="padding:4px 5px;border:1px solid var(--border-light);min-width:80px;"></td>`;
+                const badges = working.map(a => {
+                    const c = colorMap[a.id];
+                    return `<span style="display:inline-block;font-size:0.63rem;padding:1px 6px;border-radius:50px;background:${c.bg};color:${c.text};margin:1px;white-space:nowrap;font-weight:600;">${escapeHTML(a.nombre.split(' ')[0])}</span>`;
+                }).join('');
+                return `<td style="padding:4px 5px;border:1px solid var(--border-light);vertical-align:top;min-width:80px;">${badges}</td>`;
+            }).join('');
+            return `<tr style="${isNow ? 'background:rgba(37,99,235,0.07);' : ''}">
+                <td style="padding:6px 8px;font-size:0.71rem;font-weight:${isNow ? '800' : '600'};color:${isNow ? 'var(--primary)' : 'var(--text-muted)'};text-align:right;border-right:2px solid var(--border);white-space:nowrap;font-variant-numeric:tabular-nums;">${String(h).padStart(2,'0')}:00</td>
+                ${cells}
+            </tr>`;
+        }).join('');
+
+        const showNowNote = nowH >= 8 && nowH < 20;
+        container.innerHTML = `
+            <div style="margin-bottom:0.8rem;">
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.4rem;font-weight:600;letter-spacing:0.03em;">AYUDANTES ACTIVOS</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;">${legend}</div>
+            </div>
+            <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                <table style="width:100%;border-collapse:collapse;min-width:480px;">
+                    <thead>${header}</thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+            ${showNowNote ? '<div style="margin-top:0.5rem;font-size:0.68rem;color:var(--text-muted);">🕐 Hora actual resaltada en azul.</div>' : ''}
+        `;
     }
 
     // ── Modal Crear / Editar ──────────────────────────
@@ -5582,7 +5689,7 @@
                     <div style="font-size:1.1rem;font-weight:800;">${escapeHTML(a.nombre)}</div>
                     <div style="font-size:0.82rem;color:var(--text-muted);">${escapeHTML(a.carrera||'—')}${a.anio ? ' · ' + escapeHTML(a.anio) : ''}</div>
                     <span style="display:inline-block;margin-top:4px;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:50px;${a.activo ? 'background:var(--green-glow);color:var(--green)' : 'background:#f3f4f6;color:#9ca3af'};">${a.activo ? '✅ Activo' : 'Inactivo'}</span>
-                    <span style="display:inline-block;margin-top:4px;margin-left:6px;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:50px;${a.tipo === 'pagado' ? 'background:var(--amber-glow);color:#b45309' : 'background:var(--purple-glow);color:var(--purple)'};">${a.tipo === 'pagado' ? '💰 Pagado' : '🤝 Voluntario'}</span>
+                    <span style="display:inline-block;margin-top:4px;margin-left:6px;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:50px;${a.tipo === 'pagado' ? 'background:var(--amber-glow);color:#b45309' : a.tipo === 'practica' ? 'background:#e0f2fe;color:#0369a1' : 'background:var(--purple-glow);color:var(--purple)'};">${a.tipo === 'pagado' ? '💰 Pagado' : a.tipo === 'practica' ? '📋 Práctica' : '🤝 Voluntario'}</span>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;font-size:0.83rem;">
