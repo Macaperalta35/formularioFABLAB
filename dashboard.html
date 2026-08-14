@@ -5358,7 +5358,7 @@
                             <span style="display:inline-block;margin-top:3px;margin-left:4px;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:50px;${a.tipo === 'pagado' ? 'background:var(--amber-glow);color:#b45309' : a.tipo === 'practica' ? 'background:#e0f2fe;color:#0369a1' : 'background:var(--purple-glow);color:var(--purple)'};">${a.tipo === 'pagado' ? '💰 Pagado' : a.tipo === 'practica' ? '📋 Práctica' : '🤝 Voluntario'}</span>
                         </div>
                     </div>
-                    ${diasActivos.length ? `<div style="font-size:0.73rem;color:var(--text-muted);margin-bottom:0.5rem;">🗓 ${diasActivos.map(d => `${AY_DIAS_LABEL[d].slice(0,3)} ${(a.horario[d].desde||'').slice(0,5)}–${(a.horario[d].hasta||'').slice(0,5)}`).join(' · ')}</div>` : ''}
+                    ${diasActivos.length ? `<div style="font-size:0.73rem;color:var(--text-muted);margin-bottom:0.5rem;">🗓 ${diasActivos.map(d => { const bl = _normBloques(a.horario[d]); return AY_DIAS_LABEL[d].slice(0,3) + ' ' + bl.map(b => `${(b.desde||'').slice(0,5)}–${(b.hasta||'').slice(0,5)}`).join(', '); }).join(' · ')}</div>` : ''}
                     ${habilidades.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:0.75rem;">${habilidades.slice(0,4).map(h => `<span style="font-size:0.68rem;background:var(--blue-glow);color:var(--blue);padding:2px 7px;border-radius:50px;">${escapeHTML(h)}</span>`).join('')}${habilidades.length > 4 ? `<span style="font-size:0.68rem;color:var(--text-muted);">+${habilidades.length - 4}</span>` : ''}</div>` : ''}
                     <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
                         <button class="btn btn-secondary btn-sm" onclick="openVerAyudante(${a.id})" style="flex:1;">Ver perfil</button>
@@ -5440,9 +5440,7 @@
                 const working = activos.filter(a => {
                     const dh = a.horario?.[d];
                     if (!dh?.activo) return false;
-                    const desde = _ayMins(dh.desde || '08:00');
-                    const hasta = _ayMins(dh.hasta || '20:00');
-                    return hMins >= desde && hMins < hasta;
+                    return _normBloques(dh).some(b => hMins >= _ayMins(b.desde||'08:00') && hMins < _ayMins(b.hasta||'20:00'));
                 });
                 if (!working.length) return `<td style="padding:4px 5px;border:1px solid var(--border-light);min-width:80px;"></td>`;
                 const badges = working.map(a => {
@@ -5480,51 +5478,100 @@
         return h * 60 + (m || 0);
     }
 
+    // Normaliza formato antiguo (desde/hasta) al nuevo (bloques[])
+    function _normBloques(dh) {
+        if (!dh?.activo) return [];
+        if (Array.isArray(dh.bloques) && dh.bloques.length) return dh.bloques;
+        if (dh.desde) return [{ desde: dh.desde, hasta: dh.hasta || '17:00' }];
+        return [{ desde: '08:00', hasta: '17:00' }];
+    }
+
     window.updateAyBand = d => {
-        const desde = document.getElementById(`ay-h-${d}-desde`)?.value || '08:00';
-        const hasta = document.getElementById(`ay-h-${d}-hasta`)?.value || '20:00';
-        const fill  = document.getElementById(`ay-h-${d}-fill`);
-        if (!fill) return;
-        const S = 480, E = 1200, T = 720; // 08:00→20:00 en minutos
-        const f = Math.max(S, Math.min(E, _ayMins(desde)));
-        const t = Math.max(S, Math.min(E, _ayMins(hasta)));
-        fill.style.left  = ((f - S) / T * 100).toFixed(1) + '%';
-        fill.style.width = (Math.max(0, t - f) / T * 100).toFixed(1) + '%';
+        const track = document.getElementById(`ay-h-${d}-track`);
+        if (!track) return;
+        const S = 480, E = 1200, T = 720;
+        const rows = document.querySelectorAll(`#ay-h-${d}-bloques .ay-bloque-row`);
+        track.innerHTML = [...rows].map(row => {
+            const f = Math.max(S, Math.min(E, _ayMins(row.querySelector('.ay-desde')?.value || '08:00')));
+            const t = Math.max(S, Math.min(E, _ayMins(row.querySelector('.ay-hasta')?.value || '20:00')));
+            if (t <= f) return '';
+            return `<div class="ay-band-fill" style="left:${((f-S)/T*100).toFixed(1)}%;width:${((t-f)/T*100).toFixed(1)}%;"></div>`;
+        }).join('');
     };
+
+    window.addAyBloque = d => {
+        const container = document.getElementById(`ay-h-${d}-bloques`);
+        if (!container) return;
+        const row = document.createElement('div');
+        row.className = 'ay-bloque-row';
+        row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;margin-bottom:5px;flex-wrap:wrap;';
+        row.innerHTML = `
+            <input type="time" class="form-input ay-desde" value="09:00" min="08:00" max="20:00"
+                   style="width:105px;padding:5px 8px;font-size:0.82rem;" onchange="updateAyBand('${d}')">
+            <span style="font-size:0.82rem;color:var(--text-muted);">a</span>
+            <input type="time" class="form-input ay-hasta" value="13:00" min="08:00" max="20:00"
+                   style="width:105px;padding:5px 8px;font-size:0.82rem;" onchange="updateAyBand('${d}')">
+            <button class="btn btn-ghost btn-sm" onclick="removeAyBloque(this,'${d}')"
+                    title="Quitar bloque" style="padding:3px 8px;font-size:0.8rem;color:#dc2626;">✕</button>`;
+        container.appendChild(row);
+        _syncRemoveBtns(d);
+        updateAyBand(d);
+    };
+
+    window.removeAyBloque = (btn, d) => {
+        const container = document.getElementById(`ay-h-${d}-bloques`);
+        if (!container) return;
+        if (container.querySelectorAll('.ay-bloque-row').length <= 1) return;
+        btn.closest('.ay-bloque-row').remove();
+        _syncRemoveBtns(d);
+        updateAyBand(d);
+    };
+
+    function _syncRemoveBtns(d) {
+        const container = document.getElementById(`ay-h-${d}-bloques`);
+        if (!container) return;
+        const rows = container.querySelectorAll('.ay-bloque-row');
+        rows.forEach(r => {
+            const btn = r.querySelector('button');
+            if (btn) btn.style.opacity = rows.length > 1 ? '1' : '0.25';
+        });
+    }
 
     function buildHorarioGrid(horario = {}) {
         const grid = document.getElementById('ay-horario-grid');
         if (!grid) return;
         grid.innerHTML = AY_DIAS.map(d => {
             const h = horario[d] || {};
+            const bloques = _normBloques(h.activo ? h : null);
+            const bloquesDefault = bloques.length ? bloques : [{ desde: '08:00', hasta: '17:00' }];
+            const bloquesHTML = bloquesDefault.map((b, i) => `
+                <div class="ay-bloque-row" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:5px;flex-wrap:wrap;">
+                    <input type="time" class="form-input ay-desde" value="${b.desde || '08:00'}" min="08:00" max="20:00"
+                           style="width:105px;padding:5px 8px;font-size:0.82rem;" onchange="updateAyBand('${d}')">
+                    <span style="font-size:0.82rem;color:var(--text-muted);">a</span>
+                    <input type="time" class="form-input ay-hasta" value="${b.hasta || '17:00'}" min="08:00" max="20:00"
+                           style="width:105px;padding:5px 8px;font-size:0.82rem;" onchange="updateAyBand('${d}')">
+                    <button class="btn btn-ghost btn-sm" onclick="removeAyBloque(this,'${d}')"
+                            title="Quitar bloque" style="padding:3px 8px;font-size:0.8rem;color:#dc2626;opacity:${bloquesDefault.length > 1 ? '1' : '0.25'};">✕</button>
+                </div>`).join('');
             return `
-            <div style="padding:5px 0;border-bottom:1px solid var(--border-light);">
-                <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-                    <label style="display:flex;align-items:center;gap:0.4rem;width:90px;flex-shrink:0;font-size:0.83rem;font-weight:600;cursor:pointer;">
+            <div style="padding:6px 0;border-bottom:1px solid var(--border-light);">
+                <div style="display:flex;align-items:flex-start;gap:0.6rem;">
+                    <label style="display:flex;align-items:center;gap:0.4rem;width:90px;flex-shrink:0;font-size:0.83rem;font-weight:600;cursor:pointer;padding-top:6px;">
                         <input type="checkbox" id="ay-h-${d}" ${h.activo ? 'checked' : ''} onchange="toggleHorarioDia('${d}')">
                         ${AY_DIAS_LABEL[d]}
                     </label>
-                    <div id="ay-h-${d}-rango" style="display:${h.activo ? 'flex' : 'none'};align-items:center;gap:0.5rem;flex-wrap:wrap;">
-                        <input type="time" class="form-input" id="ay-h-${d}-desde"
-                               value="${h.desde || '08:00'}" min="08:00" max="20:00"
-                               style="width:105px;padding:5px 8px;font-size:0.82rem;"
-                               onchange="updateAyBand('${d}')">
-                        <span style="font-size:0.82rem;color:var(--text-muted);">a</span>
-                        <input type="time" class="form-input" id="ay-h-${d}-hasta"
-                               value="${h.hasta || '17:00'}" min="08:00" max="20:00"
-                               style="width:105px;padding:5px 8px;font-size:0.82rem;"
-                               onchange="updateAyBand('${d}')">
-                    </div>
-                </div>
-                <div id="ay-h-${d}-band-wrap" style="display:${h.activo ? 'block' : 'none'};padding-left:94px;margin-top:5px;">
-                    <div class="ay-band-track">
-                        <div class="ay-band-fill" id="ay-h-${d}-fill"></div>
-                    </div>
-                    <div class="ay-band-ticks">
-                        <span class="ay-band-tick">08</span><span class="ay-band-tick">10</span>
-                        <span class="ay-band-tick">12</span><span class="ay-band-tick">14</span>
-                        <span class="ay-band-tick">16</span><span class="ay-band-tick">18</span>
-                        <span class="ay-band-tick">20</span>
+                    <div id="ay-h-${d}-rango" style="display:${h.activo ? 'block' : 'none'};flex:1;min-width:0;">
+                        <div id="ay-h-${d}-bloques">${bloquesHTML}</div>
+                        <button class="btn btn-ghost btn-sm" onclick="addAyBloque('${d}')"
+                                style="font-size:0.75rem;padding:3px 10px;margin-bottom:6px;color:var(--primary);">+ Agregar bloque</button>
+                        <div class="ay-band-track" id="ay-h-${d}-track"></div>
+                        <div class="ay-band-ticks">
+                            <span class="ay-band-tick">08</span><span class="ay-band-tick">10</span>
+                            <span class="ay-band-tick">12</span><span class="ay-band-tick">14</span>
+                            <span class="ay-band-tick">16</span><span class="ay-band-tick">18</span>
+                            <span class="ay-band-tick">20</span>
+                        </div>
                     </div>
                 </div>
             </div>`;
@@ -5533,11 +5580,9 @@
     }
 
     window.toggleHorarioDia = d => {
-        const checked  = document.getElementById(`ay-h-${d}`)?.checked;
-        const rango    = document.getElementById(`ay-h-${d}-rango`);
-        const bandWrap = document.getElementById(`ay-h-${d}-band-wrap`);
-        if (rango)    rango.style.display    = checked ? 'flex'  : 'none';
-        if (bandWrap) bandWrap.style.display = checked ? 'block' : 'none';
+        const checked = document.getElementById(`ay-h-${d}`)?.checked;
+        const rango   = document.getElementById(`ay-h-${d}-rango`);
+        if (rango) rango.style.display = checked ? 'block' : 'none';
         if (checked) updateAyBand(d);
     };
 
@@ -5545,9 +5590,13 @@
         const h = {};
         AY_DIAS.forEach(d => {
             const activo = document.getElementById(`ay-h-${d}`)?.checked || false;
-            h[d] = activo
-                ? { activo: true, desde: document.getElementById(`ay-h-${d}-desde`)?.value || '08:00', hasta: document.getElementById(`ay-h-${d}-hasta`)?.value || '17:00' }
-                : { activo: false };
+            if (!activo) { h[d] = { activo: false, bloques: [] }; return; }
+            const rows = document.querySelectorAll(`#ay-h-${d}-bloques .ay-bloque-row`);
+            const bloques = [...rows].map(row => ({
+                desde: row.querySelector('.ay-desde')?.value || '08:00',
+                hasta: row.querySelector('.ay-hasta')?.value || '17:00',
+            })).filter(b => _ayMins(b.hasta) > _ayMins(b.desde));
+            h[d] = { activo: true, bloques: bloques.length ? bloques : [{ desde: '08:00', hasta: '17:00' }] };
         });
         return h;
     }
@@ -5657,22 +5706,23 @@
         const body = document.getElementById('ay-ver-body');
         const habilidades = (a.habilidades || '').split(',').map(h => h.trim()).filter(Boolean);
 
-        const _vMins = t => { if (!t) return 0; const [hh,mm] = t.split(':').map(Number); return hh*60+(mm||0); };
         const horarioHTML = AY_DIAS.map(d => {
-            const h = a.horario?.[d];
-            if (!h?.activo) return '';
+            const dh = a.horario?.[d];
+            if (!dh?.activo) return '';
+            const bloques = _normBloques(dh);
             const S=480,E=1200,T=720;
-            const f = Math.max(S,Math.min(E,_vMins(h.desde||'08:00')));
-            const t2 = Math.max(S,Math.min(E,_vMins(h.hasta||'20:00')));
-            const left  = ((f-S)/T*100).toFixed(1);
-            const width = (Math.max(0,t2-f)/T*100).toFixed(1);
+            const fills = bloques.map(b => {
+                const f = Math.max(S,Math.min(E,_ayMins(b.desde||'08:00')));
+                const t2 = Math.max(S,Math.min(E,_ayMins(b.hasta||'20:00')));
+                if (t2 <= f) return '';
+                return `<div style="position:absolute;height:100%;left:${((f-S)/T*100).toFixed(1)}%;width:${((t2-f)/T*100).toFixed(1)}%;background:var(--primary,#2563eb);opacity:0.7;border-radius:5px;"></div>`;
+            }).join('');
+            const rangoText = bloques.map(b => `${b.desde||''}–${b.hasta||''}`).join(', ');
             return `<div style="padding:0.35rem 0;border-bottom:1px solid var(--border-light);">
                 <div style="display:flex;align-items:center;gap:0.75rem;font-size:0.82rem;margin-bottom:3px;">
                     <span style="width:78px;font-weight:600;flex-shrink:0;">${AY_DIAS_LABEL[d]}</span>
-                    <span style="color:var(--text-muted);flex-shrink:0;min-width:90px;">${h.desde} – ${h.hasta}</span>
-                    <div style="flex:1;position:relative;height:10px;background:var(--bg-secondary);border-radius:5px;overflow:hidden;border:1px solid var(--border-light);">
-                        <div style="position:absolute;height:100%;left:${left}%;width:${width}%;background:var(--primary,#2563eb);opacity:0.7;border-radius:5px;"></div>
-                    </div>
+                    <span style="color:var(--text-muted);flex-shrink:0;min-width:90px;">${rangoText}</span>
+                    <div style="flex:1;position:relative;height:10px;background:var(--bg-secondary);border-radius:5px;overflow:hidden;border:1px solid var(--border-light);">${fills}</div>
                 </div>
                 <div style="padding-left:168px;display:flex;justify-content:space-between;font-size:0.57rem;color:var(--text-muted);">
                     <span>08</span><span>10</span><span>12</span><span>14</span><span>16</span><span>18</span><span>20</span>
