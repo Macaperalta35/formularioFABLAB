@@ -5581,6 +5581,9 @@
                         <input type="checkbox" id="ay-h-${d}" ${h.activo ? 'checked' : ''} onchange="toggleHorarioDia('${d}')">
                         ${AY_DIAS_LABEL[d]}
                     </label>
+                    <div id="ay-h-${d}-libre" style="display:${h.activo ? 'none' : 'flex'};align-items:center;padding-top:5px;">
+                        <span style="font-size:0.75rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;background:var(--bg-secondary);color:var(--text-muted);border:1px solid var(--border-light);border-radius:4px;padding:2px 10px;">Día libre</span>
+                    </div>
                     <div id="ay-h-${d}-rango" style="display:${h.activo ? 'block' : 'none'};flex:1;min-width:0;">
                         <div id="ay-h-${d}-bloques">${bloquesHTML}</div>
                         <button class="btn btn-ghost btn-sm" onclick="addAyBloque('${d}')"
@@ -5602,7 +5605,9 @@
     window.toggleHorarioDia = d => {
         const checked = document.getElementById(`ay-h-${d}`)?.checked;
         const rango   = document.getElementById(`ay-h-${d}-rango`);
+        const libre   = document.getElementById(`ay-h-${d}-libre`);
         if (rango) rango.style.display = checked ? 'block' : 'none';
+        if (libre) libre.style.display = checked ? 'none' : 'flex';
         if (checked) updateAyBand(d);
     };
 
