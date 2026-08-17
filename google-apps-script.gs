@@ -4,6 +4,8 @@
 //  como Web App: "Ejecutar como: Yo" + "Acceso: Todos"
 // =====================================================
 
+var SCRIPT_TOKEN = '5bf91869ba52ee6a0bbdea4073e814f312fe77f29919b9f7';
+
 
 // =====================================================
 //  MIGRACIÓN: Ejecutar UNA VEZ desde el editor del script
@@ -198,6 +200,11 @@ function doGet(e) {
   var cb = e.parameter.callback || '';
   try {
     var action = e.parameter.action || 'getAll';
+    var token  = e.parameter.token  || '';
+
+    if (token !== SCRIPT_TOKEN) {
+      return respond({ error: 'No autorizado', status: 401 }, cb);
+    }
 
     if (action === 'getAll') {
       var sheet = getOrCreateSheet('Visitas', [
@@ -294,6 +301,11 @@ function doPost(e) {
         String(body.etiquetas || '').trim()
       ]);
       return jsonResponse({ ok: true });
+    }
+
+    // Acciones de admin (requieren token)
+    if (body.token !== SCRIPT_TOKEN) {
+      return jsonResponse({ error: 'No autorizado' });
     }
 
     // Lectura via POST (evita problema de CORS con GET redirect)
