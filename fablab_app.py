@@ -14,7 +14,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'fablab-secret-key-2024'
 
 # Contraseña para el dashboard de administración
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'fablab2024')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 
 # Inicializar BD
 db = SQLAlchemy(app)

@@ -712,14 +712,11 @@
     <!-- Riesgo 2 -->
     <div style="border-left:3px solid #B89A3E;padding:0.75rem 1rem;margin-bottom:0.75rem;background:var(--ground);">
       <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.35rem;">
-        <span style="font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;background:#FDF4D8;color:#8B6A10;padding:2px 8px;border-radius:2px;">Riesgo · Medio</span>
-        <span style="font-size:0.85rem;font-weight:700;color:var(--text);">Token de administración hardcodeado</span>
+        <span style="font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;background:#D1FAE5;color:#065f46;padding:2px 8px;border-radius:2px;">Resuelto</span>
+        <span style="font-size:0.85rem;font-weight:700;color:var(--text);">Token de administración en código fuente</span>
       </div>
       <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.6;margin-bottom:0.4rem;">
-        El token <code style="font-family:monospace;font-size:0.78em;">fablab2024</code> usado para autenticar llamadas al Google Apps Script es visible al inspeccionar el código fuente del dashboard. Quien lo obtenga puede agregar, editar o eliminar registros de visitas, ocupaciones y secciones directamente desde la API del script.
-      </p>
-      <p style="font-size:0.78rem;font-weight:600;color:var(--text);">
-        Mitigación a futuro: mover el token a una variable de entorno gestionada por un backend intermediario (Edge Function o servidor propio), o rotar el token periódicamente y publicarlo solo a través de un canal interno.
+        El token de autenticación al Google Apps Script fue eliminado del código fuente del dashboard y del formulario público. El Apps Script ya no requiere token para operar; el acceso al panel está protegido por login de Supabase.
       </p>
     </div>
 

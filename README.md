@@ -105,7 +105,7 @@ const SUPABASE_KEY = 'sb_publishable_...'
 
 **URL:** https://macaperalta35.github.io/formularioFABLAB/dashboard.html
 
-El panel se abre directamente sin contraseña. El token de administración (`fablab2024`) está configurado como constante en el código y se usa internamente para autenticar las llamadas al Google Apps Script.
+El panel requiere login con las credenciales configuradas en Supabase Authentication. Las llamadas al Google Apps Script no requieren token adicional.
 
 ---
 
@@ -127,7 +127,7 @@ https://script.google.com/macros/s/AKfycbxqySNZqlHt2Iy6_v6xUE4X0pUWoQO2IwxRea2Xf
 
 ### Acciones del script
 
-**GET (requieren `?token=fablab2024`):**
+**GET (sin token):**
 - `?action=getAll` — todas las visitas
 - `?action=getOcupaciones` — eventos de ocupación
 - `?action=getSecciones` — secciones con alumnos
@@ -199,7 +199,7 @@ python fablab_app.py
 # Servidor en http://0.0.0.0:5000
 ```
 
-Contraseña del panel local: `fablab2024` (variable de entorno `ADMIN_PASSWORD`)
+Contraseña del panel local: configurar variable de entorno `ADMIN_PASSWORD` antes de ejecutar.
 
 ---
 

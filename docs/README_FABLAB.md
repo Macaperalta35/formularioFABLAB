@@ -117,7 +117,6 @@ CREATE POLICY "anon_all" ON users  FOR ALL TO anon USING (true) WITH CHECK (true
 
 ```javascript
 const GOOGLE_SCRIPT_URL = '...'   // URL del Apps Script
-const ADMIN_TOKEN       = 'fablab2024'
 const SUPABASE_URL      = 'https://jcojygzofplajvnpobpw.supabase.co'
 const SUPABASE_KEY      = 'sb_publishable_...'
 const supabaseClient    = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)

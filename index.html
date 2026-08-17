@@ -431,15 +431,13 @@
         });
 
         // ========== ACTIVIDADES DEL LAB (JSONP) ==========
-        const ADMIN_TOKEN = 'fablab2024';
-
         function jsonpFetch(action) {
             return new Promise((resolve, reject) => {
                 const cb = '_labcb_' + Date.now();
                 const script = document.createElement('script');
                 window[cb] = (data) => { delete window[cb]; script.remove(); resolve(data); };
                 script.onerror = () => { delete window[cb]; script.remove(); reject(); };
-                script.src = GOOGLE_SCRIPT_URL + '?action=' + action + '&token=' + ADMIN_TOKEN + '&callback=' + cb + '&t=' + Date.now();
+                script.src = GOOGLE_SCRIPT_URL + '?action=' + action + '&callback=' + cb + '&t=' + Date.now();
                 document.head.appendChild(script);
             });
         }
