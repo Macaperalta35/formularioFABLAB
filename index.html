@@ -182,7 +182,7 @@
         // ========== CONFIG ==========
         // URL de tu Google Apps Script (Web App)
         // INSTRUCCIONES: Reemplaza esta URL con la de tu Google Apps Script desplegado
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6BTxO40_SFtBU8T-wkK2Fe4nqSpnCgV_3EJDlh5ebVtI0Vg_CWo5SF19ydMV5R9vj-w/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwphBh6bhSTBF2k7fPLLAVcCmE2X2_QRWXqu6tzDoCYGadQF8AOE6LlJf1T33O1qLZIvg/exec';
 
         // ========== DOM ==========
         const form = document.getElementById('registro-form');
@@ -431,13 +431,15 @@
         });
 
         // ========== ACTIVIDADES DEL LAB (JSONP) ==========
+        const SCRIPT_TOKEN = '5bf91869ba52ee6a0bbdea4073e814f312fe77f29919b9f7';
+
         function jsonpFetch(action) {
             return new Promise((resolve, reject) => {
                 const cb = '_labcb_' + Date.now();
                 const script = document.createElement('script');
                 window[cb] = (data) => { delete window[cb]; script.remove(); resolve(data); };
                 script.onerror = () => { delete window[cb]; script.remove(); reject(); };
-                script.src = GOOGLE_SCRIPT_URL + '?action=' + action + '&callback=' + cb + '&t=' + Date.now();
+                script.src = GOOGLE_SCRIPT_URL + '?action=' + action + '&token=' + SCRIPT_TOKEN + '&callback=' + cb + '&t=' + Date.now();
                 document.head.appendChild(script);
             });
         }

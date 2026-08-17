@@ -1964,7 +1964,8 @@
     //  CONFIGURACIÓN BACKEND
     // ===========================
     // INSTRUCCIÓN: Actualiza este enlace con la nueva URL de tu Apps Script implementado
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6BTxO40_SFtBU8T-wkK2Fe4nqSpnCgV_3EJDlh5ebVtI0Vg_CWo5SF19ydMV5R9vj-w/exec';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwphBh6bhSTBF2k7fPLLAVcCmE2X2_QRWXqu6tzDoCYGadQF8AOE6LlJf1T33O1qLZIvg/exec';
+    const SCRIPT_TOKEN = '5bf91869ba52ee6a0bbdea4073e814f312fe77f29919b9f7';
 
     // ── Supabase (Inventario) ──────────────────────────────────
     const SUPABASE_URL = 'https://jcojygzofplajvnpobpw.supabase.co';
@@ -2948,7 +2949,7 @@
                 else resolve(data);
             };
             script.onerror = () => { clearTimeout(timer); cleanup(); reject(new Error('No se pudo conectar con Sheets')); };
-            script.src = `${GOOGLE_SCRIPT_URL}?action=${encodeURIComponent(action)}&callback=${cb}&t=${Date.now()}`;
+            script.src = `${GOOGLE_SCRIPT_URL}?action=${encodeURIComponent(action)}&token=${SCRIPT_TOKEN}&callback=${cb}&t=${Date.now()}`;
             document.head.appendChild(script);
         });
     }
@@ -2963,7 +2964,7 @@
         // Escrituras via POST no-cors
         setGlobalLoading(true);
         try {
-            const body = { action, ...payload };
+            const body = { action, token: SCRIPT_TOKEN, ...payload };
             await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
