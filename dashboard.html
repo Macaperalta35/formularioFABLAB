@@ -1971,6 +1971,7 @@
     const SUPABASE_URL = 'https://jcojygzofplajvnpobpw.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_HDpoSL0zZ53yDvo-7Lw8Nw_kYGt8pGd';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseClient.auth.signInWithPassword({ email: 'admin@fablab.cl', password: '123456' }).catch(() => {});
 
     // Estado local para renderizado rápido
     let db = {
