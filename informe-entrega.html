@@ -688,6 +688,60 @@
     </div>
   </div>
 
+  <!-- SEGURIDAD -->
+  <div class="section">
+    <p class="section-title">Consideraciones de Seguridad</p>
+    <p class="prose" style="margin-bottom:1rem;">
+      El sistema fue diseñado como prototipo funcional de gestión interna. A continuación se detallan los riesgos identificados, su nivel de impacto y las mitigaciones aplicadas o planificadas antes de un eventual paso a producción crítica.
+    </p>
+
+    <!-- Riesgo 1 -->
+    <div style="border-left:3px solid #C8521A;padding:0.75rem 1rem;margin-bottom:0.75rem;background:var(--ground);">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.35rem;">
+        <span style="font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;background:#FDE8D8;color:#C8521A;padding:2px 8px;border-radius:2px;">Riesgo · Medio-Alto</span>
+        <span style="font-size:0.85rem;font-weight:700;color:var(--text);">RLS de Supabase abierto</span>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.6;margin-bottom:0.4rem;">
+        Las tablas <code style="font-family:monospace;font-size:0.78em;">assets</code>, <code style="font-family:monospace;font-size:0.78em;">loans</code> y <code style="font-family:monospace;font-size:0.78em;">ayudantes</code> no tienen políticas RLS activas. La <em>anon key</em> es pública por diseño de Supabase, por lo que cualquier persona que la identifique en el código fuente puede consultar o modificar datos directamente a través de la API REST.
+      </p>
+      <p style="font-size:0.78rem;font-weight:600;color:var(--text);">
+        Mitigación planificada: el archivo <code style="font-family:monospace;font-size:0.78em;">supabase-rls.sql</code> incluido en el repositorio contiene las políticas necesarias. Al ejecutarlo, las lecturas permanecen abiertas y las escrituras quedan restringidas a usuarios autenticados. El dashboard ya incluye la llamada <code style="font-family:monospace;font-size:0.78em;">signInWithPassword</code> para activar la sesión autenticada automáticamente.
+      </p>
+    </div>
+
+    <!-- Riesgo 2 -->
+    <div style="border-left:3px solid #B89A3E;padding:0.75rem 1rem;margin-bottom:0.75rem;background:var(--ground);">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.35rem;">
+        <span style="font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;background:#FDF4D8;color:#8B6A10;padding:2px 8px;border-radius:2px;">Riesgo · Medio</span>
+        <span style="font-size:0.85rem;font-weight:700;color:var(--text);">Token de administración hardcodeado</span>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.6;margin-bottom:0.4rem;">
+        El token <code style="font-family:monospace;font-size:0.78em;">fablab2024</code> usado para autenticar llamadas al Google Apps Script es visible al inspeccionar el código fuente del dashboard. Quien lo obtenga puede agregar, editar o eliminar registros de visitas, ocupaciones y secciones directamente desde la API del script.
+      </p>
+      <p style="font-size:0.78rem;font-weight:600;color:var(--text);">
+        Mitigación a futuro: mover el token a una variable de entorno gestionada por un backend intermediario (Edge Function o servidor propio), o rotar el token periódicamente y publicarlo solo a través de un canal interno.
+      </p>
+    </div>
+
+    <!-- Riesgo 3 -->
+    <div style="border-left:3px solid var(--steel);padding:0.75rem 1rem;background:var(--ground);">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.35rem;">
+        <span style="font-size:0.6rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;background:var(--steel);color:var(--text-muted);padding:2px 8px;border-radius:2px;">Riesgo · Bajo (contexto actual)</span>
+        <span style="font-size:0.85rem;font-weight:700;color:var(--text);">Autorización por roles solo en cliente</span>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.6;margin-bottom:0.4rem;">
+        La lógica de control de acceso (qué puede hacer un usuario administrador vs. uno de solo lectura) se aplica únicamente en el frontend. No existe validación equivalente en el servidor. Un usuario con conocimiento técnico puede bypassear las restricciones de interfaz realizando llamadas directas a la API.
+      </p>
+      <p style="font-size:0.78rem;font-weight:600;color:var(--text);">
+        Mitigación a futuro: implementar validación server-side mediante Supabase Edge Functions o un backend dedicado que centralice la lógica de permisos. Clasificado como prioridad de trabajo futuro de alta relevancia para producción.
+      </p>
+    </div>
+
+    <div class="note-block" style="margin-top:1rem;">
+      Para el contexto actual de uso interno en el FAB LAB INACAP, el nivel de riesgo es aceptable. Los datos gestionados (visitas, inventario, horarios) no son sensibles en términos de privacidad crítica. Se recomienda aplicar las mitigaciones indicadas antes de ampliar el acceso del sistema a usuarios externos o integrar datos personales adicionales.
+    </div>
+  </div>
+
   <!-- ACEPTACIÓN Y FIRMA -->
   <div class="section">
     <p class="section-title">Acta de Recepción</p>
