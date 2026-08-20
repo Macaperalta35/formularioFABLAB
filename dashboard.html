@@ -752,11 +752,10 @@
                 <div class="page-section" id="section-usuarios">
                     <div class="section-header">
                         <h3 class="section-title">🔑 Roles y Permisos</h3>
-                        <button class="btn btn-secondary btn-sm" onclick="loadDashUsers()">🔄 Recargar</button>
-                    </div>
-                    <div style="background:var(--bg-secondary);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:var(--text-muted);display:flex;gap:0.5rem;align-items:flex-start;">
-                        <span>ℹ️</span>
-                        <span>Desde aquí puedes cambiar el rol y el estado de los usuarios existentes. Para crear un nuevo usuario, ve a <strong>Supabase → Authentication → Users</strong> y luego edita su perfil aquí para asignarle el rol.</span>
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn btn-secondary btn-sm" onclick="loadDashUsers()">🔄 Recargar</button>
+                            <button class="btn btn-primary btn-sm" onclick="openDashUserModal()">➕ Nuevo Usuario</button>
+                        </div>
                     </div>
                     <div class="table-scroll" style="margin-top:1rem;">
                         <table class="data-table">
@@ -1462,6 +1461,12 @@
                 <div class="form-group" id="du-pass-row">
                     <label class="form-label">Contraseña <span id="du-pass-hint" style="color:var(--text-muted);font-size:0.8rem;">(requerida)</span></label>
                     <input type="password" class="form-input" id="du-password" placeholder="••••••••" autocomplete="new-password">
+                </div>
+                <div class="form-group" id="du-reset-row" style="display:none;">
+                    <label class="form-label">Contraseña</label>
+                    <button type="button" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;" onclick="sendPasswordReset()">
+                        📧 Enviar email de recuperación de contraseña
+                    </button>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -2207,48 +2212,51 @@
             return;
         }
 
-        tbody.innerHTML = data.map(u => `
-            <tr>
+        tbody.innerHTML = data.map(u => {
+            const isMe        = u.id === currentUser?.id;
+            const isSuperadmin = u.role === 'superadmin';
+            const acciones = isMe
+                ? `<button class="btn btn-ghost btn-sm" onclick="openDashUserModal(${u.id})" title="Editar">✏️</button>
+                   <span style="font-size:0.75rem;color:var(--text-muted);">(tú)</span>`
+                : `<button class="btn btn-ghost btn-sm" onclick="openDashUserModal(${u.id})" title="Editar">✏️</button>
+                   <button class="btn btn-ghost btn-sm" onclick="toggleDashUserActive(${u.id}, ${u.active})"
+                       title="${u.active ? 'Desactivar' : 'Activar'}"
+                       style="color:${u.active ? '#dc2626' : '#16a34a'};">
+                       ${u.active ? '🔒' : '🔓'}
+                   </button>
+                   ${!isSuperadmin ? `<button class="btn btn-ghost btn-sm" onclick="deleteDashUser(${u.id}, '${escapeHTML(u.name)}')" title="Eliminar usuario" style="color:#dc2626;">🗑️</button>` : ''}`;
+            return `<tr>
                 <td style="color:var(--text-muted);font-size:0.8rem;">${u.id}</td>
                 <td><strong>${escapeHTML(u.name)}</strong></td>
                 <td style="font-size:0.85rem;">${escapeHTML(u.email)}</td>
                 <td><span class="role-badge ${u.role}">${ROLE_LABEL[u.role] || u.role}</span></td>
-                <td>
-                    <span style="font-size:0.82rem;font-weight:600;color:${u.active ? '#16a34a' : '#dc2626'};">
-                        ${u.active ? '✅ Activo' : '❌ Inactivo'}
-                    </span>
-                </td>
-                <td style="white-space:nowrap;">
-                    <button class="btn btn-ghost btn-sm" onclick="openDashUserModal(${u.id})" title="Editar">✏️</button>
-                    ${u.id !== currentUser?.id ? `
-                    <button class="btn btn-ghost btn-sm" onclick="toggleDashUserActive(${u.id}, ${u.active})"
-                        title="${u.active ? 'Desactivar' : 'Activar'}"
-                        style="color:${u.active ? '#dc2626' : '#16a34a'};">
-                        ${u.active ? '🔒' : '🔓'}
-                    </button>` : '<span style="font-size:0.75rem;color:var(--text-muted);">  (tú)</span>'}
-                </td>
-            </tr>
-        `).join('');
+                <td><span style="font-size:0.82rem;font-weight:600;color:${u.active ? '#16a34a' : '#dc2626'};">${u.active ? '✅ Activo' : '❌ Inactivo'}</span></td>
+                <td style="white-space:nowrap;">${acciones}</td>
+            </tr>`;
+        }).join('');
     }
 
     async function openDashUserModal(userId = null) {
         dashUserEditingId = userId;
-        const title = document.getElementById('dash-user-modal-title');
-        const hint  = document.getElementById('du-pass-hint');
+        const title    = document.getElementById('dash-user-modal-title');
+        const passRow  = document.getElementById('du-pass-row');
+        const resetRow = document.getElementById('du-reset-row');
 
         document.getElementById('du-password').value = '';
 
         if (userId) {
             const { data } = await supabaseClient.from('users').select('*').eq('id', userId).single();
             if (!data) return;
-            title.textContent = '✏️ Editar Usuario';
-            hint.textContent  = '(opcional — dejar vacío para no cambiar)';
+            title.textContent      = '✏️ Editar Usuario';
+            passRow.style.display  = 'none';
+            resetRow.style.display = 'block';
             document.getElementById('du-name').value  = data.name;
             document.getElementById('du-email').value = data.email;
             document.getElementById('du-role').value  = data.role;
         } else {
-            title.textContent = '➕ Nuevo Usuario';
-            hint.textContent  = '(requerida)';
+            title.textContent      = '➕ Nuevo Usuario';
+            passRow.style.display  = 'block';
+            resetRow.style.display = 'none';
             document.getElementById('du-name').value  = '';
             document.getElementById('du-email').value = '';
             document.getElementById('du-role').value  = 'operador';
@@ -2277,46 +2285,36 @@
 
         try {
             if (dashUserEditingId) {
-                // Actualizar nombre, email y rol en la tabla users
                 const { error } = await supabaseClient.from('users').update({ name, email, role }).eq('id', dashUserEditingId);
                 if (error) { showToast('Error al actualizar: ' + error.message, 'error'); return; }
-
-                // Si ingresó nueva contraseña, actualizarla vía Netlify Function
-                if (password) {
-                    let res, data;
-                    try {
-                        res = await fetch('/.netlify/functions/fablab-update-password', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email, password, adminToken: ADMIN_TOKEN })
-                        });
-                        data = await res.json();
-                    } catch {
-                        showToast('Error al cambiar contraseña: el servidor de funciones no está disponible en este entorno.', 'error');
-                        return;
-                    }
-                    if (!res.ok) { showToast('Usuario actualizado pero error al cambiar contraseña: ' + data.error, 'error'); return; }
-                }
                 showToast('✅ Usuario actualizado.', 'success');
 
             } else {
-                // Crear usuario — requiere contraseña
                 if (!password) { showToast('La contraseña es obligatoria.', 'error'); return; }
 
-                let res, data;
-                try {
-                    res = await fetch('/.netlify/functions/fablab-create-user', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, email, password, role, adminToken: ADMIN_TOKEN })
-                    });
-                    data = await res.json();
-                } catch {
-                    showToast('Error al crear usuario: el servidor de funciones no está disponible en este entorno.', 'error');
+                // Crear en Supabase Auth via REST (no afecta la sesión actual del admin)
+                const authRes = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({ email, password })
+                });
+                const authData = await authRes.json();
+                if (!authRes.ok) {
+                    const msg = authData.msg || authData.error_description || authData.error || 'Error al crear usuario';
+                    showToast('Error en Auth: ' + msg, 'error');
                     return;
                 }
-                if (!res.ok) { showToast('Error al crear usuario: ' + data.error, 'error'); return; }
-                showToast('✅ Usuario creado correctamente.', 'success');
+
+                // Calcular próximo id
+                const { data: maxRow } = await supabaseClient.from('users').select('id').order('id', { ascending: false }).limit(1);
+                const newId = (maxRow?.[0]?.id || 0) + 1;
+
+                const { error: insertError } = await supabaseClient.from('users').insert({ id: newId, name, email, role, active: true });
+                if (insertError) {
+                    showToast('Cuenta creada en Auth pero error al guardar perfil: ' + insertError.message, 'error');
+                    return;
+                }
+                showToast('✅ Usuario creado. Ya puede iniciar sesión.', 'success');
             }
 
             closeModal('modal-dash-user');
@@ -2324,6 +2322,22 @@
         } finally {
             btn.disabled = false; btn.textContent = '💾 Guardar';
         }
+    }
+
+    async function sendPasswordReset() {
+        const email = document.getElementById('du-email').value.trim();
+        if (!email) { showToast('Guarda el usuario primero.', 'error'); return; }
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+        if (error) { showToast('Error: ' + error.message, 'error'); return; }
+        showToast('📧 Email de recuperación enviado a ' + email, 'success');
+    }
+
+    async function deleteDashUser(userId, userName) {
+        if (!confirm(`¿Eliminar al usuario "${userName}"? Esta acción no se puede deshacer.`)) return;
+        const { error } = await supabaseClient.from('users').delete().eq('id', userId);
+        if (error) { showToast('Error al eliminar: ' + error.message, 'error'); return; }
+        showToast('🗑️ Usuario eliminado.', 'success');
+        loadDashUsers();
     }
 
     async function toggleDashUserActive(userId, currentActive) {
