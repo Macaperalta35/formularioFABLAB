@@ -2330,7 +2330,17 @@
         const email = document.getElementById('du-email').value.trim();
         if (!email) { showToast('Guarda el usuario primero.', 'error'); return; }
         const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-        if (error) { showToast('Error: ' + error.message, 'error'); return; }
+        if (error) {
+            const msg = error.message || '';
+            if (msg.includes('rate limit')) {
+                showToast('Límite de correos alcanzado. Espera unos minutos e intenta de nuevo.', 'error');
+            } else if (msg.includes('email logins are disabled') || msg.includes('Email logins are disabled')) {
+                showToast('El envío de correos está desactivado en la configuración de Supabase.', 'error');
+            } else {
+                showToast('No se pudo enviar el correo de recuperación. Intenta más tarde.', 'error');
+            }
+            return;
+        }
         showToast('📧 Email de recuperación enviado a ' + email, 'success');
     }
 
