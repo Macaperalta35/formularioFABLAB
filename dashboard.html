@@ -271,8 +271,8 @@
                 </button>
 
                 <div class="nav-label" style="margin-top: 8px;">Sistema</div>
-                <button class="nav-item superadmin-only" data-section="usuarios" id="nav-usuarios">
-                    Gestión de Usuarios
+                <button class="nav-item admin-only" data-section="usuarios" id="nav-usuarios">
+                    Roles y Permisos
                 </button>
                 <button class="nav-item" data-section="accesibilidad" id="nav-accesibilidad">
                     Accesibilidad
@@ -751,8 +751,12 @@
                 <!-- ==================== SECTION: USUARIOS ==================== -->
                 <div class="page-section" id="section-usuarios">
                     <div class="section-header">
-                        <h3 class="section-title">👤 Gestión de Usuarios</h3>
-                        <button class="btn btn-primary btn-sm" onclick="openDashUserModal()">➕ Nuevo Usuario</button>
+                        <h3 class="section-title">🔑 Roles y Permisos</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="loadDashUsers()">🔄 Recargar</button>
+                    </div>
+                    <div style="background:var(--bg-secondary);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:var(--text-muted);display:flex;gap:0.5rem;align-items:flex-start;">
+                        <span>ℹ️</span>
+                        <span>Desde aquí puedes cambiar el rol y el estado de los usuarios existentes. Para crear un nuevo usuario, ve a <strong>Supabase → Authentication → Users</strong> y luego edita su perfil aquí para asignarle el rol.</span>
                     </div>
                     <div class="table-scroll" style="margin-top:1rem;">
                         <table class="data-table">
