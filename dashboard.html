@@ -458,6 +458,10 @@
                                     <option value="externo">🏢 Externo</option>
                                     <option value="empresa">🏭 Empresa</option>
                                 </select>
+                                <select class="filter-select" id="sort-visitas" onchange="filterVisitas()">
+                                    <option value="desc">↓ Más reciente primero</option>
+                                    <option value="asc">↑ Más antiguo primero</option>
+                                </select>
                             </div>
                         </div>
                         <div class="table-scroll">
@@ -3214,18 +3218,19 @@
 
     function getFilteredVisitas() {
         const search = document.getElementById('search-visitas').value.toLowerCase();
-        const tipo = document.getElementById('filter-tipo').value.toLowerCase();
+        const tipo   = document.getElementById('filter-tipo').value.toLowerCase();
+        const sign   = (document.getElementById('sort-visitas')?.value || 'desc') === 'asc' ? 1 : -1;
         return db.visitas.filter(v => {
-            const name = (v.nombre || '').toLowerCase();
-            const rut = (v.rut || '').toLowerCase();
+            const name  = (v.nombre || '').toLowerCase();
+            const rut   = (v.rut || '').toLowerCase();
             const vTipo = (v.tipoVisita || v.tipo_visita || v.tipo || '').toLowerCase();
             return (!search || name.includes(search) || rut.includes(search)) &&
                    (!tipo || vTipo.includes(tipo));
         }).sort((a, b) => {
-            if (a._rowIndex && b._rowIndex) return b._rowIndex - a._rowIndex;
+            if (a._rowIndex && b._rowIndex) return sign * (a._rowIndex - b._rowIndex);
             const fa = new Date(a.fecha || a.created_at || 0).getTime();
             const fb = new Date(b.fecha || b.created_at || 0).getTime();
-            return fb - fa;
+            return sign * (fa - fb);
         });
     }
 
