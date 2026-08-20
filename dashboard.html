@@ -340,37 +340,37 @@
                 <div class="page-section active" id="section-overview">
                     <!-- Stats -->
                     <div class="stats-grid">
-                        <div class="stat-card red">
+                        <div class="stat-card red" style="cursor:pointer;" onclick="goToSection('visitas')">
                             <div class="stat-header">
                                 <div class="stat-icon red">📋</div>
                                 <span class="stat-label">Visitas Totales</span>
                             </div>
                             <div class="stat-value" id="ov-total-visitas">0</div>
-                            <div class="stat-change neutral">📊 Total registrado</div>
+                            <div class="stat-change neutral">📊 Ver registro →</div>
                         </div>
-                        <div class="stat-card green">
+                        <div class="stat-card green" style="cursor:pointer;" onclick="goToSection('ocupacion')">
                             <div class="stat-header">
                                 <div class="stat-icon green">✅</div>
                                 <span class="stat-label">Lab Hoy</span>
                             </div>
                             <div class="stat-value" id="ov-lab-status">Libre</div>
-                            <div class="stat-change up" id="ov-lab-detail">Sin actividad</div>
+                            <div class="stat-change up" id="ov-lab-detail">Ver ocupación →</div>
                         </div>
-                        <div class="stat-card blue">
+                        <div class="stat-card blue" style="cursor:pointer;" onclick="goToSection('secciones')">
                             <div class="stat-header">
                                 <div class="stat-icon blue">🏫</div>
                                 <span class="stat-label">Secciones Activas</span>
                             </div>
                             <div class="stat-value" id="ov-secciones">0</div>
-                            <div class="stat-change neutral">Clases y capacitaciones</div>
+                            <div class="stat-change neutral">Ver secciones →</div>
                         </div>
-                        <div class="stat-card purple">
+                        <div class="stat-card purple" style="cursor:pointer;" onclick="goToSection('secciones')">
                             <div class="stat-header">
                                 <div class="stat-icon purple">👥</div>
                                 <span class="stat-label">Alumnos Inscritos</span>
                             </div>
                             <div class="stat-value" id="ov-alumnos">0</div>
-                            <div class="stat-change neutral">En todas las secciones</div>
+                            <div class="stat-change neutral">Ver secciones →</div>
                         </div>
                         <div class="stat-card amber" style="cursor:pointer;" onclick="goToSection('inventario')">
                             <div class="stat-header">
@@ -385,9 +385,10 @@
                     <!-- Overview Grid -->
                     <div class="overview-grid">
                         <!-- Upcoming activities -->
-                        <div class="panel-card">
+                        <div class="panel-card" style="cursor:pointer;" onclick="goToSection('ocupacion')">
                             <div class="panel-card-header">
                                 <span class="panel-card-title">📅 Próximas Actividades</span>
+                                <span class="panel-card-action">Ver todas →</span>
                             </div>
                             <div class="panel-card-body" id="ov-upcoming">
                                 <div class="empty-state" style="padding:30px 20px;">
@@ -411,9 +412,10 @@
                         </div>
 
                         <!-- Recent visits -->
-                        <div class="panel-card">
+                        <div class="panel-card" style="cursor:pointer;" onclick="goToSection('visitas')">
                             <div class="panel-card-header">
                                 <span class="panel-card-title">🕐 Visitas Recientes</span>
+                                <span class="panel-card-action">Ver todas →</span>
                             </div>
                             <div class="panel-card-body" id="ov-recent-visits">
                                 <div class="empty-state" style="padding:30px 20px;">
@@ -3219,6 +3221,11 @@
             const vTipo = (v.tipoVisita || v.tipo_visita || v.tipo || '').toLowerCase();
             return (!search || name.includes(search) || rut.includes(search)) &&
                    (!tipo || vTipo.includes(tipo));
+        }).sort((a, b) => {
+            if (a._rowIndex && b._rowIndex) return b._rowIndex - a._rowIndex;
+            const fa = new Date(a.fecha || a.created_at || 0).getTime();
+            const fb = new Date(b.fecha || b.created_at || 0).getTime();
+            return fb - fa;
         });
     }
 
@@ -5443,7 +5450,7 @@
                 const working = activos.filter(a => {
                     const dh = a.horario?.[d];
                     if (!dh?.activo) return false;
-                    return _normBloques(dh).some(b => hMins >= _ayMins(b.desde||'08:00') && hMins < _ayMins(b.hasta||'20:00'));
+                    return _normBloques(dh).some(b => hMins >= _ayMins(b.desde||'08:00') && hMins <= _ayMins(b.hasta||'20:00'));
                 });
 
                 const nowRing = isNow ? 'box-shadow:0 0 0 2px rgba(37,99,235,0.35);' : '';
@@ -5526,11 +5533,11 @@
         row.className = 'ay-bloque-row';
         row.style.cssText = 'display:flex;align-items:center;gap:0.5rem;margin-bottom:5px;flex-wrap:wrap;';
         row.innerHTML = `
-            <input type="time" class="form-input ay-desde" value="09:00" min="08:00" max="20:00"
-                   style="width:105px;padding:5px 8px;font-size:0.82rem;" onchange="updateAyBand('${d}')">
+            <input type="time" class="form-input ay-desde" value="09:00"
+                   style="width:105px;padding:5px 8px;font-size:0.82rem;" oninput="updateAyBand('${d}')" onchange="updateAyBand('${d}')">
             <span style="font-size:0.82rem;color:var(--text-muted);">a</span>
-            <input type="time" class="form-input ay-hasta" value="13:00" min="08:00" max="20:00"
-                   style="width:105px;padding:5px 8px;font-size:0.82rem;" onchange="updateAyBand('${d}')">
+            <input type="time" class="form-input ay-hasta" value="13:00"
+                   style="width:105px;padding:5px 8px;font-size:0.82rem;" oninput="updateAyBand('${d}')" onchange="updateAyBand('${d}')">
             <button class="btn btn-ghost btn-sm" onclick="removeAyBloque(this,'${d}')"
                     title="Quitar bloque" style="padding:3px 8px;font-size:0.8rem;color:#dc2626;">✕</button>`;
         container.appendChild(row);
@@ -5566,11 +5573,11 @@
             const bloquesDefault = bloques.length ? bloques : [{ desde: '08:00', hasta: '17:00' }];
             const bloquesHTML = bloquesDefault.map((b, i) => `
                 <div class="ay-bloque-row" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:5px;flex-wrap:wrap;">
-                    <input type="time" class="form-input ay-desde" value="${b.desde || '08:00'}" min="08:00" max="20:00"
-                           style="width:105px;padding:5px 8px;font-size:0.82rem;" onchange="updateAyBand('${d}')">
+                    <input type="time" class="form-input ay-desde" value="${b.desde || '08:00'}"
+                           style="width:105px;padding:5px 8px;font-size:0.82rem;" oninput="updateAyBand('${d}')" onchange="updateAyBand('${d}')">
                     <span style="font-size:0.82rem;color:var(--text-muted);">a</span>
-                    <input type="time" class="form-input ay-hasta" value="${b.hasta || '17:00'}" min="08:00" max="20:00"
-                           style="width:105px;padding:5px 8px;font-size:0.82rem;" onchange="updateAyBand('${d}')">
+                    <input type="time" class="form-input ay-hasta" value="${b.hasta || '17:00'}"
+                           style="width:105px;padding:5px 8px;font-size:0.82rem;" oninput="updateAyBand('${d}')" onchange="updateAyBand('${d}')">
                     <button class="btn btn-ghost btn-sm" onclick="removeAyBloque(this,'${d}')"
                             title="Quitar bloque" style="padding:3px 8px;font-size:0.8rem;color:#dc2626;opacity:${bloquesDefault.length > 1 ? '1' : '0.25'};">✕</button>
                 </div>`).join('');
