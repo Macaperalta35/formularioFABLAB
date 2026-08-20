@@ -149,7 +149,7 @@ body {
     padding: 5px 16px;
     background: var(--red-glow);
     color: var(--red);
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     font-weight: 700;
     border-radius: 50px;
     letter-spacing: 1px;
@@ -468,7 +468,7 @@ body {
 }
 
 .footer-text {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     color: #9ca3af;
     text-align: center;
     line-height: 1.5;
@@ -507,14 +507,14 @@ body {
     .inacap-bar { width: 6px; }
     .inacap-text { font-size: 1.7rem; }
     .title { font-size: 1.5rem; letter-spacing: 1.5px; }
-    .subtitle { font-size: 0.75rem; }
+    .subtitle { font-size: 0.875rem; }
     .header-divider { margin: 10px auto; }
     .form-row { grid-template-columns: 1fr; gap: 0; }
     .radio-group { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .radio-label { padding: 10px 8px; font-size: 0.75rem; }
-    .radio-text { font-size: 0.75rem; }
+    .radio-label { padding: 11px 10px; font-size: 0.875rem; }
+    .radio-text { font-size: 0.875rem; }
     .form-group { margin-bottom: 14px; }
-    .label { font-size: 0.75rem; margin-bottom: 4px; }
+    .label { font-size: 0.875rem; margin-bottom: 5px; }
     .input { padding: 11px 12px 11px 36px; font-size: 16px; }
     .submit-btn { padding: 15px; font-size: 0.9rem; }
     .footer { margin-top: 14px; padding-top: 10px; }
@@ -655,9 +655,9 @@ body {
     background: #fff5f5;
     border: 1px solid var(--red);
     color: var(--red);
-    padding: 6px 12px;
+    padding: 7px 14px;
     border-radius: 50px;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition);

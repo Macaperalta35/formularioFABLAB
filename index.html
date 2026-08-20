@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Formulario de registro de visitas del FAB LAB INACAP - Laboratorio de Fabricación Digital">
     <meta name="theme-color" content="#ED1C24">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,7 +21,7 @@
         <div id="form-container" class="form-card fade-in">
             <div class="card-accent"></div>
             <header class="logo-section">
-                <a href="dashboard.html" style="display:inline-flex;align-items:center;gap:5px;font-size:0.78rem;font-weight:600;color:var(--text-muted,#6b7280);text-decoration:none;padding:5px 12px;border:1px solid var(--border,#e5e7eb);border-radius:50px;margin-bottom:16px;transition:background 0.15s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
+                <a href="dashboard.html" style="display:inline-flex;align-items:center;gap:5px;font-size:0.875rem;font-weight:600;color:var(--text-muted,#6b7280);text-decoration:none;padding:5px 12px;border:1px solid var(--border,#e5e7eb);border-radius:50px;margin-bottom:16px;transition:background 0.15s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
                     ← Ir al Panel
                 </a>
                 <div class="inacap-logo" aria-label="Logo INACAP">
@@ -43,11 +43,11 @@
                     <div style="display:flex;align-items:center;gap:8px;">
                         <span style="font-size:1.3rem;">👋</span>
                         <div>
-                            <div style="font-weight:700;font-size:0.9rem;color:#991b1b;">¡Bienvenido/a de nuevo!</div>
-                            <div style="font-size:0.8rem;color:#b91c1c;" id="welcome-name-sub">Tus datos fueron completados automáticamente.</div>
+                            <div style="font-weight:700;font-size:1rem;color:#991b1b;">¡Bienvenido/a de nuevo!</div>
+                            <div style="font-size:0.875rem;color:#b91c1c;" id="welcome-name-sub">Tus datos fueron completados automáticamente.</div>
                         </div>
                     </div>
-                    <button type="button" onclick="clearSavedUser()" style="font-size:0.75rem;font-weight:600;color:#6b7280;background:white;border:1px solid #d1d5db;border-radius:50px;padding:5px 14px;cursor:pointer;white-space:nowrap;">✕ No soy yo</button>
+                    <button type="button" onclick="clearSavedUser()" style="font-size:0.875rem;font-weight:600;color:#6b7280;background:white;border:1px solid #d1d5db;border-radius:50px;padding:6px 14px;cursor:pointer;white-space:nowrap;">✕ No soy yo</button>
                 </div>
 
                 <!-- Datos Personales -->
@@ -144,7 +144,7 @@
                 <div class="form-group" id="frequent-reasons-group" style="display:none;">
                     <label class="label" style="display:flex;align-items:center;justify-content:space-between;">
                         <span>💡 Tus razones frecuentes</span>
-                        <button type="button" onclick="clearFrequentReasons()" style="font-size:0.7rem;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0;">Limpiar historial</button>
+                        <button type="button" onclick="clearFrequentReasons()" style="font-size:0.8rem;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0;">Limpiar historial</button>
                     </label>
                     <div id="frequent-reasons-list" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
                 </div>
@@ -594,9 +594,9 @@
                     return `<button type="button"
                         onclick="applyReason(this.dataset.full)"
                         data-full="${r.text.replace(/"/g, '&quot;')}"
-                        style="font-size:0.78rem;font-weight:500;padding:6px 14px;border-radius:50px;border:1.5px solid #e5e7eb;background:white;color:#374151;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background 0.15s;"
+                        style="font-size:0.875rem;font-weight:500;padding:7px 15px;border-radius:50px;border:1.5px solid #e5e7eb;background:white;color:#374151;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background 0.15s;"
                         onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
-                        <span style="color:#9ca3af;font-size:0.68rem;font-weight:700;">${r.count}×</span> ${label}
+                        <span style="color:#9ca3af;font-size:0.75rem;font-weight:700;">${r.count}×</span> ${label}
                     </button>`;
                 }).join('');
             } catch (e) {}
