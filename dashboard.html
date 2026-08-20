@@ -1028,8 +1028,8 @@
                         <input type="text" class="form-input" id="imp-solicitante" placeholder="Nombre completo">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">RUT</label>
-                        <input type="text" class="form-input" id="imp-rut" placeholder="12.345.678-9">
+                        <label class="form-label">Correo</label>
+                        <input type="email" class="form-input" id="imp-correo" placeholder="ejemplo@correo.com">
                     </div>
                 </div>
                 <div class="form-row">
@@ -2521,7 +2521,7 @@
             if (j) {
                 document.getElementById('imp-titulo').value      = j.titulo          || '';
                 document.getElementById('imp-solicitante').value = j.solicitante     || '';
-                document.getElementById('imp-rut').value         = j.rut             || '';
+                document.getElementById('imp-correo').value      = j.correo          || '';
                 document.getElementById('imp-material').value    = j.material        || 'PLA';
                 document.getElementById('imp-color').value       = j.color           || '';
                 document.getElementById('imp-impresora').value   = j.impresora       || '';
@@ -2542,7 +2542,7 @@
                 }
             }
         } else {
-            ['imp-titulo','imp-solicitante','imp-rut','imp-color','imp-impresora','imp-tiempo','imp-notas'].forEach(fid => {
+            ['imp-titulo','imp-solicitante','imp-correo','imp-color','imp-impresora','imp-tiempo','imp-notas'].forEach(fid => {
                 document.getElementById(fid).value = '';
             });
             document.getElementById('imp-archivo').value     = '';
@@ -2584,7 +2584,7 @@
             id,
             titulo,
             solicitante,
-            rut:            document.getElementById('imp-rut').value.trim(),
+            correo:         document.getElementById('imp-correo').value.trim(),
             material:       document.getElementById('imp-material').value,
             color:          document.getElementById('imp-color').value.trim(),
             impresora:      document.getElementById('imp-impresora').value.trim(),
@@ -2716,7 +2716,8 @@
                     <span class="status-dot ${est.css}">${est.icon} ${est.label}</span>
                 </div>
                 <div class="info-card-meta">
-                    <div class="meta-row"><span class="meta-icon">👤</span> ${escapeHTML(j.solicitante)}${j.rut ? ' · ' + escapeHTML(j.rut) : ''}</div>
+                    <div class="meta-row"><span class="meta-icon">👤</span> ${escapeHTML(j.solicitante)}</div>
+                    ${j.correo ? `<div class="meta-row"><span class="meta-icon">✉️</span> ${escapeHTML(j.correo)}</div>` : ''}
                     <div class="meta-row">
                         <span class="meta-icon">🧵</span>
                         <span style="background:${matColor}22;color:${matColor};font-weight:700;padding:2px 8px;border-radius:6px;font-size:0.78rem;">${escapeHTML(j.material)}</span>
