@@ -140,6 +140,15 @@
                     </div>
                 </div>
 
+                <!-- Razones frecuentes (se muestra solo si hay historial) -->
+                <div class="form-group" id="frequent-reasons-group" style="display:none;">
+                    <label class="label" style="display:flex;align-items:center;justify-content:space-between;">
+                        <span>💡 Tus razones frecuentes</span>
+                        <button type="button" onclick="clearFrequentReasons()" style="font-size:0.7rem;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0;">Limpiar historial</button>
+                    </label>
+                    <div id="frequent-reasons-list" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+                </div>
+
                 <div class="form-group">
                     <label class="label" for="proposito">Propósito de la Visita / Descripción <span class="req">*</span></label>
                     <div class="input-wrapper textarea-wrapper">
@@ -402,6 +411,9 @@
 
                 await postRegistro(payload);
 
+                // Registrar razón de visita en historial de frecuentes
+                if (payload.proposito) saveReason(payload.proposito);
+
                 // Guardar datos personales para autocompletar próxima visita
                 localStorage.setItem('fablab_user_data', JSON.stringify({
                     nombre: payload.nombre,
@@ -547,6 +559,63 @@
 
         updateSubmitButton();
 
+        // ========== RAZONES FRECUENTES ==========
+        function saveReason(text) {
+            if (!text || text.trim().length < 4) return;
+            text = text.trim();
+            try {
+                const reasons = JSON.parse(localStorage.getItem('fablab_reasons') || '[]');
+                const existing = reasons.find(r => r.text === text);
+                if (existing) {
+                    existing.count++;
+                } else {
+                    reasons.push({ text, count: 1 });
+                }
+                // Mantener solo las 15 más frecuentes
+                reasons.sort((a, b) => b.count - a.count);
+                localStorage.setItem('fablab_reasons', JSON.stringify(reasons.slice(0, 15)));
+                loadFrequentReasons();
+            } catch (e) {}
+        }
+
+        function loadFrequentReasons() {
+            try {
+                const reasons = JSON.parse(localStorage.getItem('fablab_reasons') || '[]');
+                const group   = document.getElementById('frequent-reasons-group');
+                const list    = document.getElementById('frequent-reasons-list');
+                if (!group || !list) return;
+
+                const top = reasons.sort((a, b) => b.count - a.count).slice(0, 5);
+                if (!top.length) { group.style.display = 'none'; return; }
+
+                group.style.display = 'block';
+                list.innerHTML = top.map(r => {
+                    const label = r.text.length > 45 ? r.text.slice(0, 43) + '…' : r.text;
+                    return `<button type="button"
+                        onclick="applyReason(this.dataset.full)"
+                        data-full="${r.text.replace(/"/g, '&quot;')}"
+                        style="font-size:0.78rem;font-weight:500;padding:6px 14px;border-radius:50px;border:1.5px solid #e5e7eb;background:white;color:#374151;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background 0.15s;"
+                        onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                        <span style="color:#9ca3af;font-size:0.68rem;font-weight:700;">${r.count}×</span> ${label}
+                    </button>`;
+                }).join('');
+            } catch (e) {}
+        }
+
+        window.applyReason = function(text) {
+            const proposito = document.getElementById('proposito');
+            proposito.value = text;
+            proposito.dispatchEvent(new Event('input'));
+            proposito.focus();
+            updateSubmitButton();
+        };
+
+        window.clearFrequentReasons = function() {
+            localStorage.removeItem('fablab_reasons');
+            const group = document.getElementById('frequent-reasons-group');
+            if (group) group.style.display = 'none';
+        };
+
         // ========== RECONOCIMIENTO DE DISPOSITIVO ==========
         function loadSavedUser() {
             try {
@@ -588,6 +657,7 @@
         };
 
         loadSavedUser();
+        loadFrequentReasons();
     </script>
 </body>
 </html>
