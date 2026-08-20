@@ -1771,6 +1771,7 @@
                             <option value="voluntario">🤝 Voluntario</option>
                             <option value="pagado">💰 Pagado</option>
                             <option value="practica">📋 Práctica</option>
+                            <option value="coordinador">⭐ Coordinador</option>
                         </select>
                     </div>
                 </div>
@@ -5396,7 +5397,7 @@
                             <div style="font-weight:700;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(a.nombre)}</div>
                             <div style="font-size:0.78rem;color:var(--text-muted);">${escapeHTML(a.carrera || '—')} ${a.anio ? '· ' + escapeHTML(a.anio) : ''}</div>
                             <span style="display:inline-block;margin-top:3px;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:50px;${a.activo ? 'background:var(--green-glow);color:var(--green)' : 'background:#f3f4f6;color:#9ca3af'};">${a.activo ? '✅ Activo' : 'Inactivo'}</span>
-                            <span style="display:inline-block;margin-top:3px;margin-left:4px;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:50px;${a.tipo === 'pagado' ? 'background:var(--amber-glow);color:#b45309' : a.tipo === 'practica' ? 'background:#e0f2fe;color:#0369a1' : 'background:var(--purple-glow);color:var(--purple)'};">${a.tipo === 'pagado' ? '💰 Pagado' : a.tipo === 'practica' ? '📋 Práctica' : '🤝 Voluntario'}</span>
+                            <span style="display:inline-block;margin-top:3px;margin-left:4px;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:50px;${a.tipo === 'coordinador' ? 'background:#fee2e2;color:#991b1b' : a.tipo === 'pagado' ? 'background:var(--amber-glow);color:#b45309' : a.tipo === 'practica' ? 'background:#e0f2fe;color:#0369a1' : 'background:var(--purple-glow);color:var(--purple)'};">${a.tipo === 'coordinador' ? '⭐ Coordinador' : a.tipo === 'pagado' ? '💰 Pagado' : a.tipo === 'practica' ? '📋 Práctica' : '🤝 Voluntario'}</span>
                         </div>
                     </div>
                     ${diasActivos.length ? `<div style="font-size:0.73rem;color:var(--text-muted);margin-bottom:0.5rem;">🗓 ${diasActivos.map(d => { const bl = _normBloques(a.horario[d]); return AY_DIAS_LABEL[d].slice(0,3) + ' ' + bl.map(b => `${(b.desde||'').slice(0,5)}–${(b.hasta||'').slice(0,5)}`).join(', '); }).join(' · ')}</div>` : ''}
@@ -5807,7 +5808,7 @@
                     <div style="font-size:1.1rem;font-weight:800;">${escapeHTML(a.nombre)}</div>
                     <div style="font-size:0.82rem;color:var(--text-muted);">${escapeHTML(a.carrera||'—')}${a.anio ? ' · ' + escapeHTML(a.anio) : ''}</div>
                     <span style="display:inline-block;margin-top:4px;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:50px;${a.activo ? 'background:var(--green-glow);color:var(--green)' : 'background:#f3f4f6;color:#9ca3af'};">${a.activo ? '✅ Activo' : 'Inactivo'}</span>
-                    <span style="display:inline-block;margin-top:4px;margin-left:6px;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:50px;${a.tipo === 'pagado' ? 'background:var(--amber-glow);color:#b45309' : a.tipo === 'practica' ? 'background:#e0f2fe;color:#0369a1' : 'background:var(--purple-glow);color:var(--purple)'};">${a.tipo === 'pagado' ? '💰 Pagado' : a.tipo === 'practica' ? '📋 Práctica' : '🤝 Voluntario'}</span>
+                    <span style="display:inline-block;margin-top:4px;margin-left:6px;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:50px;${a.tipo === 'coordinador' ? 'background:#fee2e2;color:#991b1b' : a.tipo === 'pagado' ? 'background:var(--amber-glow);color:#b45309' : a.tipo === 'practica' ? 'background:#e0f2fe;color:#0369a1' : 'background:var(--purple-glow);color:var(--purple)'};">${a.tipo === 'coordinador' ? '⭐ Coordinador' : a.tipo === 'pagado' ? '💰 Pagado' : a.tipo === 'practica' ? '📋 Práctica' : '🤝 Voluntario'}</span>
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;font-size:0.83rem;">
