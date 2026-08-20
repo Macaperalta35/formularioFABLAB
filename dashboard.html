@@ -2212,9 +2212,11 @@
             return;
         }
 
+        const superadminCount = data.filter(u => u.role === 'superadmin').length;
         tbody.innerHTML = data.map(u => {
-            const isMe        = u.id === currentUser?.id;
-            const isSuperadmin = u.role === 'superadmin';
+            const isMe     = u.id === currentUser?.id;
+            const lastSA   = u.role === 'superadmin' && superadminCount <= 1;
+            const canDelete = !isMe && !lastSA;
             const acciones = isMe
                 ? `<button class="btn btn-ghost btn-sm" onclick="openDashUserModal(${u.id})" title="Editar">✏️</button>
                    <span style="font-size:0.75rem;color:var(--text-muted);">(tú)</span>`
@@ -2224,7 +2226,7 @@
                        style="color:${u.active ? '#dc2626' : '#16a34a'};">
                        ${u.active ? '🔒' : '🔓'}
                    </button>
-                   ${!isSuperadmin ? `<button class="btn btn-ghost btn-sm" onclick="deleteDashUser(${u.id}, '${escapeHTML(u.name)}')" title="Eliminar usuario" style="color:#dc2626;">🗑️</button>` : ''}`;
+                   ${canDelete ? `<button class="btn btn-ghost btn-sm" onclick="deleteDashUser(${u.id}, '${escapeHTML(u.name)}')" title="Eliminar usuario" style="color:#dc2626;">🗑️</button>` : ''}`;
             return `<tr>
                 <td style="color:var(--text-muted);font-size:0.8rem;">${u.id}</td>
                 <td><strong>${escapeHTML(u.name)}</strong></td>
